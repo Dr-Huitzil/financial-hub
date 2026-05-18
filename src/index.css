@@ -1,0 +1,781 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&display=swap');
+
+:root {
+  /* Skeuomorphic Color Tokens */
+  --color-desk: #252220;
+  --color-binder-outer: #c5b9a5;
+  --color-binder-inner: #d7cdba;
+  --color-manila-light: #f5eedc;
+  --color-manila-dark: #ebdcb9;
+  --color-paper-light: #fdfcf7;
+  --color-paper-grid: #eaddc3;
+  --color-ink-dark: #201e1c;
+  --color-ink-blue: #162a45;
+  --color-stamp-red: #9e2a2b;
+  --color-stamp-green: #256046;
+  --color-amber-gold: #b27a18;
+  --color-silver: #a1a1aa;
+  
+  /* Drop Shadows & Materials */
+  --shadow-tactile-heavy: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 
+                           0 10px 20px -5px rgba(0, 0, 0, 0.3),
+                           inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --shadow-tactile-medium: 0 12px 20px -8px rgba(40, 30, 20, 0.25), 
+                            0 4px 6px -2px rgba(40, 30, 20, 0.2);
+  --shadow-paper: 2px 2px 8px rgba(40, 30, 20, 0.12),
+                  inset 0 0 40px rgba(253, 252, 247, 0.8);
+  --shadow-inset-groove: inset 0 2px 5px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.6);
+
+  /* Fonts */
+  --font-typewriter: 'Special Elite', monospace;
+  --font-ledger: 'Courier Prime', monospace;
+  --font-sans: 'Outfit', sans-serif;
+  --font-accent: 'Space Grotesk', sans-serif;
+
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: var(--color-ink-dark);
+  background: var(--color-desk);
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.4) 100%),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0px, rgba(0, 0, 0, 0.1) 2px, transparent 2px, transparent 10px);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 1300px;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* --- Tactile Manila Folder Container --- */
+.folder-container {
+  width: 100%;
+  display: flex;
+  background-color: var(--color-binder-outer);
+  border-radius: 20px;
+  box-shadow: var(--shadow-tactile-heavy);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  min-height: 850px;
+  
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    min-height: auto;
+    border-radius: 12px;
+  }
+}
+
+/* Manila Paper texture overlay */
+.folder-container::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3联%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.045'/%3E%3C/svg%3E");
+  z-index: 10;
+}
+
+/* --- Left Folder Sidebar (Vertical Tabs) --- */
+.folder-sidebar {
+  width: 95px;
+  background-color: var(--color-manila-dark);
+  border-right: 2px solid rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 40px;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+  
+  @media (max-width: 1024px) {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 12px 10px;
+    border-right: none;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+    gap: 4px;
+    overflow-x: auto;
+  }
+}
+
+/* Vertical Tab design */
+.folder-tab {
+  width: 95px;
+  height: 120px;
+  background-color: var(--color-manila-dark);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: -4px 2px 6px rgba(0,0,0,0.06);
+  margin-right: -2px; /* Pull tab tightly against active layout */
+
+  @media (max-width: 1024px) {
+    width: auto;
+    flex: 1;
+    height: 48px;
+    border-radius: 6px 6px 0 0;
+    margin-right: 0;
+    margin-bottom: -14px;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+  }
+}
+
+.folder-tab-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-accent);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: rgba(32, 30, 28, 0.6);
+  text-transform: uppercase;
+  user-select: none;
+  
+  @media (max-width: 1024px) {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+}
+
+.folder-tab:hover {
+  background-color: var(--color-manila-light);
+  transform: translateX(-4px);
+  
+  @media (max-width: 1024px) {
+    transform: translateY(-2px);
+  }
+}
+
+.folder-tab.active {
+  background-color: var(--color-paper-light);
+  width: 102px;
+  z-index: 5;
+  box-shadow: -6px 4px 12px rgba(0,0,0,0.12);
+  border-left: 3px solid var(--color-amber-gold);
+  border-right: none;
+  
+  .folder-tab-text {
+    color: var(--color-ink-dark);
+  }
+
+  @media (max-width: 1024px) {
+    width: auto;
+    height: 52px;
+    border-left: none;
+    border-top: 3px solid var(--color-amber-gold);
+    box-shadow: 0 -4px 8px rgba(0,0,0,0.08);
+  }
+}
+
+/* --- Main Manila Folder Body --- */
+.folder-body {
+  flex: 1;
+  background-color: var(--color-paper-light);
+  padding: 40px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  box-shadow: inset 20px 0 30px rgba(0,0,0,0.03);
+  
+  @media (max-width: 1024px) {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+}
+
+/* Ring binder look in the spine */
+.binder-spine-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(to right, rgba(0,0,0,0.12), transparent);
+  pointer-events: none;
+}
+
+/* Header styled as vintage typewriter heading card */
+.folder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px double var(--color-ink-dark);
+  padding-bottom: 16px;
+  margin-bottom: 8px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+.folder-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.folder-title-main {
+  font-family: var(--font-typewriter);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-ink-dark);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.folder-subtitle {
+  font-family: var(--font-ledger);
+  font-size: 13px;
+  color: rgba(32,30,28,0.7);
+  margin: 4px 0 0 0;
+  text-transform: uppercase;
+}
+
+.folder-badge-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Tactile ledger barcode stamp */
+.barcode-stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.85;
+}
+
+.barcode-stripes {
+  height: 24px;
+  width: 110px;
+  background: repeating-linear-gradient(90deg, 
+    var(--color-ink-dark) 0px, var(--color-ink-dark) 2px, 
+    transparent 2px, transparent 4px,
+    var(--color-ink-dark) 4px, var(--color-ink-dark) 8px,
+    transparent 8px, transparent 10px);
+}
+
+.barcode-text {
+  font-family: var(--font-ledger);
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+/* Stylized Ink Stamp */
+.stamp {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 3px double currentColor;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+  user-select: none;
+  display: inline-block;
+  opacity: 0.9;
+  letter-spacing: 1px;
+}
+
+.stamp-red {
+  color: var(--color-stamp-red);
+  background-color: rgba(158, 42, 43, 0.05);
+  box-shadow: 0 0 2px rgba(158, 42, 43, 0.1);
+}
+
+.stamp-green {
+  color: var(--color-stamp-green);
+  background-color: rgba(37, 96, 70, 0.05);
+  box-shadow: 0 0 2px rgba(37, 96, 70, 0.1);
+}
+
+/* --- Overview Tab Layout --- */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 30px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overview-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Card base resembling stacked mechanical blueprint sheets */
+.tactile-card {
+  background-color: var(--color-paper-light);
+  border: 1px solid var(--color-paper-grid);
+  border-radius: 8px;
+  box-shadow: var(--shadow-paper);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tactile-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+  background-color: var(--color-binder-inner);
+}
+
+.card-title {
+  font-family: var(--font-accent);
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--color-ink-blue);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px dashed var(--color-paper-grid);
+  padding-bottom: 10px;
+}
+
+/* Stamp Metric Cards */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-stamp-card {
+  border: 2px dashed var(--color-paper-grid);
+  border-radius: 6px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  background-color: rgba(235, 220, 185, 0.15);
+}
+
+.metric-stamp-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(32,30,28,0.6);
+  margin-bottom: 6px;
+}
+
+.metric-stamp-value {
+  font-family: var(--font-ledger);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.metric-stamp-card.positive {
+  border-color: rgba(37, 96, 70, 0.4);
+  .metric-stamp-value {
+    color: var(--color-stamp-green);
+  }
+}
+
+.metric-stamp-card.negative {
+  border-color: rgba(158, 42, 43, 0.4);
+  .metric-stamp-value {
+    color: var(--color-stamp-red);
+  }
+}
+
+/* Ledger paper text layout */
+.ledger-text-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dotted var(--color-paper-grid);
+}
+
+.ledger-text-row:last-child {
+  border-bottom: none;
+}
+
+.ledger-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.ledger-value {
+  font-family: var(--font-ledger);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* Custom visual checklist for Upcoming payments */
+.payment-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.payment-checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background-color: var(--color-paper-light);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateX(4px);
+    background-color: var(--color-manila-light);
+  }
+}
+
+.payment-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.custom-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-ink-dark);
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.payment-checklist-item.checked {
+  opacity: 0.65;
+  background-color: rgba(37, 96, 70, 0.04);
+  border-color: rgba(37, 96, 70, 0.15);
+  
+  .custom-checkbox {
+    background-color: var(--color-stamp-green);
+    border-color: var(--color-stamp-green);
+  }
+  
+  .custom-checkbox::after {
+    content: "✓";
+    color: var(--color-paper-light);
+    font-size: 13px;
+    font-weight: bold;
+  }
+  
+  .payment-item-name {
+    text-decoration: line-through;
+  }
+}
+
+.payment-item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-item-name {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.payment-item-date {
+  font-family: var(--font-ledger);
+  font-size: 11px;
+  color: rgba(32,30,28,0.5);
+  margin-top: 2px;
+}
+
+.payment-item-value {
+  font-family: var(--font-ledger);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Ledger Grid Tables --- */
+.ledger-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--color-paper-grid);
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+}
+
+.ledger-table th {
+  background-color: var(--color-manila-dark);
+  font-family: var(--font-accent);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--color-ink-dark);
+  color: var(--color-ink-dark);
+}
+
+.ledger-table td {
+  padding: 12px 16px;
+  border-bottom: 1px dashed var(--color-paper-grid);
+  font-family: var(--font-sans);
+}
+
+.ledger-table tr:hover {
+  background-color: rgba(235, 220, 185, 0.15);
+}
+
+.ledger-table .number-cell {
+  font-family: var(--font-ledger);
+  font-weight: 700;
+  text-align: right;
+}
+
+.ledger-table .total-row {
+  background-color: var(--color-manila-light);
+  font-weight: bold;
+  border-top: 2px double var(--color-ink-dark);
+  border-bottom: 2px double var(--color-ink-dark);
+  
+  td {
+    border-bottom: none;
+  }
+}
+
+/* --- SVG Grid / Blueprint Charts --- */
+.chart-wrapper {
+  background-color: var(--color-paper-light);
+  border: 1px solid var(--color-paper-grid);
+  border-radius: 8px;
+  padding: 20px;
+  position: relative;
+  background-image: 
+    linear-gradient(var(--color-paper-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-paper-grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 220px;
+  overflow: visible;
+}
+
+/* Custom interactive inputs like ranges */
+.range-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.range-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.range-title {
+  font-family: var(--font-accent);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-ink-blue);
+}
+
+.range-percent {
+  font-family: var(--font-ledger);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Skeuomorphic grooved slot slider */
+.analog-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  background: var(--color-manila-dark);
+  border-radius: 5px;
+  outline: none;
+  box-shadow: var(--shadow-inset-groove);
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.analog-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e2e8f0 0%, #64748b 70%, #334155 100%);
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  border: 2px solid var(--color-ink-dark);
+  transition: transform 0.1s ease;
+}
+
+.analog-range::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.analog-range::-webkit-slider-thumb:active {
+  background: radial-gradient(circle at 35% 35%, #cbd5e1 0%, #475569 70%, #1e293b 100%);
+  transform: scale(0.95);
+}
+
+/* Custom interactive tabs */
+.sub-tabs-strip {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-paper-grid);
+  padding-bottom: 8px;
+  
+  @media (max-width: 480px) {
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+  }
+}
+
+.sub-tab-btn {
+  background-color: var(--color-manila-light);
+  border: 1px solid var(--color-paper-grid);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-family: var(--font-accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: var(--color-manila-dark);
+  }
+  
+  &.active {
+    background-color: var(--color-ink-blue);
+    color: var(--color-paper-light);
+    border-color: var(--color-ink-blue);
+  }
+}
+
+/* --- Category List Layout --- */
+.category-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.category-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-bar-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.category-bar-bg {
+  height: 10px;
+  background-color: var(--color-manila-dark);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.category-bar-fill {
+  height: 100%;
+  background-color: var(--color-ink-blue);
+  border-radius: 5px;
+}
+
+/* --- Custom Custom Scrollbars for Authentic Look --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-paper-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-manila-dark);
+  border-radius: 4px;
+  border: 2px solid var(--color-paper-dark);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-binder-outer);
+}
