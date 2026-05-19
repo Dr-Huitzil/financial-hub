@@ -83,8 +83,31 @@ def main():
     print("=" * 60)
     
     # Configuration
-    api_key = "YOUR_FIREBASE_API_KEY"
-    project_id = "atnetnoc-404"
+    api_key = os.environ.get("VITE_FIREBASE_API_KEY")
+    project_id = os.environ.get("VITE_FIREBASE_PROJECT_ID")
+    
+    # Fallback to loading from .env file if not in environment
+    if not api_key or not project_id:
+        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
+        if os.path.exists(env_path):
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        if k == "VITE_FIREBASE_API_KEY" and not api_key:
+                            api_key = v
+                        elif k == "VITE_FIREBASE_PROJECT_ID" and not project_id:
+                            project_id = v
+                            
+    if not api_key or not project_id:
+        print("\n[WARNING] Could not find VITE_FIREBASE_API_KEY or VITE_FIREBASE_PROJECT_ID in environment or .env file.")
+        api_key = api_key or input("Firebase API Key: ").strip()
+        project_id = project_id or input("Firebase Project ID: ").strip()
     
     # 1. Credentials Prompt
     print("Please enter your Comptroller credentials to authorize access:")
