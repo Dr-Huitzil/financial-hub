@@ -121,12 +121,12 @@ body {
 
 /* Vertical Tab design */
 .folder-tab {
-  width: 95px;
-  height: 120px;
+  width: 70px;
+  height: 160px;
   background-color: var(--color-manila-dark);
   border: 1px solid rgba(0,0,0,0.1);
   border-right: none;
-  border-radius: 10px 0 0 10px;
+  border-radius: 16px 4px 4px 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -141,7 +141,7 @@ body {
     width: auto;
     flex: 1;
     height: 48px;
-    border-radius: 6px 6px 0 0;
+    border-radius: 12px 12px 0 0;
     margin-right: 0;
     margin-bottom: -14px;
     box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
@@ -178,7 +178,7 @@ body {
 
 .folder-tab.active {
   background-color: var(--color-paper-light);
-  width: 102px;
+  width: 78px;
   z-index: 5;
   box-shadow: -6px 4px 12px rgba(0,0,0,0.12);
   border-left: 3px solid var(--color-amber-gold);

@@ -253,13 +253,13 @@ export default function TransactionTab({ transactions, categories, onAddTransact
             color: !isBatchMode ? "var(--color-paper-light)" : "var(--color-ink-dark)",
             border: "1.5px solid var(--color-ink-dark)",
             borderBottom: "none",
-            borderRadius: "6px 6px 0 0",
+            borderRadius: "14px 14px 0 0",
             cursor: "pointer",
             transform: !isBatchMode ? "translateY(2px)" : "none",
             boxShadow: !isBatchMode ? "none" : "inset 0 -2px 4px rgba(0,0,0,0.05)"
           }}
         >
-          Single Voucher Input
+          Single Entry
         </button>
         <button
           onClick={() => setIsBatchMode(true)}
@@ -274,13 +274,13 @@ export default function TransactionTab({ transactions, categories, onAddTransact
             color: isBatchMode ? "var(--color-paper-light)" : "var(--color-ink-dark)",
             border: "1.5px solid var(--color-ink-dark)",
             borderBottom: "none",
-            borderRadius: "6px 6px 0 0",
+            borderRadius: "14px 14px 0 0",
             cursor: "pointer",
             transform: isBatchMode ? "translateY(2px)" : "none",
             boxShadow: isBatchMode ? "none" : "inset 0 -2px 4px rgba(0,0,0,0.05)"
           }}
         >
-          Excel Batch Spreadsheet Input
+          Batch Entry
         </button>
       </div>
 
@@ -292,7 +292,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
           <div className="tactile-card" style={{ border: "2px solid var(--color-ink-dark)", overflowX: "auto" }}>
             <div className="card-title" style={{ marginBottom: "15px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span>Excel Batch Entry Spreadsheet</span>
+                <span>Batch Transaction Entry</span>
                 <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(-3deg)" }}>BATCH SHEETS</span>
               </div>
               <div className="barcode-stamp" style={{ opacity: 0.7 }}>
@@ -310,11 +310,11 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                 <table className="ledger-table" style={{ width: "100%", fontSize: "11.5px", borderCollapse: "collapse", marginBottom: "20px" }}>
                   <thead>
                     <tr>
-                      <th style={{ width: "120px" }}>Voucher Date</th>
+                      <th style={{ width: "120px" }}>Date</th>
                       <th style={{ width: "110px" }}>Type</th>
                       <th style={{ width: "150px" }}>Flow Category</th>
-                      <th style={{ width: "140px" }}>Reconciled Account</th>
-                      <th>Voucher Description / Merchant</th>
+                      <th style={{ width: "140px" }}>Account</th>
+                      <th>Description / Merchant</th>
                       <th style={{ width: "100px" }}>Amount ($)</th>
                       <th style={{ width: "100px" }}>Person</th>
                       <th style={{ width: "60px", textAlign: "center" }}>Void</th>
@@ -456,7 +456,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
           {/* Card 2: Audit Journal Log Book underneath in spreadsheet view */}
           <div className="tactile-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="card-title">
-              <span>Audit Journal Log Book</span>
+              <span>Transaction History</span>
               <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(-1deg)" }}>ARCHIVE LOGS</span>
             </div>
             
@@ -586,18 +586,18 @@ export default function TransactionTab({ transactions, categories, onAddTransact
           {/* Transaction Voucher Form */}
           <div className="tactile-card" style={{ height: "fit-content", border: "2.5px solid var(--color-ink-dark)" }}>
             <div className="card-title" style={{ marginBottom: "15px" }}>
-              <span>Comptroller General Entry Voucher</span>
+              <span>Transaction Entry</span>
               <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(4deg)" }}>POSTED</span>
             </div>
 
             <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
-              Complete the fields below to register and post a general ledger voucher. Authorizations are saved in real-time.
+              Complete the fields below to register and post a transaction. Authorizations are saved in real-time.
             </p>
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Date</label>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Date</label>
                   <input 
                     type="date" 
                     value={date} 
@@ -607,7 +607,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Type</label>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Type</label>
                   <select 
                     value={type} 
                     onChange={(e) => handleTypeChange(e.target.value)}
@@ -635,7 +635,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                   </select>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Reconciled Account</label>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Account</label>
                   <select 
                     value={account} 
                     onChange={(e) => setAccount(e.target.value)}
@@ -650,7 +650,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
 
               <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "12px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Description Ledger</label>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Description</label>
                   <input 
                     type="text" 
                     value={description}
@@ -660,7 +660,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Amount ($)</label>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Amount ($)</label>
                   <input 
                     type="number" 
                     step="0.01"
@@ -720,7 +720,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
           {/* Ledger table log */}
           <div className="tactile-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="card-title">
-              <span>Audit Journal Log Book</span>
+              <span>Transaction History</span>
               <span className="barcode-text" style={{ fontSize: "8px" }}>LEDG-IDX-88A</span>
             </div>
             
