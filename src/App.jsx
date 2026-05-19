@@ -1,39 +1,346 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
+
 import OverviewTab from "./components/OverviewTab";
 import BudgetTab from "./components/BudgetTab";
 import InvestmentsTab from "./components/InvestmentsTab";
 import GoalsTab from "./components/GoalsTab";
 import ReportsTab from "./components/ReportsTab";
-import { initialUpcomingPayments } from "./data/financialData";
+import TransactionTab from "./components/TransactionTab";
+import SettingsTab from "./components/SettingsTab";
+import Login from "./components/Login";
+
+import { initialUpcomingPayments, savingsGoals as initialGoals } from "./data/financialData";
+import { generateDemoTransactions } from "./data/demoDataGenerator";
+import { aggregateFinancialData } from "./data/financialDataSync";
 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [upcomingPayments, setUpcomingPayments] = useState(initialUpcomingPayments);
 
-  const togglePayment = (id) => {
-    setUpcomingPayments(
-      upcomingPayments.map((p) =>
-        p.id === id ? { ...p, paid: !p.paid } : p
-      )
-    );
+  const DEFAULT_CATEGORIES = {
+    Income: ["Paycheck 1", "Paycheck 2", "Overtime On Call", "Mileage", "Commission", "Business", "Side hustle", "Interest", "School Refund", "Cash"],
+    Expense: ["Groceries", "Restaurant", "Games", "Fuel", "Car Maintenance", "Clothing", "Childcare", "Home", "Entertainment", "Pets", "Travel", "Electronics", "Personal Care", "Jessica", "Prison", "Snacks", "Work Equipment", "Gift", "Hobbies", "Thrifting", "Fast Food", "School"],
+    Bill: ["Electricity", "Rent", "Insurance (Ford)", "Insurance (Volks)", "YouTube Premium", "Google One", "Cricket", "Post Office", "Mind Melt", "Websites", "WiFi", "KikOff", "Prison"],
+    Debt: ["Discover It", "Freedom Chase", "Amazon Chase", "Sapphire Chase", "Personal Loans", "Capital One 1", "Capital One 2", "Credit One 1", "Credit One 2"]
   };
+
+  // General ledger states
+  const [transactions, setTransactions] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [upcomingPayments, setUpcomingPayments] = useState([]);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Auth State Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setIsDemoMode(false);
+      } else {
+        setUser(null);
+        // Clear live states on logout
+        if (!isDemoMode) {
+          setTransactions([]);
+          setGoals([]);
+          setUpcomingPayments([]);
+        }
+      }
+      setAuthLoading(false);
+    });
+    return unsubscribe;
+  }, [isDemoMode]);
+
+  // Firestore Dynamic Database Sync
+  useEffect(() => {
+    if (!user) return;
+
+    // 1. Sync Transactions
+    const txRef = collection(db, "users", user.uid, "transactions");
+    const unsubTx = onSnapshot(txRef, (snapshot) => {
+      const txList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setTransactions(txList);
+    });
+
+    // 2. Sync Savings Goals
+    const goalsRef = collection(db, "users", user.uid, "savingsGoals");
+    const unsubGoals = onSnapshot(goalsRef, (snapshot) => {
+      if (snapshot.empty) {
+        // Seed default goals in DB on first login
+        initialGoals.forEach((goal) => {
+          setDoc(doc(goalsRef, String(goal.id)), goal);
+        });
+      } else {
+        const goalsList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setGoals(goalsList);
+      }
+    });
+
+    // 3. Sync Upcoming Payments Checklists
+    const paymentsRef = collection(db, "users", user.uid, "upcomingPayments");
+    const unsubPayments = onSnapshot(paymentsRef, (snapshot) => {
+      if (snapshot.empty) {
+        // Seed default payments in DB on first login
+        initialUpcomingPayments.forEach((payment) => {
+          setDoc(doc(paymentsRef, String(payment.id)), payment);
+        });
+      } else {
+        const paymentsList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data()
+        })).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        setUpcomingPayments(paymentsList);
+      }
+    });
+
+    // 4. Sync Setup settings (Categories)
+    const settingsRef = doc(db, "users", user.uid, "settings", "comptroller");
+    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.categories) {
+          setCategories(data.categories);
+        }
+      } else {
+        // Seed default categories in Firestore
+        setDoc(settingsRef, { categories: DEFAULT_CATEGORIES });
+      }
+    });
+
+    return () => {
+      unsubTx();
+      unsubGoals();
+      unsubPayments();
+      unsubSettings();
+    };
+  }, [user]);
+
+  // Enter Demo / Guest Mode Handler
+  const handleEnterDemoMode = () => {
+    setIsDemoMode(true);
+    setTransactions(generateDemoTransactions());
+    setUpcomingPayments(initialUpcomingPayments);
+    setGoals(initialGoals);
+    setActiveTab("overview");
+  };
+
+  // Sign out / Exit Demo mode
+  const handleLogout = async () => {
+    if (isDemoMode) {
+      setIsDemoMode(false);
+      setTransactions([]);
+      setGoals([]);
+      setUpcomingPayments([]);
+    } else {
+      await signOut(auth);
+    }
+    setActiveTab("overview");
+  };
+
+  // 1. Post a new transaction voucher
+  const handleAddTransaction = async (newTx) => {
+    if (isDemoMode) {
+      setTransactions([{ ...newTx, id: `demo-${Date.now()}` }, ...transactions]);
+    } else if (user) {
+      await addDoc(collection(db, "users", user.uid, "transactions"), newTx);
+    }
+  };
+
+  // 2. Void / Delete a transaction voucher
+  const handleDeleteTransaction = async (id) => {
+    if (isDemoMode) {
+      setTransactions(transactions.filter((tx) => tx.id !== id));
+    } else if (user) {
+      await deleteDoc(doc(db, "users", user.uid, "transactions", id));
+    }
+  };
+
+  // 3. Toggle upcoming obligation paid status
+  const handleTogglePayment = async (id) => {
+    const payment = upcomingPayments.find((p) => p.id === id);
+    if (!payment) return;
+
+    if (isDemoMode) {
+      setUpcomingPayments(
+        upcomingPayments.map((p) =>
+          p.id === id ? { ...p, paid: !p.paid } : p
+        )
+      );
+    } else if (user) {
+      await setDoc(
+        doc(db, "users", user.uid, "upcomingPayments", String(id)),
+        { paid: !payment.paid },
+        { merge: true }
+      );
+    }
+  };
+
+  // 4. Update Milestone savings slider
+  const handleUpdateGoalSlider = async (id, currentVal) => {
+    if (isDemoMode) {
+      setGoals(goals.map((g) => (g.id === id ? { ...g, current: parseFloat(currentVal) } : g)));
+    } else if (user) {
+      await setDoc(
+        doc(db, "users", user.uid, "savingsGoals", String(id)),
+        { current: parseFloat(currentVal) },
+        { merge: true }
+      );
+    }
+  };
+
+  // 5. Authorize new savings goal milestone
+  const handleAddGoal = async (newGoal) => {
+    if (isDemoMode) {
+      setGoals([...goals, { ...newGoal, id: Date.now() }]);
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "savingsGoals", String(newGoal.id)), newGoal);
+    }
+  };
+
+  // 6. Delete savings goal milestone
+  const handleDeleteGoal = async (id) => {
+    if (isDemoMode) {
+      setGoals(goals.filter((g) => g.id !== id));
+    } else if (user) {
+      await deleteDoc(doc(db, "users", user.uid, "savingsGoals", String(id)));
+    }
+  };
+
+  // 7. Update savings goal fields
+  const handleUpdateGoal = async (id, updatedFields) => {
+    if (isDemoMode) {
+      setGoals(goals.map((g) => (g.id === id ? { ...g, ...updatedFields } : g)));
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "savingsGoals", String(id)), updatedFields, { merge: true });
+    }
+  };
+
+  // 8. Update customized categories registry
+  const handleUpdateCategories = async (newCategories) => {
+    setCategories(newCategories);
+    if (isDemoMode) {
+      // Keep in local guest state
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { categories: newCategories }, { merge: true });
+    }
+  };
+
+  // 9. Add recurring scheduled payment
+  const handleAddPayment = async (newPayment) => {
+    if (isDemoMode) {
+      setUpcomingPayments([...upcomingPayments, newPayment].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)));
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(newPayment.id)), newPayment);
+    }
+  };
+
+  // 10. Delete scheduled recurring payment
+  const handleDeletePayment = async (id) => {
+    if (isDemoMode) {
+      setUpcomingPayments(upcomingPayments.filter((p) => p.id !== id));
+    } else if (user) {
+      await deleteDoc(doc(db, "users", user.uid, "upcomingPayments", String(id)));
+    }
+  };
+
+  // 11. Edit scheduled payment parameters
+  const handleUpdatePayment = async (id, updatedFields) => {
+    if (isDemoMode) {
+      setUpcomingPayments(
+        upcomingPayments.map((p) => (p.id === id ? { ...p, ...updatedFields } : p))
+          .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+      );
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(id)), updatedFields, { merge: true });
+    }
+  };
+
+  // Compute live cumulative aggregations from raw transaction flow
+  const aggregatedData = aggregateFinancialData(transactions, goals);
 
   const renderActiveTab = () => {
     switch (activeTab) {
       case "overview":
-        return <OverviewTab upcomingPayments={upcomingPayments} onTogglePayment={togglePayment} />;
+        return (
+          <OverviewTab 
+            upcomingPayments={upcomingPayments} 
+            onTogglePayment={handleTogglePayment}
+            cashFlowSummary={aggregatedData.cashFlowSummary}
+            investmentGrowthData={aggregatedData.investmentGrowthData}
+          />
+        );
+      case "transactions":
+        return (
+          <TransactionTab 
+            transactions={transactions}
+            categories={categories}
+            onAddTransaction={handleAddTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+          />
+        );
       case "budget":
-        return <BudgetTab />;
+        return <BudgetTab monthlyBudgets={aggregatedData.monthlyBudgets} />;
       case "investments":
-        return <InvestmentsTab />;
+        return <InvestmentsTab investmentGrowthData={aggregatedData.investmentGrowthData} />;
       case "goals":
-        return <GoalsTab />;
+        return (
+          <GoalsTab 
+            goals={goals} 
+            onAddGoal={handleAddGoal} 
+            onSliderChange={handleUpdateGoalSlider} 
+          />
+        );
       case "reports":
-        return <ReportsTab />;
+        return <ReportsTab categoryBreakdown={aggregatedData.categoryBreakdown} />;
+      case "setup":
+        return (
+          <SettingsTab
+            categories={categories}
+            onUpdateCategories={handleUpdateCategories}
+            upcomingPayments={upcomingPayments}
+            onAddPayment={handleAddPayment}
+            onDeletePayment={handleDeletePayment}
+            onUpdatePayment={handleUpdatePayment}
+            goals={goals}
+            onAddGoal={handleAddGoal}
+            onDeleteGoal={handleDeleteGoal}
+            onUpdateGoal={handleUpdateGoal}
+          />
+        );
       default:
-        return <OverviewTab upcomingPayments={upcomingPayments} onTogglePayment={togglePayment} />;
+        return (
+          <OverviewTab 
+            upcomingPayments={upcomingPayments} 
+            onTogglePayment={handleTogglePayment}
+            cashFlowSummary={aggregatedData.cashFlowSummary}
+            investmentGrowthData={aggregatedData.investmentGrowthData}
+          />
+        );
     }
   };
+
+  if (authLoading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "var(--color-manila-light)" }}>
+        <h2 style={{ fontFamily: "var(--font-typewriter)", fontSize: "20px" }}>UNLOCKING LEDGER AUTHORIZATIONS...</h2>
+      </div>
+    );
+  }
+
+  // Auth gate
+  if (!user && !isDemoMode) {
+    return <Login onDemoMode={handleEnterDemoMode} />;
+  }
 
   return (
     <div className="folder-container">
@@ -47,6 +354,13 @@ export default function App() {
           onClick={() => setActiveTab("overview")}
         >
           <span className="folder-tab-text">Overview</span>
+        </button>
+
+        <button 
+          className={`folder-tab ${activeTab === "transactions" ? "active" : ""}`}
+          onClick={() => setActiveTab("transactions")}
+        >
+          <span className="folder-tab-text">Transactions</span>
         </button>
 
         <button 
@@ -76,6 +390,14 @@ export default function App() {
         >
           <span className="folder-tab-text">Reports</span>
         </button>
+
+        <button 
+          className={`folder-tab ${activeTab === "setup" ? "active" : ""}`}
+          onClick={() => setActiveTab("setup")}
+          style={{ marginTop: "auto" }}
+        >
+          <span className="folder-tab-text">Setup</span>
+        </button>
       </div>
 
       {/* Main Manila Paper Sheet Content */}
@@ -84,11 +406,31 @@ export default function App() {
         <div className="folder-header">
           <div className="folder-title-block">
             <h1 className="folder-title-main">IVAN'S FINANCIAL HUB</h1>
-            <p className="folder-subtitle">ANNUAL TREASURY & CAPITAL LEDGERS — EST. 2026</p>
+            <p className="folder-subtitle">
+              {isDemoMode ? "ANNUAL TREASURY GENERAL LEDGER — DEMO VISITOR" : `ANNUAL TREASURY GENERAL LEDGER — ID: ${user.email.toUpperCase()}`}
+            </p>
           </div>
 
           <div className="folder-badge-strip">
-            {/* Visual profile badge representing the auditor (Ivan) */}
+            {/* Live Mode Indicator or Logout Stamp */}
+            <button
+              onClick={handleLogout}
+              className="stamp stamp-red"
+              style={{
+                fontSize: "10px",
+                cursor: "pointer",
+                border: "2px solid var(--color-stamp-red)",
+                backgroundColor: "rgba(158, 42, 43, 0.08)",
+                transform: "rotate(-3deg)",
+                fontFamily: "var(--font-typewriter)",
+                letterSpacing: "1.5px"
+              }}
+              title="Secure Lock & Exit Account"
+            >
+              [ Audit Lock-Out ]
+            </button>
+
+            {/* Profile badge */}
             <div 
               style={{ 
                 display: 'flex', 
@@ -100,23 +442,17 @@ export default function App() {
                 backgroundColor: 'rgba(235, 220, 185, 0.15)' 
               }}
             >
-              {/* Custom SVG Avatar Silhouette */}
               <svg width="32" height="32" viewBox="0 0 32 32" style={{ borderRadius: '50%', backgroundColor: 'var(--color-manila-dark)', border: '1px solid var(--color-ink-dark)' }}>
                 <path d="M16,14 C18.7614237,14 21,11.7614237 21,9 C21,6.23857625 18.7614237,4 16,4 C13.2385763,4 11,6.23857625 11,9 C11,11.7614237 13.2385763,14 16,14 Z M16,16 C10.4771525,16 6,20.4771525 6,26 L26,26 C26,20.4771525 21.5228475,16 16,16 Z" fill="var(--color-ink-dark)" />
               </svg>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '11px', fontWeight: 'bold', fontFamily: 'var(--font-accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Ivan Alier-Reyes
+                  {isDemoMode ? "Guest Comptroller" : user.email.split("@")[0].toUpperCase()}
                 </span>
                 <span style={{ fontSize: '9px', fontFamily: 'var(--font-ledger)', color: 'rgba(32,30,28,0.6)' }}>
                   Ledger Comptroller
                 </span>
               </div>
-            </div>
-
-            <div className="barcode-stamp">
-              <div className="barcode-stripes"></div>
-              <span className="barcode-text">HUB-SEC-2026</span>
             </div>
           </div>
         </div>

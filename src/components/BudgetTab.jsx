@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { monthlyBudgets } from "../data/financialData";
 
-export default function BudgetTab() {
+export default function BudgetTab({ monthlyBudgets }) {
   const [selectedMonth, setSelectedMonth] = useState("All");
   const [projectedIncome, setProjectedIncome] = useState("3500");
   const [projectedOutflow, setProjectedOutflow] = useState("2800");

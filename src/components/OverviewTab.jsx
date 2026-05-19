@@ -1,7 +1,6 @@
 import React from "react";
-import { cashFlowSummary, investmentGrowthData } from "../data/financialData";
 
-export default function OverviewTab({ upcomingPayments, onTogglePayment }) {
+export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData }) {
   // Calculate remaining dynamic budget
   const totalUpcomingToPay = upcomingPayments
     .filter(p => !p.paid && !p.isIncome)

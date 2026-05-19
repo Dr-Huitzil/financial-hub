@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { categoryBreakdown } from "../data/financialData";
 
-export default function ReportsTab() {
+export default function ReportsTab({ categoryBreakdown }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [sortBy, setSortBy] = useState("actual");

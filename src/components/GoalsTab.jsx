@@ -1,14 +1,12 @@
 import React, { useState } from "react";
-import { savingsGoals as initialGoals } from "../data/financialData";
 
-export default function GoalsTab() {
-  const [goals, setGoals] = useState(initialGoals);
+export default function GoalsTab({ goals, onAddGoal, onSliderChange }) {
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTarget, setNewGoalTarget] = useState("");
   const [newGoalCategory, setNewGoalCategory] = useState("Savings");
 
   const handleSliderChange = (id, val) => {
-    setGoals(goals.map(g => g.id === id ? { ...g, current: parseFloat(val) } : g));
+    onSliderChange(id, val);
   };
 
   const handleAddGoal = (e) => {
@@ -23,7 +21,7 @@ export default function GoalsTab() {
       category: newGoalCategory
     };
 
-    setGoals([...goals, newGoalObj]);
+    onAddGoal(newGoalObj);
     setNewGoalName("");
     setNewGoalTarget("");
   };

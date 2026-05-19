@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { investmentGrowthData } from "../data/financialData";
 
-export default function InvestmentsTab() {
+export default function InvestmentsTab({ investmentGrowthData }) {
   const [timeframe, setTimeframe] = useState("1-year");
   const [initialCapital, setInitialCapital] = useState("10000");
   const [monthlyContribution, setMonthlyContribution] = useState("500");
