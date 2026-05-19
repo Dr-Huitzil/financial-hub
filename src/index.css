@@ -820,6 +820,7 @@ body {
   background-color: var(--color-manila-light);
   color: var(--color-ink-dark);
   z-index: 2;
+  transform: translateY(-2px);
 }
 
 .folder-month-tab.active {
@@ -833,4 +834,26 @@ body {
   padding-top: 6px; /* Offset the 3px border-top height shift */
   z-index: 3;
 }
+
+.folder-month-tab.active:hover {
+  transform: none; /* Keep active tab locked flush with page sheet */
+}
+
+/* --- Folder Tabs Outside/Above Card Layout --- */
+.folder-tabs-container.above-card {
+  border-bottom: none;
+  margin-bottom: -1px;
+  padding-top: 0;
+  padding-left: 12px;
+  z-index: 2;
+}
+
+.tactile-card.tabs-above {
+  border-top-left-radius: 0;
+}
+
+.tactile-card.tabs-above::before {
+  display: none; /* Disable the 4px horizontal top bar to let active tab merge perfectly */
+}
+
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 export default function SettingsTab({ 
   categories, 
@@ -32,7 +32,7 @@ export default function SettingsTab({
   // Goal states
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTarget, setNewGoalTarget] = useState("");
-  const [newGoalCategory, setNewGoalCategory] = useState("Savings");
+  const newGoalCategory = "Savings";
 
   // Credit Card states
   const [newCardName, setNewCardName] = useState("");

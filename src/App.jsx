@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -16,43 +16,43 @@ import { initialUpcomingPayments, savingsGoals as initialGoals } from "./data/fi
 import { generateDemoTransactions } from "./data/demoDataGenerator";
 import { aggregateFinancialData } from "./data/financialDataSync";
 
+const DEFAULT_CATEGORIES = {
+  Income: ["Paycheck 1", "Paycheck 2", "Overtime On Call", "Mileage", "Commission", "Business", "Side hustle", "Interest", "School Refund", "Cash"],
+  Expense: ["Groceries", "Restaurant", "Games", "Fuel", "Car Maintenance", "Clothing", "Childcare", "Home", "Entertainment", "Pets", "Travel", "Electronics", "Personal Care", "Jessica", "Prison", "Snacks", "Work Equipment", "Gift", "Hobbies", "Thrifting", "Fast Food", "School"],
+  Bill: ["Electricity", "Rent", "Insurance (Ford)", "Insurance (Volks)", "YouTube Premium", "Google One", "Cricket", "Post Office", "Mind Melt", "Websites", "WiFi", "KikOff", "Prison"],
+  Debt: ["Discover It", "Freedom Chase", "Amazon Chase", "Sapphire Chase", "Personal Loans", "Capital One 1", "Capital One 2", "Credit One 1", "Credit One 2"]
+};
+
+const DEFAULT_CREDIT_CARDS = [
+  { id: "discover-it", name: "Discover It", limit: 5000, balance: 1250 },
+  { id: "freedom-chase", name: "Freedom Chase", limit: 3000, balance: 450 },
+  { id: "amazon-chase", name: "Amazon Chase", limit: 4500, balance: 800 },
+  { id: "sapphire-chase", name: "Sapphire Chase", limit: 12000, balance: 1800 },
+  { id: "capital-one-1", name: "Capital One 1", limit: 2000, balance: 150 },
+  { id: "capital-one-2", name: "Capital One 2", limit: 2500, balance: 350 },
+  { id: "credit-one-1", name: "Credit One 1", limit: 1000, balance: 400 },
+  { id: "credit-one-2", name: "Credit One 2", limit: 1000, balance: 250 }
+];
+
+const DEFAULT_BUDGET_LIMITS = {
+  "Rent": 1800,
+  "Discover It": 500,
+  "Amazon Chase": 350,
+  "Electricity": 150,
+  "Groceries": 450,
+  "Fuel": 250,
+  "Fast Food": 150,
+  "Personal Care": 100,
+  "Entertainment": 150,
+  "Restaurant": 200,
+  "Car Maintenance": 300,
+  "Electronics": 500
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-
-  const DEFAULT_CATEGORIES = {
-    Income: ["Paycheck 1", "Paycheck 2", "Overtime On Call", "Mileage", "Commission", "Business", "Side hustle", "Interest", "School Refund", "Cash"],
-    Expense: ["Groceries", "Restaurant", "Games", "Fuel", "Car Maintenance", "Clothing", "Childcare", "Home", "Entertainment", "Pets", "Travel", "Electronics", "Personal Care", "Jessica", "Prison", "Snacks", "Work Equipment", "Gift", "Hobbies", "Thrifting", "Fast Food", "School"],
-    Bill: ["Electricity", "Rent", "Insurance (Ford)", "Insurance (Volks)", "YouTube Premium", "Google One", "Cricket", "Post Office", "Mind Melt", "Websites", "WiFi", "KikOff", "Prison"],
-    Debt: ["Discover It", "Freedom Chase", "Amazon Chase", "Sapphire Chase", "Personal Loans", "Capital One 1", "Capital One 2", "Credit One 1", "Credit One 2"]
-  };
-
-  const DEFAULT_CREDIT_CARDS = [
-    { id: "discover-it", name: "Discover It", limit: 5000, balance: 1250 },
-    { id: "freedom-chase", name: "Freedom Chase", limit: 3000, balance: 450 },
-    { id: "amazon-chase", name: "Amazon Chase", limit: 4500, balance: 800 },
-    { id: "sapphire-chase", name: "Sapphire Chase", limit: 12000, balance: 1800 },
-    { id: "capital-one-1", name: "Capital One 1", limit: 2000, balance: 150 },
-    { id: "capital-one-2", name: "Capital One 2", limit: 2500, balance: 350 },
-    { id: "credit-one-1", name: "Credit One 1", limit: 1000, balance: 400 },
-    { id: "credit-one-2", name: "Credit One 2", limit: 1000, balance: 250 }
-  ];
-
-  const DEFAULT_BUDGET_LIMITS = {
-    "Rent": 1800,
-    "Discover It": 500,
-    "Amazon Chase": 350,
-    "Electricity": 150,
-    "Groceries": 450,
-    "Fuel": 250,
-    "Fast Food": 150,
-    "Personal Care": 100,
-    "Entertainment": 150,
-    "Restaurant": 200,
-    "Car Maintenance": 300,
-    "Electronics": 500
-  };
 
   // General ledger states
   const [transactions, setTransactions] = useState([]);

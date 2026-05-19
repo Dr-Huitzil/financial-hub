@@ -8,7 +8,6 @@ const CATEGORIES = {
   Debt: ["Discover It", "Freedom Chase", "Amazon Chase", "Sapphire Chase", "Personal Loans", "Capital One 1", "Capital One 2", "Credit One 1", "Credit One 2"]
 };
 
-const ACCOUNTS = ["Checking", "Prepaid Card", "Gift Card", "Cash Envelopes", "Cash Wallet", "Savings Pool"];
 
 const MERCHANTS = {
   Groceries: ["Safeway", "Trader Joe's", "Costco Wholesale", "Target Superstore", "Whole Foods", "Tortilleria"],

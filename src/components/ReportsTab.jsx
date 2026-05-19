@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -117,7 +117,21 @@ export default function ReportsTab({ transactions = [] }) {
     "#1e293b", "#6d28d9", "#3b82f6", "#10b981", "#f59e0b"
   ];
 
-  let accumulatedPercentage = 0;
+  const topCategories = filteredCategories
+    .filter(c => c.category !== "No Ledger Data")
+    .slice(0, 10);
+
+  const donutSegments = topCategories.map((c, idx) => {
+    const prevPctSum = topCategories.slice(0, idx).reduce((sum, item) => sum + item.percentage, 0);
+    const strokeDashoffset = circumference - (c.percentage / 100) * circumference;
+    const strokeRotation = (prevPctSum / 100) * 360;
+    return {
+      ...c,
+      strokeDashoffset,
+      strokeRotation,
+      color: colors[idx % colors.length]
+    };
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -146,30 +160,24 @@ export default function ReportsTab({ transactions = [] }) {
                 stroke="var(--color-manila-dark)" 
                 strokeWidth="20"
               />
-              {filteredCategories.filter(c => c.category !== "No Ledger Data").slice(0, 10).map((c, idx) => {
-                const strokeDashoffset = circumference - (c.percentage / 100) * circumference;
-                const strokeRotation = (accumulatedPercentage / 100) * 360;
-                accumulatedPercentage += c.percentage;
-
-                return (
-                  <circle 
-                    key={c.category}
-                    cx={center} 
-                    cy={center} 
-                    r={radius} 
-                    fill="none" 
-                    stroke={colors[idx % colors.length]} 
-                    strokeWidth="20"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    style={{
-                      transformOrigin: '50% 50%',
-                      transform: `rotate(${strokeRotation}deg)`,
-                      transition: 'all 0.3s ease'
-                    }}
-                  />
-                );
-              })}
+              {donutSegments.map((c) => (
+                <circle 
+                  key={c.category}
+                  cx={center} 
+                  cy={center} 
+                  r={radius} 
+                  fill="none" 
+                  stroke={c.color} 
+                  strokeWidth="20"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={c.strokeDashoffset}
+                  style={{
+                    transformOrigin: '50% 50%',
+                    transform: `rotate(${c.strokeRotation}deg)`,
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+              ))}
               
               <g style={{ transform: `rotate(90deg) translate(0px, 0px)`, transformOrigin: '50% 50%' }}>
                 <text 

@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 export default function BudgetTab({ 
   monthlyBudgets, 
   annualRunningBalance, 
-  categoryBreakdown,
   transactions = [],
   budgetLimits = {}
 }) {
@@ -200,7 +199,16 @@ export default function BudgetTab({
     };
   }).filter(item => item.value > 0);
 
-  let accumulatedPercentage = 0;
+  const macroBreakdownSegments = macroBreakdown.map((c, idx) => {
+    const prevPctSum = macroBreakdown.slice(0, idx).reduce((sum, item) => sum + item.percentage, 0);
+    const strokeDashoffset = circumference - (c.percentage / 100) * circumference;
+    const strokeRotation = (prevPctSum / 100) * 360;
+    return {
+      ...c,
+      strokeDashoffset,
+      strokeRotation
+    };
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
@@ -315,23 +323,17 @@ export default function BudgetTab({
           <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
             <svg width={donutSize} height={donutSize} style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
               <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--color-manila-dark)" strokeWidth="15" />
-              {macroBreakdown.map((c) => {
-                const strokeDashoffset = circumference - (c.percentage / 100) * circumference;
-                const strokeRotation = (accumulatedPercentage / 100) * 360;
-                accumulatedPercentage += c.percentage;
-
-                return (
-                  <circle 
-                    key={c.name}
-                    cx={center} cy={center} r={radius} fill="none" 
-                    stroke={c.color} 
-                    strokeWidth="15"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    style={{ transformOrigin: '50% 50%', transform: `rotate(${strokeRotation}deg)`, transition: 'all 0.3s ease' }}
-                  />
-                );
-              })}
+              {macroBreakdownSegments.map((c) => (
+                <circle 
+                  key={c.name}
+                  cx={center} cy={center} r={radius} fill="none" 
+                  stroke={c.color} 
+                  strokeWidth="15"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={c.strokeDashoffset}
+                  style={{ transformOrigin: '50% 50%', transform: `rotate(${c.strokeRotation}deg)`, transition: 'all 0.3s ease' }}
+                />
+              ))}
               
               <g style={{ transform: `rotate(90deg) translate(0px, 0px)`, transformOrigin: '50% 50%' }}>
                 <text x={center} y={center - 5} textAnchor="middle" fontFamily="var(--font-accent)" fontSize="10px" fontWeight="bold" fill="rgba(32,30,28,0.6)">
@@ -360,17 +362,9 @@ export default function BudgetTab({
       </div>
 
       {/* 3. Main Budget Spreadsheet Grid with Combined Folder Tabs Selector */}
-      <div className="tactile-card">
-        <div className="card-title" style={{ marginBottom: "12px" }}>
-          <span>Excel Replica Ledger Grid</span>
-          <div className="barcode-stamp" style={{ transform: "scale(0.85)" }}>
-            <div className="barcode-stripes" style={{ width: '70px', height: '12px' }}></div>
-            <span className="barcode-text" style={{ fontSize: '7px' }}>GRID-ID: XLSX-2026</span>
-          </div>
-        </div>
-
+      <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
         {/* Dynamic Sloped Folder Tabs Month Selector */}
-        <div className="folder-tabs-container">
+        <div className="folder-tabs-container above-card">
           <button 
             className={`folder-month-tab ${selectedMonth === "All" ? "active" : ""}`} 
             onClick={() => setSelectedMonth("All")}
@@ -388,7 +382,16 @@ export default function BudgetTab({
           ))}
         </div>
 
-        <div className="ledger-table-container">
+        <div className="tactile-card tabs-above">
+          <div className="card-title" style={{ marginBottom: "12px" }}>
+            <span>Excel Replica Ledger Grid</span>
+            <div className="barcode-stamp" style={{ transform: "scale(0.85)" }}>
+              <div className="barcode-stripes" style={{ width: '70px', height: '12px' }}></div>
+              <span className="barcode-text" style={{ fontSize: '7px' }}>GRID-ID: XLSX-2026</span>
+            </div>
+          </div>
+
+          <div className="ledger-table-container">
           <table className="ledger-table">
             <thead>
               <tr>
@@ -441,6 +444,7 @@ export default function BudgetTab({
           </table>
         </div>
       </div>
+    </div>
 
       {/* 4. Planned vs. Actual Target Limits Progress Dashboard */}
       <div className="tactile-card" style={{ width: "100%" }}>

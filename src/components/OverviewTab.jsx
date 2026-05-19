@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData, thirtyDayBalance, creditCards = [] }) {
   // Calculate remaining dynamic budget
   const totalUpcomingToPay = upcomingPayments

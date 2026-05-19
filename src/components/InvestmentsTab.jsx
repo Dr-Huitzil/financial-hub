@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 export default function InvestmentsTab({ investmentGrowthData }) {
   const [timeframe, setTimeframe] = useState("1-year");
