@@ -22,6 +22,14 @@ export default function TransactionTab({ transactions, categories, onAddTransact
   const [filterType, setFilterType] = useState("All");
   const [selectedMonth, setSelectedMonth] = useState("All");
 
+  // Excel Batch Mode state
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [batchRows, setBatchRows] = useState([
+    { date: new Date().toISOString().substring(0, 10), type: "Expense", category: (categories?.Expense?.[0]) || "Groceries", account: DEFAULT_ACCOUNTS[0], description: "", amount: "", person: "Ivan" },
+    { date: new Date().toISOString().substring(0, 10), type: "Expense", category: (categories?.Expense?.[0]) || "Groceries", account: DEFAULT_ACCOUNTS[0], description: "", amount: "", person: "Ivan" },
+    { date: new Date().toISOString().substring(0, 10), type: "Expense", category: (categories?.Expense?.[0]) || "Groceries", account: DEFAULT_ACCOUNTS[0], description: "", amount: "", person: "Ivan" }
+  ]);
+
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
     title: "",
@@ -35,6 +43,79 @@ export default function TransactionTab({ transactions, categories, onAddTransact
   const handleTypeChange = (newType) => {
     setType(newType);
     setCategory((categories?.[newType]?.[0]) || DEFAULT_CATEGORIES[newType]?.[0] || "");
+  };
+
+  // 1. Add row to Excel Batch Entry Sheet
+  const handleAddBatchRow = () => {
+    setBatchRows([
+      ...batchRows,
+      { date: new Date().toISOString().substring(0, 10), type: "Expense", category: (categories?.Expense?.[0]) || "Groceries", account: DEFAULT_ACCOUNTS[0], description: "", amount: "", person: "Ivan" }
+    ]);
+  };
+
+  // 2. Modify field on Excel batch row index
+  const handleUpdateBatchRow = (index, field, value) => {
+    const updated = [...batchRows];
+    updated[index][field] = value;
+    if (field === "type") {
+      const activeCats = categories?.[value] || DEFAULT_CATEGORIES[value] || [];
+      updated[index].category = activeCats[0] || "";
+    }
+    setBatchRows(updated);
+  };
+
+  // 3. Remove row from Excel batch sheet
+  const handleRemoveBatchRow = (index) => {
+    if (batchRows.length <= 1) return;
+    setBatchRows(batchRows.filter((_, i) => i !== index));
+  };
+
+  // 4. Submit multiple Excel ledger entries
+  const handleBatchSubmit = (e) => {
+    e.preventDefault();
+    const validRows = batchRows.filter(row => row.amount && parseFloat(row.amount) > 0);
+    if (validRows.length === 0) {
+      alert("Please enter a valid amount for at least one transaction row.");
+      return;
+    }
+
+    const totalBatchAmount = validRows.reduce((sum, row) => sum + parseFloat(row.amount), 0);
+
+    setConfirmState({
+      isOpen: true,
+      title: "Authorize Batch Ledger Posting?",
+      stamp: "BATCH APPR",
+      confirmLabel: "POST BATCH",
+      cancelLabel: "ABANDON",
+      details: {
+        "Total Rows": `${validRows.length} Vouchers`,
+        "Total Amount": `$${totalBatchAmount.toFixed(2)}`,
+        "Debits (Out)": `${validRows.filter(r => r.type !== "Income").length} Entries`,
+        "Credits (In)": `${validRows.filter(r => r.type === "Income").length} Entries`
+      },
+      onConfirm: () => {
+        validRows.forEach((row) => {
+          onAddTransaction({
+            date: row.date,
+            type: row.type,
+            category: row.category,
+            amount: parseFloat(row.amount),
+            account: row.account,
+            description: row.description || row.category,
+            person: row.person || "Ivan",
+            paid: true
+          });
+        });
+
+        // Seed fresh batch template
+        setBatchRows([
+          { date: new Date().toISOString().substring(0, 10), type: "Expense", category: (categories?.Expense?.[0]) || "Groceries", account: DEFAULT_ACCOUNTS[0], description: "", amount: "", person: "Ivan" },
+          { date: new Date().toISOString().substring(0, 10), type: "Expense", category: (categories?.Expense?.[0]) || "Groceries", account: DEFAULT_ACCOUNTS[0], description: "", amount: "", person: "Ivan" },
+          { date: new Date().toISOString().substring(0, 10), type: "Expense", category: (categories?.Expense?.[0]) || "Groceries", account: DEFAULT_ACCOUNTS[0], description: "", amount: "", person: "Ivan" }
+        ]);
+        setIsBatchMode(false);
+      }
+    });
   };
 
   const handleSubmit = (e) => {
@@ -157,275 +238,618 @@ export default function TransactionTab({ transactions, categories, onAddTransact
         })}
       </div>
 
-      {/* Main Grid: Form Left, Table Right */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "30px" }} className="overview-grid">
-        
-        {/* Transaction Voucher Form */}
-        <div className="tactile-card" style={{ height: "fit-content", border: "2.5px solid var(--color-ink-dark)" }}>
-          <div className="card-title" style={{ marginBottom: "15px" }}>
-            <span>Comptroller General Entry Voucher</span>
-            <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(4deg)" }}>POSTED</span>
+      {/* View Mode Toggle Stamped Tabs */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "-16px", zIndex: 5 }}>
+        <button
+          onClick={() => setIsBatchMode(false)}
+          style={{
+            padding: "8px 16px",
+            fontFamily: "var(--font-accent)",
+            fontSize: "10px",
+            fontWeight: "bold",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            backgroundColor: !isBatchMode ? "var(--color-ink-dark)" : "var(--color-manila-light)",
+            color: !isBatchMode ? "var(--color-paper-light)" : "var(--color-ink-dark)",
+            border: "1.5px solid var(--color-ink-dark)",
+            borderBottom: "none",
+            borderRadius: "6px 6px 0 0",
+            cursor: "pointer",
+            transform: !isBatchMode ? "translateY(2px)" : "none",
+            boxShadow: !isBatchMode ? "none" : "inset 0 -2px 4px rgba(0,0,0,0.05)"
+          }}
+        >
+          Single Voucher Input
+        </button>
+        <button
+          onClick={() => setIsBatchMode(true)}
+          style={{
+            padding: "8px 16px",
+            fontFamily: "var(--font-accent)",
+            fontSize: "10px",
+            fontWeight: "bold",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            backgroundColor: isBatchMode ? "var(--color-ink-dark)" : "var(--color-manila-light)",
+            color: isBatchMode ? "var(--color-paper-light)" : "var(--color-ink-dark)",
+            border: "1.5px solid var(--color-ink-dark)",
+            borderBottom: "none",
+            borderRadius: "6px 6px 0 0",
+            cursor: "pointer",
+            transform: isBatchMode ? "translateY(2px)" : "none",
+            boxShadow: isBatchMode ? "none" : "inset 0 -2px 4px rgba(0,0,0,0.05)"
+          }}
+        >
+          Excel Batch Spreadsheet Input
+        </button>
+      </div>
+
+      {isBatchMode ? (
+        /* Full-Width Spreadsheet Mode Layout */
+        <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+          
+          {/* Card 1: Batch Spreadsheet Table Card */}
+          <div className="tactile-card" style={{ border: "2px solid var(--color-ink-dark)", overflowX: "auto" }}>
+            <div className="card-title" style={{ marginBottom: "15px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span>Excel Batch Entry Spreadsheet</span>
+                <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(-3deg)" }}>BATCH SHEETS</span>
+              </div>
+              <div className="barcode-stamp" style={{ opacity: 0.7 }}>
+                <span className="barcode-stripes" style={{ display: "inline-block", width: "70px", height: "12px" }}></span>
+                <span className="barcode-text" style={{ fontSize: "6px" }}>SPREAD-VO-99</span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
+              Direct spreadsheet replication. Fill rows in parallel and hit Post. Incomplete or empty rows are automatically bypassed.
+            </p>
+
+            <form onSubmit={handleBatchSubmit}>
+              <div style={{ overflowX: "auto" }}>
+                <table className="ledger-table" style={{ width: "100%", fontSize: "11.5px", borderCollapse: "collapse", marginBottom: "20px" }}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: "120px" }}>Voucher Date</th>
+                      <th style={{ width: "110px" }}>Type</th>
+                      <th style={{ width: "150px" }}>Flow Category</th>
+                      <th style={{ width: "140px" }}>Reconciled Account</th>
+                      <th>Voucher Description / Merchant</th>
+                      <th style={{ width: "100px" }}>Amount ($)</th>
+                      <th style={{ width: "100px" }}>Person</th>
+                      <th style={{ width: "60px", textAlign: "center" }}>Void</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {batchRows.map((row, idx) => (
+                      <tr key={idx}>
+                        <td>
+                          <input
+                            type="date"
+                            value={row.date}
+                            onChange={(e) => handleUpdateBatchRow(idx, "date", e.target.value)}
+                            required
+                            style={{ width: "100%", padding: "6px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontFamily: "var(--font-ledger)", fontSize: "11px" }}
+                          />
+                        </td>
+                        <td>
+                          <select
+                            value={row.type}
+                            onChange={(e) => handleUpdateBatchRow(idx, "type", e.target.value)}
+                            style={{ width: "100%", padding: "5px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "11.5px" }}
+                          >
+                            <option value="Expense">Expense</option>
+                            <option value="Income">Income</option>
+                            <option value="Bill">Bill</option>
+                            <option value="Debt">Debt</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select
+                            value={row.category}
+                            onChange={(e) => handleUpdateBatchRow(idx, "category", e.target.value)}
+                            style={{ width: "100%", padding: "5px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "11.5px" }}
+                          >
+                            {(categories?.[row.type] || DEFAULT_CATEGORIES[row.type] || []).map((cat) => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <select
+                            value={row.account}
+                            onChange={(e) => handleUpdateBatchRow(idx, "account", e.target.value)}
+                            style={{ width: "100%", padding: "5px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "11.5px" }}
+                          >
+                            {DEFAULT_ACCOUNTS.map((acct) => (
+                              <option key={acct} value={acct}>{acct}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            placeholder="Voucher Merchant/Details..."
+                            value={row.description}
+                            onChange={(e) => handleUpdateBatchRow(idx, "description", e.target.value)}
+                            style={{ width: "100%", padding: "6px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "11.5px" }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={row.amount}
+                            onChange={(e) => handleUpdateBatchRow(idx, "amount", e.target.value)}
+                            style={{ width: "100%", padding: "6px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontFamily: "var(--font-ledger)", fontWeight: "bold", fontSize: "11.5px" }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            placeholder="Ivan"
+                            value={row.person}
+                            onChange={(e) => handleUpdateBatchRow(idx, "person", e.target.value)}
+                            style={{ width: "100%", padding: "6px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "11.5px" }}
+                          />
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveBatchRow(idx)}
+                            style={{ background: "none", border: "none", color: "var(--color-stamp-red)", cursor: "pointer", fontWeight: "bold", fontFamily: "var(--font-typewriter)", fontSize: "11px" }}
+                            disabled={batchRows.length <= 1}
+                            title="Exclude Row"
+                          >
+                            [VOID]
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "14px" }}>
+                <button
+                  type="button"
+                  onClick={handleAddBatchRow}
+                  style={{
+                    padding: "8px 16px",
+                    fontFamily: "var(--font-accent)",
+                    fontSize: "9px",
+                    fontWeight: "bold",
+                    textTransform: "uppercase",
+                    color: "var(--color-ink-dark)",
+                    backgroundColor: "var(--color-manila-light)",
+                    border: "1.5px solid var(--color-paper-grid)",
+                    borderRadius: "4px",
+                    cursor: "pointer"
+                  }}
+                >
+                  + Add Ledger Row
+                </button>
+
+                <button
+                  type="submit"
+                  style={{
+                    padding: "10px 20px",
+                    fontFamily: "var(--font-accent)",
+                    fontSize: "10px",
+                    fontWeight: "bold",
+                    textTransform: "uppercase",
+                    color: "var(--color-paper-light)",
+                    backgroundColor: "var(--color-stamp-green)",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
+                  }}
+                >
+                  Post Batch Entries
+                </button>
+              </div>
+            </form>
           </div>
 
-          <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
-            Complete the fields below to register and post a general ledger voucher. Authorizations are saved in real-time.
-          </p>
-
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Date</label>
-                <input 
-                  type="date" 
-                  value={date} 
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontFamily: "var(--font-ledger)" }}
-                />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Type</label>
-                <select 
-                  value={type} 
-                  onChange={(e) => handleTypeChange(e.target.value)}
-                  style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", cursor: "pointer" }}
-                >
-                  <option value="Expense">Expense</option>
-                  <option value="Income">Income Receipt</option>
-                  <option value="Bill">Scheduled Bill</option>
-                  <option value="Debt">Debt Repayment</option>
-                </select>
-              </div>
+          {/* Card 2: Audit Journal Log Book underneath in spreadsheet view */}
+          <div className="tactile-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div className="card-title">
+              <span>Audit Journal Log Book</span>
+              <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(-1deg)" }}>ARCHIVE LOGS</span>
+            </div>
+            
+            {/* Filter Log Bar */}
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 1fr", gap: "10px" }}>
+              <input
+                type="text"
+                placeholder="Search description/category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "12.5px",
+                  border: "1px solid var(--color-paper-grid)",
+                  borderRadius: "4px",
+                  backgroundColor: "var(--color-paper-light)"
+                }}
+              />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
+              >
+                <option value="All">All Months</option>
+                {months.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
+              >
+                <option value="All">All Vouchers</option>
+                <option value="Expense">Expenses Only</option>
+                <option value="Income">Incomes Only</option>
+                <option value="Bill">Bills Only</option>
+                <option value="Debt">Debts Only</option>
+              </select>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Flow Category</label>
-                <select 
-                  value={category} 
-                  onChange={(e) => setCategory(e.target.value)}
-                  style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", cursor: "pointer" }}
-                >
-                  {(categories?.[type] || DEFAULT_CATEGORIES[type] || []).map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
+            <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto" }}>
+              <table className="ledger-table" style={{ fontSize: "12px" }}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Journal Entry</th>
+                    <th>Account</th>
+                    <th className="number-cell">Credit (+)</th>
+                    <th className="number-cell">Debit (-)</th>
+                    <th style={{ textAlign: "center" }}>Void</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTxs.map((tx) => (
+                    <tr key={tx.id}>
+                      <td style={{ fontFamily: "var(--font-ledger)" }}>{tx.date}</td>
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span style={{ fontWeight: "bold" }}>{tx.description}</span>
+                          <span style={{ fontSize: "9.5px", color: "rgba(32,30,28,0.5)" }}>{tx.category} • {tx.person || "Ivan"}</span>
+                        </div>
+                      </td>
+                      <td>{tx.account}</td>
+                      <td className="number-cell" style={{ color: tx.type === "Income" ? "var(--color-stamp-green)" : "inherit" }}>
+                        {tx.type === "Income" ? `+$${tx.amount.toFixed(2)}` : ""}
+                      </td>
+                      <td className="number-cell" style={{ color: tx.type !== "Income" ? "var(--color-stamp-red)" : "inherit" }}>
+                        {tx.type !== "Income" ? `-$${tx.amount.toFixed(2)}` : ""}
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        <button
+                          onClick={() => {
+                            setConfirmState({
+                              isOpen: true,
+                              title: "Void Journal Entry?",
+                              stamp: "VOID",
+                              confirmLabel: "VOID ENTRY",
+                              cancelLabel: "RETAIN",
+                              details: {
+                                Date: tx.date,
+                                Account: tx.account,
+                                Description: tx.description,
+                                Amount: `$${tx.amount.toFixed(2)}`
+                              },
+                              onConfirm: () => onDeleteTransaction(tx.id)
+                            });
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "var(--color-stamp-red)",
+                            fontFamily: "var(--font-typewriter)",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            padding: "2px 6px"
+                          }}
+                        >
+                          [VOID]
+                        </button>
+                      </td>
+                    </tr>
                   ))}
-                </select>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Reconciled Account</label>
-                <select 
-                  value={account} 
-                  onChange={(e) => setAccount(e.target.value)}
-                  style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", cursor: "pointer" }}
-                >
-                  {DEFAULT_ACCOUNTS.map((acct) => (
-                    <option key={acct} value={acct}>{acct}</option>
-                  ))}
-                </select>
-              </div>
+                  {filteredTxs.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "30px", opacity: 0.5 }}>
+                        No general ledger transactions found matching active search indices.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-ledger)", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "12px" }}>
+              <span>Posted Entries: <strong>{filteredTxs.length}</strong></span>
+              <span>Total Debited Out: <strong>${filteredTxs.filter(tx => tx.type !== "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
+              <span>Total Credited In: <strong>${filteredTxs.filter(tx => tx.type === "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Original Single Voucher Entry Split Layout */
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "30px" }} className="overview-grid">
+          
+          {/* Transaction Voucher Form */}
+          <div className="tactile-card" style={{ height: "fit-content", border: "2.5px solid var(--color-ink-dark)" }}>
+            <div className="card-title" style={{ marginBottom: "15px" }}>
+              <span>Comptroller General Entry Voucher</span>
+              <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(4deg)" }}>POSTED</span>
+            </div>
+
+            <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
+              Complete the fields below to register and post a general ledger voucher. Authorizations are saved in real-time.
+            </p>
+
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Date</label>
+                  <input 
+                    type="date" 
+                    value={date} 
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                    style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontFamily: "var(--font-ledger)" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Type</label>
+                  <select 
+                    value={type} 
+                    onChange={(e) => handleTypeChange(e.target.value)}
+                    style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", cursor: "pointer" }}
+                  >
+                    <option value="Expense">Expense</option>
+                    <option value="Income">Income Receipt</option>
+                    <option value="Bill">Scheduled Bill</option>
+                    <option value="Debt">Debt Repayment</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Flow Category</label>
+                  <select 
+                    value={category} 
+                    onChange={(e) => setCategory(e.target.value)}
+                    style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", cursor: "pointer" }}
+                  >
+                    {(categories?.[type] || DEFAULT_CATEGORIES[type] || []).map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Reconciled Account</label>
+                  <select 
+                    value={account} 
+                    onChange={(e) => setAccount(e.target.value)}
+                    style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", cursor: "pointer" }}
+                  >
+                    {DEFAULT_ACCOUNTS.map((acct) => (
+                      <option key={acct} value={acct}>{acct}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "12px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Description Ledger</label>
+                  <input 
+                    type="text" 
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="e.g. Costco wholesale"
+                    style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "12.5px" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Amount ($)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    required
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="120.50"
+                    style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontFamily: "var(--font-ledger)", fontWeight: "bold" }}
+                  />
+                </div>
+              </div>
+
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Description Ledger</label>
+                <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Debited / Credited Person (Optional)</label>
                 <input 
                   type="text" 
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Costco wholesale"
+                  value={person}
+                  onChange={(e) => setPerson(e.target.value)}
+                  placeholder="e.g. Jessica, Ivan"
                   style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "12.5px" }}
                 />
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Voucher Amount ($)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  required
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="120.50"
-                  style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontFamily: "var(--font-ledger)", fontWeight: "bold" }}
-                />
+
+              <button 
+                type="submit"
+                style={{
+                  padding: "12px",
+                  fontFamily: "var(--font-accent)",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  color: "var(--color-paper-light)",
+                  backgroundColor: "var(--color-stamp-green)",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s ease",
+                  marginTop: "10px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = "#1b4a35"}
+                onMouseOut={(e) => e.target.style.backgroundColor = "var(--color-stamp-green)"}
+              >
+                Post Ledger Entry
+              </button>
+            </form>
+
+            <div style={{ display: "flex", justifyContent: "center", marginTop: "14px" }}>
+              <div className="barcode-stamp" style={{ opacity: 0.7 }}>
+                <div className="barcode-stripes" style={{ width: "90px", height: "14px" }}></div>
+                <span className="barcode-text" style={{ fontSize: "7px" }}>ENTRY-VO-2026</span>
               </div>
             </div>
+          </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>Debited / Credited Person (Optional)</label>
+          {/* Ledger table log */}
+          <div className="tactile-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div className="card-title">
+              <span>Audit Journal Log Book</span>
+              <span className="barcode-text" style={{ fontSize: "8px" }}>LEDG-IDX-88A</span>
+            </div>
+            
+            {/* Table Controls */}
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 1fr", gap: "10px" }}>
               <input 
                 type="text" 
-                value={person}
-                onChange={(e) => setPerson(e.target.value)}
-                placeholder="e.g. Jessica, Ivan"
-                style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-paper-light)", fontSize: "12.5px" }}
+                placeholder="Search description/category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "12.5px",
+                  border: "1px solid var(--color-paper-grid)",
+                  borderRadius: "4px",
+                  backgroundColor: "var(--color-paper-light)"
+                }}
               />
+
+              <select 
+                value={selectedMonth} 
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
+              >
+                <option value="All">All Months</option>
+                {months.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+
+              <select 
+                value={filterType} 
+                onChange={(e) => setFilterType(e.target.value)}
+                style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
+              >
+                <option value="All">All Vouchers</option>
+                <option value="Expense">Expenses Only</option>
+                <option value="Income">Incomes Only</option>
+                <option value="Bill">Bills Only</option>
+                <option value="Debt">Debts Only</option>
+              </select>
             </div>
 
-            <button 
-              type="submit"
-              style={{
-                padding: "12px",
-                fontFamily: "var(--font-accent)",
-                fontSize: "11px",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "1.5px",
-                color: "var(--color-paper-light)",
-                backgroundColor: "var(--color-stamp-green)",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                transition: "background-color 0.2s ease",
-                marginTop: "10px",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-              }}
-              onMouseOver={(e) => e.target.style.backgroundColor = "#1b4a35"}
-              onMouseOut={(e) => e.target.style.backgroundColor = "var(--color-stamp-green)"}
-            >
-              Post Ledger Entry
-            </button>
-          </form>
-
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "14px" }}>
-            <div className="barcode-stamp" style={{ opacity: 0.7 }}>
-              <div className="barcode-stripes" style={{ width: "90px", height: "14px" }}></div>
-              <span className="barcode-text" style={{ fontSize: "7px" }}>ENTRY-VO-2026</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Ledger table log */}
-        <div className="tactile-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div className="card-title">
-            <span>Audit Journal Log Book</span>
-            <span className="barcode-text" style={{ fontSize: "8px" }}>LEDG-IDX-88A</span>
-          </div>
-
-          {/* Table Controls */}
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 1fr", gap: "10px" }}>
-            <input 
-              type="text" 
-              placeholder="Search description/category..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                fontSize: "12.5px",
-                border: "1px solid var(--color-paper-grid)",
-                borderRadius: "4px",
-                backgroundColor: "var(--color-paper-light)"
-              }}
-            />
-
-            <select 
-              value={selectedMonth} 
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
-            >
-              <option value="All">All Months</option>
-              {months.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-
-            <select 
-              value={filterType} 
-              onChange={(e) => setFilterType(e.target.value)}
-              style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
-            >
-              <option value="All">All Vouchers</option>
-              <option value="Expense">Expenses Only</option>
-              <option value="Income">Incomes Only</option>
-              <option value="Bill">Bills Only</option>
-              <option value="Debt">Debts Only</option>
-            </select>
-          </div>
-
-          {/* Ledger Table */}
-          <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto" }}>
-            <table className="ledger-table" style={{ fontSize: "12px" }}>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Journal Entry</th>
-                  <th>Account</th>
-                  <th className="number-cell">Credit (+)</th>
-                  <th className="number-cell">Debit (-)</th>
-                  <th style={{ textAlign: "center" }}>Void</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTxs.map((tx) => (
-                  <tr key={tx.id}>
-                    <td style={{ fontFamily: "var(--font-ledger)" }}>{tx.date}</td>
-                    <td>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontWeight: "bold" }}>{tx.description}</span>
-                        <span style={{ fontSize: "9.5px", color: "rgba(32,30,28,0.5)" }}>{tx.category} • {tx.person || "Ivan"}</span>
-                      </div>
-                    </td>
-                    <td>{tx.account}</td>
-                    <td className="number-cell" style={{ color: tx.type === "Income" ? "var(--color-stamp-green)" : "inherit" }}>
-                      {tx.type === "Income" ? `+$${tx.amount.toFixed(2)}` : ""}
-                    </td>
-                    <td className="number-cell" style={{ color: tx.type !== "Income" ? "var(--color-stamp-red)" : "inherit" }}>
-                      {tx.type !== "Income" ? `-$${tx.amount.toFixed(2)}` : ""}
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <button 
-                        type="button" 
-                        onClick={() => {
-                          setConfirmState({
-                            isOpen: true,
-                            title: "Void Journal Entry?",
-                            stamp: "VOID",
-                            confirmLabel: "VOID ENTRY",
-                            cancelLabel: "RETAIN",
-                            details: {
-                              Date: tx.date,
-                              Account: tx.account,
-                              Description: tx.description,
-                              Amount: `$${tx.amount.toFixed(2)}`
-                            },
-                            onConfirm: () => {
-                              onDeleteTransaction(tx.id);
-                            }
-                          });
-                        }}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "var(--color-stamp-red)",
-                          cursor: "pointer",
-                          fontFamily: "var(--font-typewriter)",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                          padding: "2px 6px"
-                        }}
-                        title="Void Journal Entry"
-                      >
-                        [VOID]
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredTxs.length === 0 && (
+            {/* Ledger Table */}
+            <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto" }}>
+              <table className="ledger-table" style={{ fontSize: "12px" }}>
+                <thead>
                   <tr>
-                    <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "30px" }}>
-                      No ledger vouchers posted.
-                    </td>
+                    <th>Date</th>
+                    <th>Journal Entry</th>
+                    <th>Account</th>
+                    <th className="number-cell">Credit (+)</th>
+                    <th className="number-cell">Debit (-)</th>
+                    <th style={{ textAlign: "center" }}>Void</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredTxs.map((tx) => (
+                    <tr key={tx.id}>
+                      <td style={{ fontFamily: "var(--font-ledger)" }}>{tx.date}</td>
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span style={{ fontWeight: "bold" }}>{tx.description}</span>
+                          <span style={{ fontSize: "9.5px", color: "rgba(32,30,28,0.5)" }}>{tx.category} • {tx.person || "Ivan"}</span>
+                        </div>
+                      </td>
+                      <td>{tx.account}</td>
+                      <td className="number-cell" style={{ color: tx.type === "Income" ? "var(--color-stamp-green)" : "inherit" }}>
+                        {tx.type === "Income" ? `+$${tx.amount.toFixed(2)}` : ""}
+                      </td>
+                      <td className="number-cell" style={{ color: tx.type !== "Income" ? "var(--color-stamp-red)" : "inherit" }}>
+                        {tx.type !== "Income" ? `-$${tx.amount.toFixed(2)}` : ""}
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setConfirmState({
+                              isOpen: true,
+                              title: "Void Journal Entry?",
+                              stamp: "VOID",
+                              confirmLabel: "VOID ENTRY",
+                              cancelLabel: "RETAIN",
+                              details: {
+                                Date: tx.date,
+                                Account: tx.account,
+                                Description: tx.description,
+                                Amount: `$${tx.amount.toFixed(2)}`
+                              },
+                              onConfirm: () => {
+                                onDeleteTransaction(tx.id);
+                              }
+                            });
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "var(--color-stamp-red)",
+                            cursor: "pointer",
+                            fontFamily: "var(--font-typewriter)",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            padding: "2px 6px"
+                          }}
+                          title="Void Journal Entry"
+                        >
+                          [VOID]
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredTxs.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "30px" }}>
+                        No ledger vouchers posted.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-ledger)", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "12px" }}>
+              <span>Posted Entries: <strong>{filteredTxs.length}</strong></span>
+              <span>Total Debited Out: <strong>${filteredTxs.filter(tx => tx.type !== "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
+              <span>Total Credited In: <strong>${filteredTxs.filter(tx => tx.type === "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
+            </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-ledger)", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "12px" }}>
-            <span>Posted Entries: <strong>{filteredTxs.length}</strong></span>
-            <span>Total Debited Out: <strong>${filteredTxs.filter(tx => tx.type !== "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
-            <span>Total Credited In: <strong>${filteredTxs.filter(tx => tx.type === "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
-          </div>
         </div>
-
-      </div>
+      )}
 
       {/* Retro Manila Custom Dialog Caching Authorization Overlay */}
       {confirmState.isOpen && (
