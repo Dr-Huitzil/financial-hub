@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function BudgetTab({ monthlyBudgets }) {
+export default function BudgetTab({ monthlyBudgets, annualRunningBalance, categoryBreakdown }) {
   const [selectedMonth, setSelectedMonth] = useState("All");
 
   const filteredBudgets = selectedMonth === "All" 
@@ -17,76 +17,245 @@ export default function BudgetTab({ monthlyBudgets }) {
   const totalSpending = totalExpenses + totalBills + totalDebts + totalSavings;
   const totalRemaining = totalIncome - totalSpending;
 
+  // --- Chart 1: Annual Balance Line Chart (using annualRunningBalance) ---
+  const abSvgWidth = 900;
+  const abSvgHeight = 160;
+  const abPadX = 50;
+  const abPadY = 20;
 
+  const abBalances = (annualRunningBalance || []).map(d => d.balance);
+  const abMinBal = Math.min(...(abBalances.length ? abBalances : [0]));
+  const abMaxBal = Math.max(...(abBalances.length ? abBalances : [1000]));
+  const abYRange = Math.max(1, abMaxBal - abMinBal);
 
-  // SVG dimensions for the monthly comparison graph
-  const svgWidth = 550;
-  const svgHeight = 220;
-  const graphPaddingX = 50;
-  const graphPaddingY = 30;
+  const abPoints = (annualRunningBalance || []).map((d, index) => {
+    const x = abPadX + (index / Math.max(1, annualRunningBalance.length - 1)) * (abSvgWidth - abPadX * 2);
+    const y = abSvgHeight - abPadY - ((d.balance - abMinBal) / abYRange) * (abSvgHeight - abPadY * 2);
+    return { x, y, label: d.label, val: d.balance };
+  });
 
-  // Only render bars for months that have data
+  const abPathD = abPoints.reduce((acc, p, index) => {
+    return index === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`;
+  }, "");
+
+  // --- Chart 2: Income vs Spending Multi-Line Chart (using monthlyBudgets) ---
+  const msSvgWidth = 500;
+  const msSvgHeight = 220;
+  const msPadX = 40;
+  const msPadY = 20;
+
   const populatedMonths = monthlyBudgets.filter(b => b.income > 0 || b.expenses > 0);
-  const maxValForGraph = Math.max(
-    ...populatedMonths.map(b => Math.max(b.income, b.expenses + b.bills + b.debts + b.savings))
-  ) * 1.1; // Add 10% ceiling buffer
+  const allMonthlyVals = populatedMonths.flatMap(b => [b.income, b.expenses, b.bills, b.debts, b.savings]);
+  const msMaxVal = Math.max(...(allMonthlyVals.length ? allMonthlyVals : [1000])) * 1.1;
+
+  const msLines = {
+    income: { color: "var(--color-stamp-green)", data: [] },
+    expenses: { color: "var(--color-ink-blue)", data: [] },
+    bills: { color: "var(--color-stamp-red)", data: [] },
+    debts: { color: "#b45309", data: [] }, // amber
+  };
+
+  populatedMonths.forEach((b, index) => {
+    const x = msPadX + (index / Math.max(1, populatedMonths.length - 1)) * (msSvgWidth - msPadX * 2);
+    const getY = (val) => msSvgHeight - msPadY - (val / Math.max(1, msMaxVal)) * (msSvgHeight - msPadY * 2);
+    
+    msLines.income.data.push({ x, y: getY(b.income), month: b.month.substring(0,3) });
+    msLines.expenses.data.push({ x, y: getY(b.expenses) });
+    msLines.bills.data.push({ x, y: getY(b.bills) });
+    msLines.debts.data.push({ x, y: getY(b.debts) });
+  });
+
+  // --- Chart 3: Spending Breakdown Donut (using categoryBreakdown) ---
+  const donutSize = 200;
+  const radius = 70;
+  const circumference = 2 * Math.PI * radius;
+  const center = donutSize / 2;
+  const colors = [
+    "#1e3a8a", "#0f766e", "#b45309", "#9f1239", "#4d7c0f", 
+    "#581c87", "#0369a1", "#047857", "#c2410c", "#881337", 
+    "#1e293b", "#6d28d9", "#3b82f6", "#10b981", "#f59e0b"
+  ];
+  let accumulatedPercentage = 0;
+  const topCategories = (categoryBreakdown || []).slice(0, 10);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
-      {/* Selector and Dynamic Card Layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "30px" }} className="overview-grid">
-        {/* Month Selector & Quick Ledger Summary */}
+      
+      {/* 1. Annual Balance Overview (Full Width) */}
+      <div className="tactile-card" style={{ width: "100%", overflowX: "auto" }}>
+        <div className="card-title">
+          <span>Balance Overview</span>
+          <span className="barcode-text" style={{ fontSize: '9px' }}>CHART-NO: 2026-F-BAL</span>
+        </div>
+        
+        <div className="chart-wrapper" style={{ minWidth: "700px" }}>
+          <svg viewBox={`0 0 ${abSvgWidth} ${abSvgHeight}`} className="chart-svg">
+            {/* Grid Lines */}
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+              const y = abPadY + ratio * (abSvgHeight - abPadY * 2);
+              const val = abMaxBal - ratio * abYRange;
+              return (
+                <g key={`ab-grid-${idx}`}>
+                  <line x1={abPadX} y1={y} x2={abSvgWidth - abPadX} y2={y} stroke="var(--color-paper-grid)" strokeDasharray="3,3" />
+                  <text x={abPadX - 8} y={y + 3} textAnchor="end" fontFamily="var(--font-ledger)" fontSize="9px" fill="rgba(32,30,28,0.5)">
+                    ${Math.round(val / 1000)}k
+                  </text>
+                </g>
+              );
+            })}
+            
+            <line x1={abPadX} y1={abSvgHeight - abPadY} x2={abSvgWidth - abPadX} y2={abSvgHeight - abPadY} stroke="var(--color-ink-dark)" strokeWidth="1" />
+            
+            {abPoints.length > 0 && (
+              <path d={abPathD} fill="none" stroke="var(--color-ink-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            )}
+
+            {/* X-Axis Labels (Sampled) */}
+            {abPoints.filter((_, i) => i % Math.max(1, Math.floor(abPoints.length / 12)) === 0).map((p, idx) => (
+              <text key={idx} x={p.x} y={abSvgHeight - 5} textAnchor="middle" fontFamily="var(--font-ledger)" fontSize="9px" fill="rgba(32,30,28,0.5)">
+                {p.label}
+              </text>
+            ))}
+          </svg>
+        </div>
+      </div>
+
+      {/* 2. Side-by-Side Charts (Multi-Line & Donut) */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "30px" }} className="overview-grid">
+        
+        {/* Income vs Spending Multi-Line Chart */}
         <div className="tactile-card">
           <div className="card-title">
-            <span>Ledger Archives</span>
-            <div className="barcode-stamp">
-              <div className="barcode-stripes" style={{ width: '80px', height: '16px' }}></div>
-              <span className="barcode-text" style={{ fontSize: '8px' }}>ARCH-2026</span>
-            </div>
-          </div>
-          
-          <div className="sub-tabs-strip">
-            <button 
-              className={`sub-tab-btn ${selectedMonth === "All" ? "active" : ""}`} 
-              onClick={() => setSelectedMonth("All")}
-            >
-              Annual Overview
-            </button>
-            {monthlyBudgets.map(b => (
-              <button 
-                key={b.month} 
-                className={`sub-tab-btn ${selectedMonth === b.month ? "active" : ""}`}
-                onClick={() => setSelectedMonth(b.month)}
-              >
-                {b.month.substring(0,3)}
-              </button>
-            ))}
+            <span>Income vs Spending</span>
+            <span className="stamp stamp-red" style={{ fontSize: '9px', transform: 'rotate(2deg)' }}>Multi-Axis</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-            <div className="ledger-text-row">
-              <span>Annual Ledger Revenue:</span>
-              <span className="ledger-value" style={{ color: 'var(--color-stamp-green)' }}>+${totalIncome.toLocaleString()}</span>
+          <div className="chart-wrapper">
+            <svg viewBox={`0 0 ${msSvgWidth} ${msSvgHeight}`} className="chart-svg">
+              {/* Grid Lines */}
+              {[0, 0.5, 1].map((ratio, idx) => {
+                const y = msPadY + ratio * (msSvgHeight - msPadY * 2);
+                const val = msMaxVal - ratio * msMaxVal;
+                return (
+                  <g key={`ms-grid-${idx}`}>
+                    <line x1={msPadX} y1={y} x2={msSvgWidth - msPadX} y2={y} stroke="var(--color-paper-grid)" strokeDasharray="3,3" />
+                    <text x={msPadX - 8} y={y + 3} textAnchor="end" fontFamily="var(--font-ledger)" fontSize="9px" fill="rgba(32,30,28,0.5)">
+                      ${Math.round(val / 1000)}k
+                    </text>
+                  </g>
+                );
+              })}
+
+              <line x1={msPadX} y1={msSvgHeight - msPadY} x2={msSvgWidth - msPadX} y2={msSvgHeight - msPadY} stroke="var(--color-ink-dark)" strokeWidth="1" />
+
+              {/* Draw Paths */}
+              {Object.keys(msLines).map(key => {
+                const line = msLines[key];
+                if (line.data.length === 0) return null;
+                const pathStr = line.data.reduce((acc, p, index) => index === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+                return <path key={key} d={pathStr} fill="none" stroke={line.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />;
+              })}
+
+              {/* X-Axis Labels */}
+              {msLines.income.data.map((p, idx) => (
+                <text key={`ms-x-${idx}`} x={p.x} y={msSvgHeight - 5} textAnchor="middle" fontFamily="var(--font-ledger)" fontSize="9px" fill="rgba(32,30,28,0.5)">
+                  {p.month}
+                </text>
+              ))}
+            </svg>
+          </div>
+
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '15px', fontSize: '10px', fontFamily: 'var(--font-accent)', textTransform: 'uppercase', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '10px', height: '10px', backgroundColor: msLines.income.color }}></span> Income
             </div>
-            <div className="ledger-text-row">
-              <span>Annual Ledger Outflow:</span>
-              <span className="ledger-value" style={{ color: 'var(--color-stamp-red)' }}>-${totalSpending.toLocaleString()}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '10px', height: '10px', backgroundColor: msLines.expenses.color }}></span> Expenses
             </div>
-            <div className="ledger-text-row" style={{ fontWeight: 'bold' }}>
-              <span>Cumulative Financial Surplus:</span>
-              <span className="ledger-value" style={{ fontSize: '16px', color: totalRemaining >= 0 ? 'var(--color-stamp-green)' : 'var(--color-stamp-red)' }}>
-                ${totalRemaining.toLocaleString()}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '10px', height: '10px', backgroundColor: msLines.bills.color }}></span> Bills
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '10px', height: '10px', backgroundColor: msLines.debts.color }}></span> Debts
+            </div>
+          </div>
+        </div>
+
+        {/* Spending Breakdown Donut */}
+        <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="card-title" style={{ width: '100%' }}>
+            <span>Spending Breakdown</span>
+            <span className="barcode-text" style={{ fontSize: '9px' }}>CHART-NO: PIE-X</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+            <svg width={donutSize} height={donutSize} style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+              <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--color-manila-dark)" strokeWidth="15" />
+              {topCategories.map((c, idx) => {
+                const strokeDashoffset = circumference - (c.percentage / 100) * circumference;
+                const strokeRotation = (accumulatedPercentage / 100) * 360;
+                accumulatedPercentage += c.percentage;
+
+                return (
+                  <circle 
+                    key={c.category}
+                    cx={center} cy={center} r={radius} fill="none" 
+                    stroke={colors[idx % colors.length]} 
+                    strokeWidth="15"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    style={{ transformOrigin: '50% 50%', transform: `rotate(${strokeRotation}deg)`, transition: 'all 0.3s ease' }}
+                  />
+                );
+              })}
+              
+              <g style={{ transform: `rotate(90deg) translate(0px, 0px)`, transformOrigin: '50% 50%' }}>
+                <text x={center} y={center - 5} textAnchor="middle" fontFamily="var(--font-accent)" fontSize="10px" fontWeight="bold" fill="rgba(32,30,28,0.6)">OUTFLOW</text>
+                <text x={center} y={center + 10} textAnchor="middle" fontFamily="var(--font-ledger)" fontSize="12px" fontWeight="bold" fill="var(--color-ink-dark)">
+                  100%
+                </text>
+              </g>
+            </svg>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%', fontSize: '10px', fontFamily: 'var(--font-accent)', textTransform: 'uppercase' }}>
+            {topCategories.slice(0, 6).map((c, idx) => (
+              <div key={c.category} style={{ display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                <span style={{ minWidth: '8px', height: '8px', backgroundColor: colors[idx % colors.length] }}></span> 
+                {c.category} ({c.percentage}%)
+              </div>
+            ))}
           </div>
         </div>
 
       </div>
 
+      {/* 3. Ledger Archives Month Selector */}
+      <div className="tactile-card" style={{ marginBottom: "-15px" }}>
+        <div className="card-title">
+          <span>Ledger Archives</span>
+          <div className="barcode-stamp">
+            <div className="barcode-stripes" style={{ width: '80px', height: '16px' }}></div>
+            <span className="barcode-text" style={{ fontSize: '8px' }}>ARCH-2026</span>
+          </div>
+        </div>
+        
+        <div className="sub-tabs-strip">
+          <button className={`sub-tab-btn ${selectedMonth === "All" ? "active" : ""}`} onClick={() => setSelectedMonth("All")}>
+            Annual Overview
+          </button>
+          {monthlyBudgets.map(b => (
+            <button key={b.month} className={`sub-tab-btn ${selectedMonth === b.month ? "active" : ""}`} onClick={() => setSelectedMonth(b.month)}>
+              {b.month.substring(0,3)}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Main Budget Spreadsheet Grid */}
       <div className="tactile-card">
         <div className="card-title">
-          <span>Excel Replica Ledger Card</span>
+          <span>Excel Replica Ledger Grid</span>
           <span className="barcode-text" style={{ fontSize: '8px' }}>GRID-ID: XLSX-2026</span>
         </div>
 
@@ -143,124 +312,7 @@ export default function BudgetTab({ monthlyBudgets }) {
           </table>
         </div>
       </div>
-
-      {/* SVG Income vs Spending Chart */}
-      {selectedMonth === "All" && (
-        <div className="tactile-card">
-          <div className="card-title">
-            <span>Income vs Outflow Chart</span>
-            <span className="stamp stamp-green" style={{ fontSize: '9px' }}>Graph view</span>
-          </div>
-
-          <div className="chart-wrapper">
-            <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="chart-svg">
-              {/* Horizontal grid guide lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                const y = graphPaddingY + ratio * (svgHeight - graphPaddingY * 2);
-                const val = maxValForGraph - ratio * maxValForGraph;
-                return (
-                  <g key={idx}>
-                    <line 
-                      x1={graphPaddingX} 
-                      y1={y} 
-                      x2={svgWidth - graphPaddingX} 
-                      y2={y} 
-                      stroke="var(--color-paper-grid)" 
-                      strokeDasharray="2,2"
-                    />
-                    <text 
-                      x={graphPaddingX - 8} 
-                      y={y + 3} 
-                      textAnchor="end" 
-                      fontFamily="var(--font-ledger)" 
-                      fontSize="9px" 
-                      fill="rgba(32,30,28,0.5)"
-                    >
-                      ${Math.round(val / 1000)}k
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Draw columns for populated months */}
-              {populatedMonths.map((b, idx) => {
-                const monthTotalSpending = b.expenses + b.bills + b.debts + b.savings;
-                
-                const colWidth = 35;
-                const colGap = 65;
-                const startX = graphPaddingX + 35 + idx * colGap;
-
-                // Calculate exact column heights
-                const incHeight = (b.income / maxValForGraph) * (svgHeight - graphPaddingY * 2);
-                const spendHeight = (monthTotalSpending / maxValForGraph) * (svgHeight - graphPaddingY * 2);
-                
-                const zeroY = svgHeight - graphPaddingY;
-
-                return (
-                  <g key={b.month}>
-                    {/* Income Bar (Green) */}
-                    <rect 
-                      x={startX} 
-                      y={zeroY - incHeight} 
-                      width={colWidth / 2} 
-                      height={incHeight} 
-                      fill="rgba(37, 96, 70, 0.65)" 
-                      stroke="var(--color-stamp-green)" 
-                      strokeWidth="1.5" 
-                      rx="2"
-                    />
-                    
-                    {/* Spending Bar (Slate Gray) */}
-                    <rect 
-                      x={startX + colWidth / 2 + 3} 
-                      y={zeroY - spendHeight} 
-                      width={colWidth / 2} 
-                      height={spendHeight} 
-                      fill="rgba(32, 42, 69, 0.4)" 
-                      stroke="var(--color-ink-blue)" 
-                      strokeWidth="1.5" 
-                      rx="2"
-                    />
-
-                    {/* Month Label */}
-                    <text 
-                      x={startX + colWidth / 2} 
-                      y={zeroY + 14} 
-                      textAnchor="middle" 
-                      fontFamily="var(--font-accent)" 
-                      fontSize="10px" 
-                      fontWeight="bold"
-                    >
-                      {b.month}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Baseline axis */}
-              <line 
-                x1={graphPaddingX} 
-                y1={svgHeight - graphPaddingY} 
-                x2={svgWidth - graphPaddingX} 
-                y2={svgHeight - graphPaddingY} 
-                stroke="var(--color-ink-dark)" 
-                strokeWidth="1.5"
-              />
-            </svg>
-            
-            <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '10px', fontSize: '11px', fontFamily: 'var(--font-accent)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ display: 'inline-block', width: '12px', height: '12px', backgroundColor: 'rgba(37, 96, 70, 0.65)', border: '1px solid var(--color-stamp-green)' }}></span>
-                <span>Income Revenue Stream</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ display: 'inline-block', width: '12px', height: '12px', backgroundColor: 'rgba(32, 42, 69, 0.4)', border: '1px solid var(--color-ink-blue)' }}></span>
-                <span>Combined Expenses & Debt Outflow</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }

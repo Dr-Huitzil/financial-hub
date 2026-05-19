@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData }) {
+export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData, thirtyDayBalance }) {
   // Calculate remaining dynamic budget
   const totalUpcomingToPay = upcomingPayments
     .filter(p => !p.paid && !p.isIncome)
@@ -12,9 +12,9 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
 
   const remainingDynamic = cashFlowSummary.totalRemaining - totalUpcomingPaid;
 
-  // Chart data calculation for a gorgeous custom SVG path
-  const months = investmentGrowthData.map(d => d.month);
-  const balances = investmentGrowthData.map(d => d.balance);
+  // Chart data calculation for 30-day checking balance
+  const chartData = thirtyDayBalance && thirtyDayBalance.length > 0 ? thirtyDayBalance : investmentGrowthData;
+  const balances = chartData.map(d => d.balance);
   const minBal = Math.min(...balances);
   const maxBal = Math.max(...balances);
   
@@ -24,11 +24,12 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
   const paddingX = 40;
   const paddingY = 20;
   
-  const points = investmentGrowthData.map((d, index) => {
-    const x = paddingX + (index / (investmentGrowthData.length - 1)) * (svgWidth - paddingX * 2);
+  const points = chartData.map((d, index) => {
+    const x = paddingX + (index / Math.max(1, chartData.length - 1)) * (svgWidth - paddingX * 2);
     // Inverse Y because SVG 0 is top
-    const y = svgHeight - paddingY - ((d.balance - minBal) / (maxBal - minBal)) * (svgHeight - paddingY * 2);
-    return { x, y, month: d.month, val: d.balance };
+    const yRange = Math.max(1, maxBal - minBal);
+    const y = svgHeight - paddingY - ((d.balance - minBal) / yRange) * (svgHeight - paddingY * 2);
+    return { x, y, label: d.label || d.month, val: d.balance };
   });
 
   const pathD = points.reduce((acc, p, index) => {
@@ -148,19 +149,21 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
                     stroke="var(--color-ink-blue)" 
                     strokeWidth="2"
                   />
-                  {/* Tooltip text for hover nodes */}
-                  <text 
-                    x={p.x} 
-                    y={svgHeight - paddingY + 12} 
-                    textAnchor="middle" 
-                    fontFamily="var(--font-ledger)" 
-                    fontSize="9px" 
-                    fill="var(--color-ink-dark)"
-                  >
-                    {p.month}
-                  </text>
+                  {/* Tooltip text could go here if needed */}
                 </g>
               ))}
+              
+              {/* X-Axis Labels (start and end) */}
+              {points.length > 0 && (
+                <>
+                  <text x={points[0].x} y={svgHeight - 5} textAnchor="middle" fontFamily="var(--font-ledger)" fontSize="9px" fill="rgba(32,30,28,0.5)">
+                    {points[0].label}
+                  </text>
+                  <text x={points[points.length - 1].x} y={svgHeight - 5} textAnchor="middle" fontFamily="var(--font-ledger)" fontSize="9px" fill="rgba(32,30,28,0.5)">
+                    {points[points.length - 1].label}
+                  </text>
+                </>
+              )}
             </svg>
           </div>
         </div>

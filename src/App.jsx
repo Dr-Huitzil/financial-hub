@@ -277,6 +277,7 @@ export default function App() {
             onTogglePayment={handleTogglePayment}
             cashFlowSummary={aggregatedData.cashFlowSummary}
             investmentGrowthData={aggregatedData.investmentGrowthData}
+            thirtyDayBalance={aggregatedData.thirtyDayBalance}
           />
         );
       case "transactions":
@@ -289,7 +290,13 @@ export default function App() {
           />
         );
       case "budget":
-        return <BudgetTab monthlyBudgets={aggregatedData.monthlyBudgets} />;
+        return (
+          <BudgetTab 
+            monthlyBudgets={aggregatedData.monthlyBudgets} 
+            annualRunningBalance={aggregatedData.annualRunningBalance}
+            categoryBreakdown={aggregatedData.categoryBreakdown}
+          />
+        );
       case "investments":
         return <InvestmentsTab investmentGrowthData={aggregatedData.investmentGrowthData} />;
       case "goals":

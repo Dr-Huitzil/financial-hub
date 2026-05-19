@@ -128,11 +128,71 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
     };
   });
 
+  // 5. Calculate Annual Running Balance and 30-Day Balance
+  let chartYear = new Date().getFullYear();
+  if (transactions.length > 0) {
+    const dates = transactions.map(t => new Date(t.date).getTime()).filter(t => !isNaN(t));
+    if (dates.length > 0) {
+      chartYear = new Date(Math.min(...dates)).getFullYear();
+    }
+  }
+
+  const yearStart = new Date(chartYear, 0, 1);
+  const yearEnd = new Date(chartYear, 11, 31);
+
+  const dailyCheckingNet = {};
+  transactions.forEach(tx => {
+    if ((tx.account || "Checking") !== "Checking") return;
+    if (!tx.date) return;
+    const tDate = new Date(tx.date);
+    // ensure local date extraction
+    const dateStr = tDate.getFullYear() + "-" + String(tDate.getMonth()+1).padStart(2, '0') + "-" + String(tDate.getDate()).padStart(2, '0');
+    const amt = parseFloat(tx.amount || 0);
+    dailyCheckingNet[dateStr] = (dailyCheckingNet[dateStr] || 0) + (tx.type === "Income" ? amt : -amt);
+  });
+
+  const annualRunningBalance = [];
+  // Use starting balance from our config
+  let currentBal = 12547.32; // Checking
+
+  const todayNormalized = new Date();
+  todayNormalized.setHours(0,0,0,0);
+
+  for (let d = new Date(yearStart); d <= yearEnd; d.setDate(d.getDate() + 1)) {
+    const dStr = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    if (dailyCheckingNet[dStr]) {
+      currentBal += dailyCheckingNet[dStr];
+    }
+    
+    annualRunningBalance.push({
+      date: dStr,
+      label: `${d.getMonth() + 1}/${d.getDate()}`,
+      balance: Math.round(currentBal * 100) / 100
+    });
+  }
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setHours(0,0,0,0);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+
+  let thirtyDayBalance = annualRunningBalance.filter(d => {
+    const [y, m, day] = d.date.split('-');
+    const dDate = new Date(y, m-1, day);
+    return dDate >= thirtyDaysAgo && dDate <= todayNormalized;
+  });
+
+  // fallback if outside year range
+  if (thirtyDayBalance.length === 0) {
+    thirtyDayBalance = annualRunningBalance.slice(-30);
+  }
+
   return {
     cashFlowSummary,
     monthlyBudgets,
     categoryBreakdown,
-    investmentGrowthData
+    investmentGrowthData,
+    annualRunningBalance,
+    thirtyDayBalance
   };
 }
 
