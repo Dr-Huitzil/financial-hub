@@ -2,8 +2,6 @@ import React, { useState } from "react";
 
 export default function BudgetTab({ monthlyBudgets }) {
   const [selectedMonth, setSelectedMonth] = useState("All");
-  const [projectedIncome, setProjectedIncome] = useState("3500");
-  const [projectedOutflow, setProjectedOutflow] = useState("2800");
 
   const filteredBudgets = selectedMonth === "All" 
     ? monthlyBudgets 
@@ -19,8 +17,7 @@ export default function BudgetTab({ monthlyBudgets }) {
   const totalSpending = totalExpenses + totalBills + totalDebts + totalSavings;
   const totalRemaining = totalIncome - totalSpending;
 
-  // Projection math
-  const calculatedRemainingProj = parseFloat(projectedIncome || 0) - parseFloat(projectedOutflow || 0);
+
 
   // SVG dimensions for the monthly comparison graph
   const svgWidth = 550;
@@ -37,7 +34,7 @@ export default function BudgetTab({ monthlyBudgets }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
       {/* Selector and Dynamic Card Layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px" }} className="overview-grid">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "30px" }} className="overview-grid">
         {/* Month Selector & Quick Ledger Summary */}
         <div className="tactile-card">
           <div className="card-title">
@@ -84,47 +81,6 @@ export default function BudgetTab({ monthlyBudgets }) {
           </div>
         </div>
 
-        {/* Projection Calculator Card */}
-        <div className="tactile-card">
-          <div className="card-title">
-            <span>Dynamic Projection Calculator</span>
-            <span className="stamp stamp-green" style={{ fontSize: '9px', transform: 'rotate(1deg)' }}>Simulate</span>
-          </div>
-          
-          <p style={{ fontSize: '12px', color: 'rgba(32,30,28,0.7)', marginBottom: '14px' }}>
-            Calculate simulated monthly buffers before adding new upcoming bills.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Simulated Income</label>
-                <input 
-                  type="number" 
-                  value={projectedIncome} 
-                  onChange={(e) => setProjectedIncome(e.target.value)}
-                  style={{ padding: '8px', border: '1px solid var(--color-paper-grid)', borderRadius: '4px', backgroundColor: 'var(--color-paper-light)', fontFamily: 'var(--font-ledger)', fontWeight: 'bold' }}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Simulated Spending</label>
-                <input 
-                  type="number" 
-                  value={projectedOutflow} 
-                  onChange={(e) => setProjectedOutflow(e.target.value)}
-                  style={{ padding: '8px', border: '1px solid var(--color-paper-grid)', borderRadius: '4px', backgroundColor: 'var(--color-paper-light)', fontFamily: 'var(--font-ledger)', fontWeight: 'bold' }}
-                />
-              </div>
-            </div>
-            
-            <div className="ledger-text-row" style={{ borderTop: '1px dashed var(--color-paper-grid)', paddingTop: '10px', fontWeight: 'bold' }}>
-              <span>Projected Safety Surplus:</span>
-              <span className={`stamp ${calculatedRemainingProj >= 0 ? "stamp-green" : "stamp-red"}`} style={{ fontSize: '12px', transform: 'rotate(-1deg)' }}>
-                ${calculatedRemainingProj.toLocaleString(undefined, {minimumFractionDigits: 2})}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Main Budget Spreadsheet Grid */}

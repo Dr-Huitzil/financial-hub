@@ -394,7 +394,6 @@ export default function App() {
         <button 
           className={`folder-tab ${activeTab === "setup" ? "active" : ""}`}
           onClick={() => setActiveTab("setup")}
-          style={{ marginTop: "auto" }}
         >
           <span className="folder-tab-text">Setup</span>
         </button>

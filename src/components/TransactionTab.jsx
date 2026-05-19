@@ -239,24 +239,27 @@ export default function TransactionTab({ transactions, categories, onAddTransact
       </div>
 
       {/* View Mode Toggle Stamped Tabs */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "-16px", zIndex: 5 }}>
+      <div style={{ display: "flex", gap: "6px", marginBottom: "0", marginLeft: "10px", position: "relative", zIndex: 10 }}>
         <button
           onClick={() => setIsBatchMode(false)}
           style={{
-            padding: "8px 16px",
+            padding: !isBatchMode ? "10px 24px" : "8px 20px",
+            paddingBottom: !isBatchMode ? "14px" : "8px",
             fontFamily: "var(--font-accent)",
             fontSize: "10px",
             fontWeight: "bold",
             textTransform: "uppercase",
             letterSpacing: "1px",
-            backgroundColor: !isBatchMode ? "var(--color-ink-dark)" : "var(--color-manila-light)",
-            color: !isBatchMode ? "var(--color-paper-light)" : "var(--color-ink-dark)",
-            border: "1.5px solid var(--color-ink-dark)",
+            backgroundColor: !isBatchMode ? "var(--color-paper-light)" : "var(--color-manila-dark)",
+            color: !isBatchMode ? "var(--color-ink-dark)" : "rgba(32, 30, 28, 0.6)",
+            border: !isBatchMode ? "2.5px solid var(--color-ink-dark)" : "1.5px solid rgba(0,0,0,0.15)",
             borderBottom: "none",
             borderRadius: "14px 14px 0 0",
             cursor: "pointer",
-            transform: !isBatchMode ? "translateY(2px)" : "none",
-            boxShadow: !isBatchMode ? "none" : "inset 0 -2px 4px rgba(0,0,0,0.05)"
+            position: "relative",
+            top: !isBatchMode ? "2.5px" : "6px",
+            zIndex: !isBatchMode ? 10 : 1,
+            boxShadow: !isBatchMode ? "none" : "inset 0 -2px 6px rgba(0,0,0,0.06)"
           }}
         >
           Single Entry
@@ -264,20 +267,23 @@ export default function TransactionTab({ transactions, categories, onAddTransact
         <button
           onClick={() => setIsBatchMode(true)}
           style={{
-            padding: "8px 16px",
+            padding: isBatchMode ? "10px 24px" : "8px 20px",
+            paddingBottom: isBatchMode ? "14px" : "8px",
             fontFamily: "var(--font-accent)",
             fontSize: "10px",
             fontWeight: "bold",
             textTransform: "uppercase",
             letterSpacing: "1px",
-            backgroundColor: isBatchMode ? "var(--color-ink-dark)" : "var(--color-manila-light)",
-            color: isBatchMode ? "var(--color-paper-light)" : "var(--color-ink-dark)",
-            border: "1.5px solid var(--color-ink-dark)",
+            backgroundColor: isBatchMode ? "var(--color-paper-light)" : "var(--color-manila-dark)",
+            color: isBatchMode ? "var(--color-ink-dark)" : "rgba(32, 30, 28, 0.6)",
+            border: isBatchMode ? "2.5px solid var(--color-ink-dark)" : "1.5px solid rgba(0,0,0,0.15)",
             borderBottom: "none",
             borderRadius: "14px 14px 0 0",
             cursor: "pointer",
-            transform: isBatchMode ? "translateY(2px)" : "none",
-            boxShadow: isBatchMode ? "none" : "inset 0 -2px 4px rgba(0,0,0,0.05)"
+            position: "relative",
+            top: isBatchMode ? "2.5px" : "6px",
+            zIndex: isBatchMode ? 10 : 1,
+            boxShadow: isBatchMode ? "none" : "inset 0 -2px 6px rgba(0,0,0,0.06)"
           }}
         >
           Batch Entry
@@ -289,7 +295,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
         <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
           
           {/* Card 1: Batch Spreadsheet Table Card */}
-          <div className="tactile-card" style={{ border: "2px solid var(--color-ink-dark)", overflowX: "auto" }}>
+          <div className="tactile-card" style={{ border: "2.5px solid var(--color-ink-dark)", overflowX: "auto", position: "relative", zIndex: 1, borderTopLeftRadius: "0" }}>
             <div className="card-title" style={{ marginBottom: "15px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <span>Batch Transaction Entry</span>
@@ -584,7 +590,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "30px" }} className="overview-grid">
           
           {/* Transaction Voucher Form */}
-          <div className="tactile-card" style={{ height: "fit-content", border: "2.5px solid var(--color-ink-dark)" }}>
+          <div className="tactile-card" style={{ height: "fit-content", border: "2.5px solid var(--color-ink-dark)", position: "relative", zIndex: 1, borderTopLeftRadius: "0" }}>
             <div className="card-title" style={{ marginBottom: "15px" }}>
               <span>Transaction Entry</span>
               <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(4deg)" }}>POSTED</span>
