@@ -65,26 +65,57 @@ export default function BudgetTab({ monthlyBudgets, annualRunningBalance, catego
     msLines.debts.data.push({ x, y: getY(b.debts) });
   });
 
-  // --- Chart 3: Spending Breakdown Donut (using categoryBreakdown) ---
+  // --- Chart 3: High-Level Budget Allocation Donut (using master categories) ---
   const donutSize = 200;
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
   const center = donutSize / 2;
-  const colors = [
-    "#1e3a8a", "#0f766e", "#b45309", "#9f1239", "#4d7c0f", 
-    "#581c87", "#0369a1", "#047857", "#c2410c", "#881337", 
-    "#1e293b", "#6d28d9", "#3b82f6", "#10b981", "#f59e0b"
-  ];
+  
+  // Calculate dynamic selected month or annual macro ratios
+  let activeIncome = totalIncome;
+  let activeExpenses = totalExpenses;
+  let activeBills = totalBills;
+  let activeDebts = totalDebts;
+  let activeSavings = totalSavings;
+
+  if (selectedMonth !== "All") {
+    const activeMonthData = monthlyBudgets.find(b => b.month === selectedMonth);
+    if (activeMonthData) {
+      activeIncome = activeMonthData.income;
+      activeExpenses = activeMonthData.expenses;
+      activeBills = activeMonthData.bills;
+      activeDebts = activeMonthData.debts;
+      activeSavings = activeMonthData.savings;
+    }
+  }
+
+  const activeSpending = activeExpenses + activeBills + activeDebts + activeSavings;
+  const activeRemaining = activeIncome > activeSpending ? activeIncome - activeSpending : 0;
+  const activeTotal = activeSpending + activeRemaining;
+
+  const macroBreakdown = [
+    { name: "Expenses", value: activeExpenses, color: "#1e3a8a" }, // Ink Blue
+    { name: "Bills", value: activeBills, color: "#0f766e" },       // Teal
+    { name: "Debts Paid", value: activeDebts, color: "#b45309" },  // Amber/Gold
+    { name: "Savings", value: activeSavings, color: "#047857" },   // Emerald
+    { name: "Remaining Cash", value: activeRemaining, color: "#9f1239" } // Deep Crimson
+  ].map(item => {
+    const pct = activeTotal > 0 ? (item.value / activeTotal) * 100 : 0;
+    return {
+      ...item,
+      percentage: Math.round(pct * 10) / 10
+    };
+  }).filter(item => item.value > 0);
+
   let accumulatedPercentage = 0;
-  const topCategories = (categoryBreakdown || []).slice(0, 10);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
       
-      {/* 1. Annual Balance Overview (Full Width) */}
+      {/* 1. Annual Balance Trend (Full Width) */}
       <div className="tactile-card" style={{ width: "100%", overflowX: "auto" }}>
         <div className="card-title">
-          <span>Balance Overview</span>
+          <span>Annual Balance Trend</span>
           <span className="barcode-text" style={{ fontSize: '9px' }}>CHART-NO: 2026-F-BAL</span>
         </div>
         
@@ -181,26 +212,26 @@ export default function BudgetTab({ monthlyBudgets, annualRunningBalance, catego
           </div>
         </div>
 
-        {/* Spending Breakdown Donut */}
+        {/* Budget Allocation Donut */}
         <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="card-title" style={{ width: '100%' }}>
-            <span>Spending Breakdown</span>
-            <span className="barcode-text" style={{ fontSize: '9px' }}>CHART-NO: PIE-X</span>
+            <span>Budget Allocation Ratio</span>
+            <span className="stamp stamp-blue" style={{ fontSize: '9px', transform: 'rotate(2deg)' }}>Macro Split</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
             <svg width={donutSize} height={donutSize} style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
               <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--color-manila-dark)" strokeWidth="15" />
-              {topCategories.map((c, idx) => {
+              {macroBreakdown.map((c) => {
                 const strokeDashoffset = circumference - (c.percentage / 100) * circumference;
                 const strokeRotation = (accumulatedPercentage / 100) * 360;
                 accumulatedPercentage += c.percentage;
 
                 return (
                   <circle 
-                    key={c.category}
+                    key={c.name}
                     cx={center} cy={center} r={radius} fill="none" 
-                    stroke={colors[idx % colors.length]} 
+                    stroke={c.color} 
                     strokeWidth="15"
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeDashoffset}
@@ -210,19 +241,24 @@ export default function BudgetTab({ monthlyBudgets, annualRunningBalance, catego
               })}
               
               <g style={{ transform: `rotate(90deg) translate(0px, 0px)`, transformOrigin: '50% 50%' }}>
-                <text x={center} y={center - 5} textAnchor="middle" fontFamily="var(--font-accent)" fontSize="10px" fontWeight="bold" fill="rgba(32,30,28,0.6)">OUTFLOW</text>
-                <text x={center} y={center + 10} textAnchor="middle" fontFamily="var(--font-ledger)" fontSize="12px" fontWeight="bold" fill="var(--color-ink-dark)">
-                  100%
+                <text x={center} y={center - 5} textAnchor="middle" fontFamily="var(--font-accent)" fontSize="10px" fontWeight="bold" fill="rgba(32,30,28,0.6)">
+                  {selectedMonth === "All" ? "ANNUAL" : selectedMonth.substring(0,3).toUpperCase()}
+                </text>
+                <text x={center} y={center + 10} textAnchor="middle" fontFamily="var(--font-ledger)" fontSize="11px" fontWeight="bold" fill="var(--color-ink-dark)">
+                  ${activeTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </text>
               </g>
             </svg>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%', fontSize: '10px', fontFamily: 'var(--font-accent)', textTransform: 'uppercase' }}>
-            {topCategories.slice(0, 6).map((c, idx) => (
-              <div key={c.category} style={{ display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                <span style={{ minWidth: '8px', height: '8px', backgroundColor: colors[idx % colors.length] }}></span> 
-                {c.category} ({c.percentage}%)
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', fontSize: '10px', fontFamily: 'var(--font-accent)', textTransform: 'uppercase' }}>
+            {macroBreakdown.map((c) => (
+              <div key={c.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(32,30,28,0.08)', paddingBottom: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ minWidth: '8px', height: '8px', backgroundColor: c.color }}></span> 
+                  {c.name}
+                </div>
+                <strong>{c.percentage}% (${c.value.toLocaleString(undefined, { maximumFractionDigits: 0 })})</strong>
               </div>
             ))}
           </div>

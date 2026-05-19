@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData, thirtyDayBalance }) {
+export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData, thirtyDayBalance, creditCards = [] }) {
   // Calculate remaining dynamic budget
   const totalUpcomingToPay = upcomingPayments
     .filter(p => !p.paid && !p.isIncome)
@@ -168,51 +168,142 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
           </div>
         </div>
       </div>
-
-      {/* Right Column: Upcoming Payments Ledger Checklist */}
-      <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="card-title">
-          <span>Upcoming Payments</span>
-          <div className="stamp stamp-red" style={{ fontSize: '10px', transform: 'rotate(-2deg)' }}>Pending</div>
-        </div>
-        
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: '12.5px', color: 'rgba(32,30,28,0.7)', marginBottom: '16px' }}>
-          Tick off payments to reconcile your cash balance. Income receipts (e.g. Paychecks) are auto-calculated in green.
-        </p>
-
-        <div className="payment-checklist">
-          {upcomingPayments.map((p) => (
-            <div 
-              key={p.id} 
-              className={`payment-checklist-item ${p.paid ? "checked" : ""}`}
-              onClick={() => onTogglePayment(p.id)}
-            >
-              <div className="payment-item-left">
-                <div className="custom-checkbox"></div>
-                <div className="payment-item-details">
-                  <span className="payment-item-name">{p.name}</span>
-                  <span className="payment-item-date">Due: {p.dueDate}</span>
+ 
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        {/* Right Column: Upcoming Payments Ledger Checklist */}
+        <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="card-title">
+            <span>Upcoming Payments</span>
+            <div className="stamp stamp-red" style={{ fontSize: '10px', transform: 'rotate(-2deg)' }}>Pending</div>
+          </div>
+          
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '12.5px', color: 'rgba(32,30,28,0.7)', marginBottom: '16px' }}>
+            Tick off payments to reconcile your cash balance. Income receipts (e.g. Paychecks) are auto-calculated in green.
+          </p>
+  
+          <div className="payment-checklist">
+            {upcomingPayments.map((p) => (
+              <div 
+                key={p.id} 
+                className={`payment-checklist-item ${p.paid ? "checked" : ""}`}
+                onClick={() => onTogglePayment(p.id)}
+              >
+                <div className="payment-item-left">
+                  <div className="custom-checkbox"></div>
+                  <div className="payment-item-details">
+                    <span className="payment-item-name">{p.name}</span>
+                    <span className="payment-item-date">Due: {p.dueDate}</span>
+                  </div>
+                </div>
+                
+                <div className="payment-item-value" style={{ color: p.isIncome ? 'var(--color-stamp-green)' : 'var(--color-ink-dark)' }}>
+                  {p.isIncome ? `+ $${p.amount.toLocaleString()}` : `$${p.amount.toLocaleString()}`}
+                  {p.paid && (
+                    <span 
+                      className={`stamp ${p.isIncome ? "stamp-green" : "stamp-red"}`} 
+                      style={{ fontSize: '8px', padding: '2px 4px', transform: 'rotate(-8deg)', marginLeft: '4px' }}
+                    >
+                      {p.isIncome ? "Deposited" : "Paid"}
+                    </span>
+                  )}
                 </div>
               </div>
-              
-              <div className="payment-item-value" style={{ color: p.isIncome ? 'var(--color-stamp-green)' : 'var(--color-ink-dark)' }}>
-                {p.isIncome ? `+ $${p.amount.toLocaleString()}` : `$${p.amount.toLocaleString()}`}
-                {p.paid && (
-                  <span 
-                    className={`stamp ${p.isIncome ? "stamp-green" : "stamp-red"}`} 
-                    style={{ fontSize: '8px', padding: '2px 4px', transform: 'rotate(-8deg)', marginLeft: '4px' }}
-                  >
-                    {p.isIncome ? "Deposited" : "Paid"}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+  
+          <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px dashed var(--color-paper-grid)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontFamily: 'var(--font-ledger)' }}>
+            <div>Outstanding: <strong>${totalUpcomingToPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
+            <div>Reconciled: <strong>${totalUpcomingPaid.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
+          </div>
         </div>
 
-        <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px dashed var(--color-paper-grid)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontFamily: 'var(--font-ledger)' }}>
-          <div>Outstanding Obligations: <strong>${totalUpcomingToPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
-          <div>Checked Reconciled: <strong>${totalUpcomingPaid.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
+        {/* Available Credit Portfolio Card */}
+        <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div className="card-title">
+            <span>Available Credit Portfolio</span>
+            <div className="stamp stamp-blue" style={{ fontSize: '10px', transform: 'rotate(2deg)' }}>PORTFOLIO</div>
+          </div>
+  
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'rgba(32,30,28,0.7)', marginBottom: '4px' }}>
+            Credit card available limits and total utilization analysis. Available credit = Limit - Balance.
+          </p>
+  
+          {/* Aggregate Credit Metrics Row */}
+          {(() => {
+            const creditCardsList = creditCards || [];
+            const totalCreditLimit = creditCardsList.reduce((sum, c) => sum + (parseFloat(c.limit) || 0), 0);
+            const totalCreditBalance = creditCardsList.reduce((sum, c) => sum + (parseFloat(c.balance) || 0), 0);
+            const totalAvailableCredit = totalCreditLimit - totalCreditBalance;
+            const overallUtilization = totalCreditLimit > 0 ? (totalCreditBalance / totalCreditLimit) * 100 : 0;
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '4px' }}>
+                  <div className="metric-stamp-card positive" style={{ padding: '8px', textAlign: 'center' }}>
+                    <span className="metric-stamp-label" style={{ fontSize: '8px' }}>Total Available</span>
+                    <span className="metric-stamp-value" style={{ fontSize: '13px', fontFamily: 'var(--font-ledger)' }}>
+                      ${totalAvailableCredit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div className="metric-stamp-card" style={{ padding: '8px', textAlign: 'center', border: '1.5px solid var(--color-paper-grid)', backgroundColor: 'var(--color-paper-light)' }}>
+                    <span className="metric-stamp-label" style={{ fontSize: '8px' }}>Total Limit</span>
+                    <span className="metric-stamp-value" style={{ fontSize: '13px', fontFamily: 'var(--font-ledger)', color: 'var(--color-ink-dark)' }}>
+                      ${totalCreditLimit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div className={`metric-stamp-card ${overallUtilization > 50 ? 'negative' : (overallUtilization > 30 ? 'warning' : 'positive')}`} style={{ padding: '8px', textAlign: 'center' }}>
+                    <span className="metric-stamp-label" style={{ fontSize: '8px' }}>Utilization Rate</span>
+                    <span className="metric-stamp-value" style={{ fontSize: '13px', fontFamily: 'var(--font-ledger)' }}>
+                      {overallUtilization.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+  
+                {/* Individual Cards Progress Bars */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '250px', overflowY: 'auto', paddingRight: '5px' }}>
+                  {creditCardsList.map((card) => {
+                    const limit = parseFloat(card.limit) || 0;
+                    const balance = parseFloat(card.balance) || 0;
+                    const available = limit - balance;
+                    const util = limit > 0 ? (balance / limit) * 100 : 0;
+                    
+                    // Color code progress bar based on utilization
+                    let barColor = 'var(--color-stamp-green)'; // Emerald < 30%
+                    if (util > 50) {
+                      barColor = 'var(--color-stamp-red)'; // Crimson > 50%
+                    } else if (util > 30) {
+                      barColor = '#b45309'; // Amber/Orange 30%-50%
+                    }
+  
+                    return (
+                      <div key={card.id || card.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                          <span style={{ fontWeight: 'bold', fontFamily: 'var(--font-sans)' }}>{card.name}</span>
+                          <span style={{ fontFamily: 'var(--font-ledger)', color: 'rgba(32,30,28,0.6)' }}>
+                            Avail: <strong style={{ color: 'var(--color-ink-blue)' }}>${available.toLocaleString()}</strong> of ${limit.toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        {/* Horizontal Progress Bar */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ flex: 1, height: '8px', backgroundColor: 'rgba(32,30,28,0.08)', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(32,30,28,0.1)' }}>
+                            <div style={{ width: `${Math.min(100, util)}%`, height: '100%', backgroundColor: barColor, transition: 'width 0.3s ease' }} />
+                          </div>
+                          <span style={{ fontSize: '10px', fontFamily: 'var(--font-ledger)', minWidth: '32px', textAlign: 'right', fontWeight: 'bold', color: util > 30 ? barColor : 'rgba(32,30,28,0.6)' }}>
+                            {util.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {creditCardsList.length === 0 && (
+                    <p style={{ fontSize: '12px', fontStyle: 'italic', textAlign: 'center', color: 'rgba(32,30,28,0.5)', margin: '20px 0' }}>
+                      No credit cards registered in setup.
+                    </p>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>

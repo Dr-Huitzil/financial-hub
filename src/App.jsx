@@ -28,11 +28,23 @@ export default function App() {
     Debt: ["Discover It", "Freedom Chase", "Amazon Chase", "Sapphire Chase", "Personal Loans", "Capital One 1", "Capital One 2", "Credit One 1", "Credit One 2"]
   };
 
+  const DEFAULT_CREDIT_CARDS = [
+    { id: "discover-it", name: "Discover It", limit: 5000, balance: 1250 },
+    { id: "freedom-chase", name: "Freedom Chase", limit: 3000, balance: 450 },
+    { id: "amazon-chase", name: "Amazon Chase", limit: 4500, balance: 800 },
+    { id: "sapphire-chase", name: "Sapphire Chase", limit: 12000, balance: 1800 },
+    { id: "capital-one-1", name: "Capital One 1", limit: 2000, balance: 150 },
+    { id: "capital-one-2", name: "Capital One 2", limit: 2500, balance: 350 },
+    { id: "credit-one-1", name: "Credit One 1", limit: 1000, balance: 400 },
+    { id: "credit-one-2", name: "Credit One 2", limit: 1000, balance: 250 }
+  ];
+
   // General ledger states
   const [transactions, setTransactions] = useState([]);
   const [goals, setGoals] = useState([]);
   const [upcomingPayments, setUpcomingPayments] = useState([]);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [creditCards, setCreditCards] = useState(DEFAULT_CREDIT_CARDS);
   const [authLoading, setAuthLoading] = useState(true);
 
   // Auth State Listener
@@ -103,7 +115,7 @@ export default function App() {
       }
     });
 
-    // 4. Sync Setup settings (Categories)
+    // 4. Sync Setup settings (Categories & Credit Cards)
     const settingsRef = doc(db, "users", user.uid, "settings", "comptroller");
     const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -111,9 +123,12 @@ export default function App() {
         if (data.categories) {
           setCategories(data.categories);
         }
+        if (data.creditCards) {
+          setCreditCards(data.creditCards);
+        }
       } else {
         // Seed default categories in Firestore
-        setDoc(settingsRef, { categories: DEFAULT_CATEGORIES });
+        setDoc(settingsRef, { categories: DEFAULT_CATEGORIES, creditCards: DEFAULT_CREDIT_CARDS });
       }
     });
 
@@ -131,6 +146,7 @@ export default function App() {
     setTransactions(generateDemoTransactions());
     setUpcomingPayments(initialUpcomingPayments);
     setGoals(initialGoals);
+    setCreditCards(DEFAULT_CREDIT_CARDS);
     setActiveTab("overview");
   };
 
@@ -141,6 +157,7 @@ export default function App() {
       setTransactions([]);
       setGoals([]);
       setUpcomingPayments([]);
+      setCreditCards(DEFAULT_CREDIT_CARDS);
     } else {
       await signOut(auth);
     }
@@ -235,6 +252,16 @@ export default function App() {
     }
   };
 
+  // 12. Update credit card portfolio
+  const handleUpdateCreditCards = async (newCreditCards) => {
+    setCreditCards(newCreditCards);
+    if (isDemoMode) {
+      // Keep in local guest state
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { creditCards: newCreditCards }, { merge: true });
+    }
+  };
+
   // 9. Add recurring scheduled payment
   const handleAddPayment = async (newPayment) => {
     if (isDemoMode) {
@@ -278,6 +305,7 @@ export default function App() {
             cashFlowSummary={aggregatedData.cashFlowSummary}
             investmentGrowthData={aggregatedData.investmentGrowthData}
             thirtyDayBalance={aggregatedData.thirtyDayBalance}
+            creditCards={creditCards}
           />
         );
       case "transactions":
@@ -308,7 +336,7 @@ export default function App() {
           />
         );
       case "reports":
-        return <ReportsTab categoryBreakdown={aggregatedData.categoryBreakdown} />;
+        return <ReportsTab categoryBreakdown={aggregatedData.categoryBreakdown} transactions={transactions} />;
       case "setup":
         return (
           <SettingsTab
@@ -322,6 +350,8 @@ export default function App() {
             onAddGoal={handleAddGoal}
             onDeleteGoal={handleDeleteGoal}
             onUpdateGoal={handleUpdateGoal}
+            creditCards={creditCards}
+            onUpdateCreditCards={handleUpdateCreditCards}
           />
         );
       default:
