@@ -10,7 +10,6 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
   let totalExpenses = 0;
   let totalBills = 0;
   let totalDebtPaid = 0;
-  let totalSavings = 0;
 
   transactions.forEach((tx) => {
     const amt = parseFloat(tx.amount || 0);
@@ -27,7 +26,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
 
   // Calculate dynamic savings contributions
   // (Goals with Savings category where current is positive)
-  totalSavings = savingsGoalsList
+  const totalSavings = savingsGoalsList
     .filter(g => g.category === "Savings")
     .reduce((sum, g) => sum + parseFloat(g.current || 0), 0);
 
