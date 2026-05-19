@@ -1,11 +1,104 @@
 import React, { useState } from "react";
 
-export default function BudgetTab({ monthlyBudgets, annualRunningBalance, categoryBreakdown }) {
+export default function BudgetTab({ 
+  monthlyBudgets, 
+  annualRunningBalance, 
+  categoryBreakdown,
+  transactions = [],
+  budgetLimits = {}
+}) {
   const [selectedMonth, setSelectedMonth] = useState("All");
+  const [progressSearchTerm, setProgressSearchTerm] = useState("");
+  const [progressSelectedType, setProgressSelectedType] = useState("All");
 
   const filteredBudgets = selectedMonth === "All" 
     ? monthlyBudgets 
     : monthlyBudgets.filter(b => b.month === selectedMonth);
+
+  const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  // 1. Get all unique active outflow categories (excluding Income)
+  const categoryTypes = {};
+  transactions.forEach(tx => {
+    if (tx.category && tx.type !== "Income") {
+      categoryTypes[tx.category] = tx.type; // Bill, Debt, or Expense
+    }
+  });
+
+  const allOutflowCategories = Array.from(
+    new Set([
+      ...transactions.filter(tx => tx.type !== "Income" && tx.category).map(tx => tx.category),
+      ...Object.keys(budgetLimits).filter(cat => budgetLimits[cat] > 0)
+    ])
+  ).sort();
+
+  // Calculate actual and limit for each category in selected period
+  const categoryProgressData = allOutflowCategories.map(cat => {
+    const type = categoryTypes[cat] || "Expense";
+
+    // Period actual
+    const activeTx = transactions.filter(tx => {
+      if (tx.type === "Income") return false;
+      if (tx.category !== cat) return false;
+      if (selectedMonth === "All") return true;
+      if (!tx.date) return false;
+      const txDate = new Date(tx.date);
+      return MONTH_NAMES[txDate.getMonth()] === selectedMonth;
+    });
+    const actualSpent = activeTx.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+
+    // Period limit
+    let limit = budgetLimits[cat] || 0;
+    if (selectedMonth === "All") {
+      limit = limit * 12;
+    }
+
+    return {
+      category: cat,
+      type,
+      actual: Math.round(actualSpent * 100) / 100,
+      limit
+    };
+  })
+  .filter(c => c.limit > 0 || c.actual > 0) // Only show budgeted categories or categories with actual spending
+  .filter(c => {
+    const matchesSearch = c.category.toLowerCase().includes(progressSearchTerm.toLowerCase());
+    const matchesType = progressSelectedType === "All" || c.type === progressSelectedType;
+    return matchesSearch && matchesType;
+  })
+  .sort((a, b) => {
+    return b.actual - a.actual;
+  });
+
+  // Calculate summary actual & limit for health card
+  const unfilteredPeriodProgress = allOutflowCategories.map(cat => {
+    const type = categoryTypes[cat] || "Expense";
+    const activeTx = transactions.filter(tx => {
+      if (tx.type === "Income") return false;
+      if (tx.category !== cat) return false;
+      if (selectedMonth === "All") return true;
+      if (!tx.date) return false;
+      const txDate = new Date(tx.date);
+      return MONTH_NAMES[txDate.getMonth()] === selectedMonth;
+    });
+    const actualSpent = activeTx.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+
+    let limit = budgetLimits[cat] || 0;
+    if (selectedMonth === "All") {
+      limit = limit * 12;
+    }
+    return { type, actual: actualSpent, limit };
+  });
+
+  const totalBudgetedPeriod = unfilteredPeriodProgress
+    .filter(c => progressSelectedType === "All" || c.type === progressSelectedType)
+    .reduce((sum, c) => sum + c.limit, 0);
+
+  const totalActualPeriod = unfilteredPeriodProgress
+    .filter(c => progressSelectedType === "All" || c.type === progressSelectedType)
+    .reduce((sum, c) => sum + c.actual, 0);
+
+  const remainingBufferPeriod = totalBudgetedPeriod - totalActualPeriod;
 
   // Totals calculations
   const totalIncome = monthlyBudgets.reduce((acc, curr) => acc + curr.income, 0);
@@ -264,6 +357,171 @@ export default function BudgetTab({ monthlyBudgets, annualRunningBalance, catego
           </div>
         </div>
 
+      </div>
+
+      {/* Planned vs. Actual Target Limits Progress Dashboard */}
+      <div className="tactile-card" style={{ width: "100%" }}>
+        <div className="card-title">
+          <span>Planned vs. Actual Category Progress Ledger</span>
+          <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(-1.5deg)" }}>
+            {selectedMonth === "All" ? "ANNUAL TARGETS" : `${selectedMonth.toUpperCase()} TARGETS`}
+          </span>
+        </div>
+
+        <p style={{ fontSize: "12.5px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
+          Tracks your actual monthly (or annual cumulative) transaction spending against the custom target limits established in the <strong>Setup Panel</strong>.
+        </p>
+
+        {/* 1. Overall Target Budget Health Bar */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: "20px",
+          padding: "15px",
+          backgroundColor: "rgba(32,30,28,0.02)",
+          border: "1px dashed var(--color-paper-grid)",
+          borderRadius: "6px",
+          marginBottom: "20px",
+          fontFamily: "var(--font-accent)",
+          textTransform: "uppercase"
+        }}>
+          <div>
+            <span style={{ fontSize: "9px", opacity: 0.6, display: "block", marginBottom: "4px" }}>Total Budgeted Limit</span>
+            <strong style={{ fontSize: "16px", color: "var(--color-ink-dark)", fontFamily: "var(--font-ledger)" }}>
+              ${totalBudgetedPeriod.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </strong>
+          </div>
+          <div>
+            <span style={{ fontSize: "9px", opacity: 0.6, display: "block", marginBottom: "4px" }}>Total Actual Spending</span>
+            <strong style={{ fontSize: "16px", color: totalActualPeriod > totalBudgetedPeriod ? "var(--color-stamp-red)" : "var(--color-ink-blue)", fontFamily: "var(--font-ledger)" }}>
+              ${totalActualPeriod.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </strong>
+          </div>
+          <div>
+            <span style={{ fontSize: "9px", opacity: 0.6, display: "block", marginBottom: "4px" }}>Remaining Buffer</span>
+            <strong style={{ 
+              fontSize: "16px", 
+              color: remainingBufferPeriod < 0 ? "var(--color-stamp-red)" : "var(--color-stamp-green)", 
+              fontFamily: "var(--font-ledger)" 
+            }}>
+              {remainingBufferPeriod < 0 ? "-" : ""}${Math.abs(remainingBufferPeriod).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {remainingBufferPeriod < 0 && <span style={{ fontSize: "9px", display: "block", color: "var(--color-stamp-red)" }}>OVER BUDGET!</span>}
+            </strong>
+          </div>
+        </div>
+
+        {/* 2. List filters and search bar */}
+        <div style={{ display: "flex", gap: "15px", marginBottom: "15px", flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "6px" }} className="sub-tabs-strip">
+            {["All", "Expense", "Bill", "Debt"].map((type) => (
+              <button
+                key={type}
+                className={`sub-tab-btn ${progressSelectedType === type ? "active" : ""}`}
+                onClick={() => setProgressSelectedType(type)}
+                style={{ marginBottom: 0 }}
+              >
+                {type === "All" ? "All Targets" : `${type}s`}
+              </button>
+            ))}
+          </div>
+
+          <input
+            type="text"
+            placeholder="Search progress categories..."
+            value={progressSearchTerm}
+            onChange={(e) => setProgressSearchTerm(e.target.value)}
+            style={{
+              padding: "6px 12px",
+              fontFamily: "var(--font-sans)",
+              fontSize: "12px",
+              border: "1px solid var(--color-paper-grid)",
+              borderRadius: "4px",
+              backgroundColor: "var(--color-paper-light)",
+              minWidth: "250px",
+              marginLeft: "auto"
+            }}
+          />
+        </div>
+
+        {/* 3. Category Progress Bars List */}
+        <div className="category-progress-list" style={{ display: "flex", flexDirection: "column", gap: "15px", maxHeight: "350px", overflowY: "auto", paddingRight: "6px" }}>
+          {categoryProgressData.map((c) => {
+            const utilization = c.limit > 0 ? Math.round((c.actual / c.limit) * 100) : 0;
+            const isOver = c.actual > c.limit;
+            
+            // Color scheme based on status
+            let barColor = "var(--color-stamp-green)"; // Safe
+            if (isOver) {
+              barColor = "var(--color-stamp-red)"; // Exceeded
+            } else if (utilization >= 75) {
+              barColor = "#b45309"; // Approaching limit (amber)
+            }
+
+            return (
+              <div key={c.category} style={{ borderBottom: "1px dashed rgba(32,30,28,0.06)", paddingBottom: "10px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "5px" }}>
+                  <div>
+                    <span style={{ fontSize: "12.5px", fontWeight: "bold", fontFamily: "var(--font-sans)" }}>{c.category}</span>
+                    <span style={{ fontSize: "9.5px", opacity: 0.5, marginLeft: "6px", textTransform: "uppercase" }}>({c.type})</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "11px", fontFamily: "var(--font-ledger)" }}>
+                    <span>
+                      <strong>${c.actual.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong> spent 
+                      / <strong>${c.limit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong> limit
+                    </span>
+                    {c.limit > 0 ? (
+                      <span style={{
+                        fontWeight: "bold",
+                        color: barColor,
+                        backgroundColor: "rgba(32,30,28,0.02)",
+                        padding: "1px 5px",
+                        borderRadius: "3px",
+                        border: `1px solid ${barColor}33`
+                      }}>
+                        {utilization}%
+                      </span>
+                    ) : (
+                      <span style={{ fontWeight: "bold", color: "var(--color-stamp-red)", backgroundColor: "rgba(158, 42, 43, 0.08)", padding: "1px 5px", borderRadius: "3px", border: "1px solid var(--color-stamp-red)33" }}>
+                        UNBUDGETED
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress bar tracks */}
+                <div style={{ height: "10px", backgroundColor: "var(--color-manila-dark)", borderRadius: "3px", overflow: "hidden", display: "flex" }}>
+                  <div 
+                    style={{ 
+                      width: `${c.limit > 0 ? Math.min(100, (c.actual / c.limit) * 100) : 100}%`, 
+                      backgroundColor: barColor,
+                      transition: "width 0.3s ease",
+                      height: "100%"
+                    }} 
+                  />
+                </div>
+
+                {isOver && (
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "3px" }}>
+                    <span style={{
+                      fontSize: "9px",
+                      fontFamily: "var(--font-typewriter)",
+                      color: "var(--color-stamp-red)",
+                      fontWeight: "bold"
+                    }}>
+                      ⚠️ [ WARNING: OVER BUDGET BY ${(c.actual - c.limit).toLocaleString(undefined, { minimumFractionDigits: 2 })}! ]
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {categoryProgressData.length === 0 && (
+            <p style={{ textAlign: "center", fontStyle: "italic", fontSize: "12.5px", margin: "40px 0", color: "rgba(32,30,28,0.5)" }}>
+              No categories match the criteria for the chosen filters.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* 3. Ledger Archives Month Selector */}

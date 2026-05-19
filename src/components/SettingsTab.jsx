@@ -12,11 +12,17 @@ export default function SettingsTab({
   onDeleteGoal,
   onUpdateGoal,
   creditCards = [],
-  onUpdateCreditCards
+  onUpdateCreditCards,
+  budgetLimits = {},
+  onUpdateBudgetLimits
 }) {
   // Category management states
   const [selectedType, setSelectedType] = useState("Expense");
   const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Budget Limits Registry states
+  const [limitSearchTerm, setLimitSearchTerm] = useState("");
+  const [limitSelectedType, setLimitSelectedType] = useState("Expense");
 
   // Recurring Bill states
   const [newBillName, setNewBillName] = useState("");
@@ -95,6 +101,17 @@ export default function SettingsTab({
       [selectedType]: typeCats.filter(c => c !== catToDelete)
     };
     onUpdateCategories(updated);
+  };
+
+  // Handle updating category budget limit target
+  const handleUpdateLimit = (category, limitVal) => {
+    let numericLimit = parseFloat(limitVal);
+    if (isNaN(numericLimit) || numericLimit < 0) numericLimit = 0;
+    const updated = {
+      ...budgetLimits,
+      [category]: numericLimit
+    };
+    onUpdateBudgetLimits(updated);
   };
 
   // Handle adding recurring bill
@@ -585,6 +602,105 @@ export default function SettingsTab({
           </form>
         </div>
 
+      </div>
+
+      {/* Card 3: Monthly Category Budget Limits Registry (Full Width) */}
+      <div className="tactile-card" style={{ height: "fit-content" }}>
+        <div className="card-title" style={{ marginBottom: "15px" }}>
+          <span>Monthly Category Target Budget Limits Registry</span>
+          <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(1deg)" }}>LIMITS REG</span>
+        </div>
+
+        <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
+          Set spending targets/caps for individual categories. These values are mapped against your actual expenditures in the <strong>Budget Tab</strong> to trace planned vs. actual execution. Set to $0 to leave unbudgeted.
+        </p>
+
+        <div style={{ display: "flex", gap: "15px", marginBottom: "15px", flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "6px" }} className="sub-tabs-strip">
+            {["Expense", "Bill", "Debt"].map((type) => (
+              <button
+                key={type}
+                className={`sub-tab-btn ${limitSelectedType === type ? "active" : ""}`}
+                onClick={() => setLimitSelectedType(type)}
+                style={{ marginBottom: 0 }}
+              >
+                {type}s
+              </button>
+            ))}
+          </div>
+
+          <input
+            type="text"
+            placeholder="Search category limits..."
+            value={limitSearchTerm}
+            onChange={(e) => setLimitSearchTerm(e.target.value)}
+            style={{
+              padding: "6px 12px",
+              fontFamily: "var(--font-sans)",
+              fontSize: "12px",
+              border: "1px solid var(--color-paper-grid)",
+              borderRadius: "4px",
+              backgroundColor: "var(--color-paper-light)",
+              minWidth: "220px",
+              marginLeft: "auto"
+            }}
+          />
+        </div>
+
+        <div className="ledger-table-container" style={{ maxHeight: "300px", overflowY: "auto" }}>
+          <table className="ledger-table" style={{ fontSize: "11.5px" }}>
+            <thead>
+              <tr>
+                <th>Category Name</th>
+                <th>Flow Type</th>
+                <th style={{ width: "200px" }}>Monthly Target Cap ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(categories[limitSelectedType] || [])
+                .filter(cat => cat.toLowerCase().includes(limitSearchTerm.toLowerCase()))
+                .map((cat) => {
+                  const currentLimit = budgetLimits[cat] !== undefined ? budgetLimits[cat] : 0;
+                  return (
+                    <tr key={cat}>
+                      <td style={{ fontWeight: "bold", fontFamily: "var(--font-sans)" }}>{cat}</td>
+                      <td style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6 }}>{limitSelectedType}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "11px", opacity: 0.5 }}>$</span>
+                          <input
+                            type="number"
+                            value={currentLimit}
+                            onChange={(e) => handleUpdateLimit(cat, e.target.value)}
+                            placeholder="0"
+                            style={{
+                              width: "120px",
+                              padding: "4px 8px",
+                              border: "1px dashed var(--color-paper-grid)",
+                              borderRadius: "4px",
+                              backgroundColor: "transparent",
+                              fontFamily: "var(--font-ledger)",
+                              fontWeight: "bold"
+                            }}
+                            onFocus={(e) => e.target.style.border = "1px solid var(--color-paper-grid)"}
+                            onBlur={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              {(categories[limitSelectedType] || [])
+                .filter(cat => cat.toLowerCase().includes(limitSearchTerm.toLowerCase())).length === 0 && (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
+                    No categories found in registry for "{limitSelectedType}".
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Card 4: Credit Card Available Credit Registry (Full Width) */}

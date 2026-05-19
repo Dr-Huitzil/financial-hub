@@ -39,12 +39,28 @@ export default function App() {
     { id: "credit-one-2", name: "Credit One 2", limit: 1000, balance: 250 }
   ];
 
+  const DEFAULT_BUDGET_LIMITS = {
+    "Rent": 1800,
+    "Discover It": 500,
+    "Amazon Chase": 350,
+    "Electricity": 150,
+    "Groceries": 450,
+    "Fuel": 250,
+    "Fast Food": 150,
+    "Personal Care": 100,
+    "Entertainment": 150,
+    "Restaurant": 200,
+    "Car Maintenance": 300,
+    "Electronics": 500
+  };
+
   // General ledger states
   const [transactions, setTransactions] = useState([]);
   const [goals, setGoals] = useState([]);
   const [upcomingPayments, setUpcomingPayments] = useState([]);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [creditCards, setCreditCards] = useState(DEFAULT_CREDIT_CARDS);
+  const [budgetLimits, setBudgetLimits] = useState(DEFAULT_BUDGET_LIMITS);
   const [authLoading, setAuthLoading] = useState(true);
 
   // Auth State Listener
@@ -115,7 +131,7 @@ export default function App() {
       }
     });
 
-    // 4. Sync Setup settings (Categories & Credit Cards)
+    // 4. Sync Setup settings (Categories & Credit Cards & Budget Limits)
     const settingsRef = doc(db, "users", user.uid, "settings", "comptroller");
     const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -126,9 +142,16 @@ export default function App() {
         if (data.creditCards) {
           setCreditCards(data.creditCards);
         }
+        if (data.budgetLimits) {
+          setBudgetLimits(data.budgetLimits);
+        }
       } else {
         // Seed default categories in Firestore
-        setDoc(settingsRef, { categories: DEFAULT_CATEGORIES, creditCards: DEFAULT_CREDIT_CARDS });
+        setDoc(settingsRef, { 
+          categories: DEFAULT_CATEGORIES, 
+          creditCards: DEFAULT_CREDIT_CARDS,
+          budgetLimits: DEFAULT_BUDGET_LIMITS 
+        });
       }
     });
 
@@ -147,6 +170,7 @@ export default function App() {
     setUpcomingPayments(initialUpcomingPayments);
     setGoals(initialGoals);
     setCreditCards(DEFAULT_CREDIT_CARDS);
+    setBudgetLimits(DEFAULT_BUDGET_LIMITS);
     setActiveTab("overview");
   };
 
@@ -158,6 +182,7 @@ export default function App() {
       setGoals([]);
       setUpcomingPayments([]);
       setCreditCards(DEFAULT_CREDIT_CARDS);
+      setBudgetLimits(DEFAULT_BUDGET_LIMITS);
     } else {
       await signOut(auth);
     }
@@ -262,6 +287,16 @@ export default function App() {
     }
   };
 
+  // 13. Update customized budget limits registry
+  const handleUpdateBudgetLimits = async (newBudgetLimits) => {
+    setBudgetLimits(newBudgetLimits);
+    if (isDemoMode) {
+      // Keep in local guest state
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { budgetLimits: newBudgetLimits }, { merge: true });
+    }
+  };
+
   // 9. Add recurring scheduled payment
   const handleAddPayment = async (newPayment) => {
     if (isDemoMode) {
@@ -323,6 +358,8 @@ export default function App() {
             monthlyBudgets={aggregatedData.monthlyBudgets} 
             annualRunningBalance={aggregatedData.annualRunningBalance}
             categoryBreakdown={aggregatedData.categoryBreakdown}
+            transactions={transactions}
+            budgetLimits={budgetLimits}
           />
         );
       case "investments":
@@ -352,6 +389,8 @@ export default function App() {
             onUpdateGoal={handleUpdateGoal}
             creditCards={creditCards}
             onUpdateCreditCards={handleUpdateCreditCards}
+            budgetLimits={budgetLimits}
+            onUpdateBudgetLimits={handleUpdateBudgetLimits}
           />
         );
       default:
