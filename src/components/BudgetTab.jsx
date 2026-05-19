@@ -359,7 +359,90 @@ export default function BudgetTab({
 
       </div>
 
-      {/* Planned vs. Actual Target Limits Progress Dashboard */}
+      {/* 3. Main Budget Spreadsheet Grid with Combined Folder Tabs Selector */}
+      <div className="tactile-card">
+        <div className="card-title" style={{ marginBottom: "12px" }}>
+          <span>Excel Replica Ledger Grid</span>
+          <div className="barcode-stamp" style={{ transform: "scale(0.85)" }}>
+            <div className="barcode-stripes" style={{ width: '70px', height: '12px' }}></div>
+            <span className="barcode-text" style={{ fontSize: '7px' }}>GRID-ID: XLSX-2026</span>
+          </div>
+        </div>
+
+        {/* Dynamic Sloped Folder Tabs Month Selector */}
+        <div className="folder-tabs-container">
+          <button 
+            className={`folder-month-tab ${selectedMonth === "All" ? "active" : ""}`} 
+            onClick={() => setSelectedMonth("All")}
+          >
+            Annual Overview
+          </button>
+          {monthlyBudgets.map(b => (
+            <button 
+              key={b.month} 
+              className={`folder-month-tab ${selectedMonth === b.month ? "active" : ""}`} 
+              onClick={() => setSelectedMonth(b.month)}
+            >
+              {b.month.substring(0,3)}
+            </button>
+          ))}
+        </div>
+
+        <div className="ledger-table-container">
+          <table className="ledger-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th className="number-cell">Income</th>
+                <th className="number-cell">Expenses</th>
+                <th className="number-cell">Bills</th>
+                <th className="number-cell">Debts Paid</th>
+                <th className="number-cell">Savings</th>
+                <th className="number-cell">Remaining Cash</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredBudgets.map((b) => {
+                const monthSpending = b.expenses + b.bills + b.debts + b.savings;
+                const monthRemaining = b.income - monthSpending;
+                return (
+                  <tr key={b.month}>
+                    <td style={{ fontWeight: 'bold' }}>{b.month}</td>
+                    <td className="number-cell" style={{ color: b.income > 0 ? 'var(--color-stamp-green)' : 'inherit' }}>
+                      {b.income > 0 ? `$${b.income.toLocaleString()}` : "$0.00"}
+                    </td>
+                    <td className="number-cell">${b.expenses.toLocaleString()}</td>
+                    <td className="number-cell">${b.bills.toLocaleString()}</td>
+                    <td className="number-cell">${b.debts.toLocaleString()}</td>
+                    <td className="number-cell">${b.savings.toLocaleString()}</td>
+                    <td className="number-cell" style={{ 
+                      fontWeight: 'bold', 
+                      color: monthRemaining < 0 ? 'var(--color-stamp-red)' : (monthRemaining > 0 ? 'var(--color-ink-blue)' : 'inherit')
+                    }}>
+                      ${monthRemaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                );
+              })}
+              {selectedMonth === "All" && (
+                <tr className="total-row">
+                  <td>Total Annuals</td>
+                  <td className="number-cell" style={{ color: 'var(--color-stamp-green)' }}>${totalIncome.toLocaleString()}</td>
+                  <td className="number-cell">${totalExpenses.toLocaleString()}</td>
+                  <td className="number-cell">${totalBills.toLocaleString()}</td>
+                  <td className="number-cell">${totalDebts.toLocaleString()}</td>
+                  <td className="number-cell">${totalSavings.toLocaleString()}</td>
+                  <td className="number-cell" style={{ color: totalRemaining < 0 ? 'var(--color-stamp-red)' : 'var(--color-ink-blue)' }}>
+                    ${totalRemaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 4. Planned vs. Actual Target Limits Progress Dashboard */}
       <div className="tactile-card" style={{ width: "100%" }}>
         <div className="card-title">
           <span>Planned vs. Actual Category Progress Ledger</span>
@@ -372,7 +455,7 @@ export default function BudgetTab({
           Tracks your actual monthly (or annual cumulative) transaction spending against the custom target limits established in the <strong>Setup Panel</strong>.
         </p>
 
-        {/* 1. Overall Target Budget Health Bar */}
+        {/* Overall Target Budget Health Bar */}
         <div style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
@@ -410,7 +493,7 @@ export default function BudgetTab({
           </div>
         </div>
 
-        {/* 2. List filters and search bar */}
+        {/* List filters and search bar */}
         <div style={{ display: "flex", gap: "15px", marginBottom: "15px", flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", gap: "6px" }} className="sub-tabs-strip">
             {["All", "Expense", "Bill", "Debt"].map((type) => (
@@ -443,7 +526,7 @@ export default function BudgetTab({
           />
         </div>
 
-        {/* 3. Category Progress Bars List */}
+        {/* Category Progress Bars List */}
         <div className="category-progress-list" style={{ display: "flex", flexDirection: "column", gap: "15px", maxHeight: "350px", overflowY: "auto", paddingRight: "6px" }}>
           {categoryProgressData.map((c) => {
             const utilization = c.limit > 0 ? Math.round((c.actual / c.limit) * 100) : 0;
@@ -521,89 +604,6 @@ export default function BudgetTab({
               No categories match the criteria for the chosen filters.
             </p>
           )}
-        </div>
-      </div>
-
-      {/* 3. Ledger Archives Month Selector */}
-      <div className="tactile-card" style={{ marginBottom: "-15px" }}>
-        <div className="card-title">
-          <span>Ledger Archives</span>
-          <div className="barcode-stamp">
-            <div className="barcode-stripes" style={{ width: '80px', height: '16px' }}></div>
-            <span className="barcode-text" style={{ fontSize: '8px' }}>ARCH-2026</span>
-          </div>
-        </div>
-        
-        <div className="sub-tabs-strip">
-          <button className={`sub-tab-btn ${selectedMonth === "All" ? "active" : ""}`} onClick={() => setSelectedMonth("All")}>
-            Annual Overview
-          </button>
-          {monthlyBudgets.map(b => (
-            <button key={b.month} className={`sub-tab-btn ${selectedMonth === b.month ? "active" : ""}`} onClick={() => setSelectedMonth(b.month)}>
-              {b.month.substring(0,3)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Budget Spreadsheet Grid */}
-      <div className="tactile-card">
-        <div className="card-title">
-          <span>Excel Replica Ledger Grid</span>
-          <span className="barcode-text" style={{ fontSize: '8px' }}>GRID-ID: XLSX-2026</span>
-        </div>
-
-        <div className="ledger-table-container">
-          <table className="ledger-table">
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th className="number-cell">Income</th>
-                <th className="number-cell">Expenses</th>
-                <th className="number-cell">Bills</th>
-                <th className="number-cell">Debts Paid</th>
-                <th className="number-cell">Savings</th>
-                <th className="number-cell">Remaining Cash</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBudgets.map((b) => {
-                const monthSpending = b.expenses + b.bills + b.debts + b.savings;
-                const monthRemaining = b.income - monthSpending;
-                return (
-                  <tr key={b.month}>
-                    <td style={{ fontWeight: 'bold' }}>{b.month}</td>
-                    <td className="number-cell" style={{ color: b.income > 0 ? 'var(--color-stamp-green)' : 'inherit' }}>
-                      {b.income > 0 ? `$${b.income.toLocaleString()}` : "$0.00"}
-                    </td>
-                    <td className="number-cell">${b.expenses.toLocaleString()}</td>
-                    <td className="number-cell">${b.bills.toLocaleString()}</td>
-                    <td className="number-cell">${b.debts.toLocaleString()}</td>
-                    <td className="number-cell">${b.savings.toLocaleString()}</td>
-                    <td className="number-cell" style={{ 
-                      fontWeight: 'bold', 
-                      color: monthRemaining < 0 ? 'var(--color-stamp-red)' : (monthRemaining > 0 ? 'var(--color-ink-blue)' : 'inherit')
-                    }}>
-                      ${monthRemaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                );
-              })}
-              {selectedMonth === "All" && (
-                <tr className="total-row">
-                  <td>Total Annuals</td>
-                  <td className="number-cell" style={{ color: 'var(--color-stamp-green)' }}>${totalIncome.toLocaleString()}</td>
-                  <td className="number-cell">${totalExpenses.toLocaleString()}</td>
-                  <td className="number-cell">${totalBills.toLocaleString()}</td>
-                  <td className="number-cell">${totalDebts.toLocaleString()}</td>
-                  <td className="number-cell">${totalSavings.toLocaleString()}</td>
-                  <td className="number-cell" style={{ color: totalRemaining < 0 ? 'var(--color-stamp-red)' : 'var(--color-ink-blue)' }}>
-                    ${totalRemaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
       

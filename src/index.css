@@ -779,3 +779,58 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-binder-outer);
 }
+
+/* --- Horizontal Folder Month Tabs --- */
+.folder-tabs-container {
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 2px solid var(--color-paper-grid);
+  margin-bottom: 20px;
+  padding-top: 10px;
+  padding-left: 2px;
+  gap: 2px;
+  scrollbar-width: none; /* Firefox */
+}
+
+.folder-tabs-container::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.folder-month-tab {
+  background-color: var(--color-manila-dark);
+  border: 1px solid var(--color-paper-grid);
+  border-bottom: none;
+  border-radius: 8px 18px 0 0; /* Classic sloped index folder cut */
+  padding: 8px 14px;
+  font-family: var(--font-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  position: relative;
+  margin-right: -4px; /* Stack slightly for overlap tab effect */
+  z-index: 1;
+  transition: all 0.15s ease-in-out;
+  color: rgba(32, 30, 28, 0.6);
+  white-space: nowrap;
+}
+
+.folder-month-tab:hover {
+  background-color: var(--color-manila-light);
+  color: var(--color-ink-dark);
+  z-index: 2;
+}
+
+.folder-month-tab.active {
+  background-color: var(--color-paper-light);
+  color: var(--color-ink-dark);
+  border-top: 3px solid var(--color-amber-gold);
+  border-left: 1px solid var(--color-paper-grid);
+  border-right: 1px solid var(--color-paper-grid);
+  border-bottom: 2px solid var(--color-paper-light); /* Hide the border underneath it */
+  margin-bottom: -2px; /* Pull down precisely to overlap container's bottom border */
+  padding-top: 6px; /* Offset the 3px border-top height shift */
+  z-index: 3;
+}
+
