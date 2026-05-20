@@ -12,6 +12,11 @@ import TransactionTab from "./components/TransactionTab";
 import SettingsTab from "./components/SettingsTab";
 import Login from "./components/Login";
 
+import MainLayout from "./components/MainLayout";
+import Dashboard from "./components/Dashboard";
+import BudgetFolder from "./components/BudgetFolder";
+import TransactionModal from "./components/TransactionModal";
+
 import { initialUpcomingPayments, savingsGoals as initialGoals } from "./data/financialData";
 import { generateDemoTransactions } from "./data/demoDataGenerator";
 import { aggregateFinancialData } from "./data/financialDataSync";
@@ -52,7 +57,8 @@ const DEFAULT_BUDGET_LIMITS = {
 export default function App() {
   const [user, setUser] = useState(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [plannerSubTab, setPlannerSubTab] = useState("goals");
 
   // General ledger states
   const [transactions, setTransactions] = useState([]);
@@ -332,49 +338,57 @@ export default function App() {
 
   const renderActiveTab = () => {
     switch (activeTab) {
-      case "overview":
+      case "dashboard":
         return (
-          <OverviewTab 
-            upcomingPayments={upcomingPayments} 
-            onTogglePayment={handleTogglePayment}
-            cashFlowSummary={aggregatedData.cashFlowSummary}
-            investmentGrowthData={aggregatedData.investmentGrowthData}
-            thirtyDayBalance={aggregatedData.thirtyDayBalance}
+          <Dashboard 
+            transactions={transactions}
             creditCards={creditCards}
+            goals={goals}
           />
         );
-      case "transactions":
+      case "budget":
         return (
-          <TransactionTab 
+          <BudgetFolder 
             transactions={transactions}
+            budgetLimits={budgetLimits}
             categories={categories}
             onAddTransaction={handleAddTransaction}
             onDeleteTransaction={handleDeleteTransaction}
           />
         );
-      case "budget":
+      case "planner":
         return (
-          <BudgetTab 
-            monthlyBudgets={aggregatedData.monthlyBudgets} 
-            annualRunningBalance={aggregatedData.annualRunningBalance}
-            categoryBreakdown={aggregatedData.categoryBreakdown}
-            transactions={transactions}
-            budgetLimits={budgetLimits}
-          />
+          <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+            {/* Sloped inner folder dividers for Savings vs Investments */}
+            <div className="budget-tabs-container">
+              <button
+                className={`budget-month-tab ${plannerSubTab === "goals" ? "active" : ""}`}
+                onClick={() => setPlannerSubTab("goals")}
+              >
+                Milestone Savings
+              </button>
+              <button
+                className={`budget-month-tab ${plannerSubTab === "investments" ? "active" : ""}`}
+                onClick={() => setPlannerSubTab("investments")}
+              >
+                Investment Projections
+              </button>
+            </div>
+
+            <div className="budget-ledger-sheet">
+              {plannerSubTab === "goals" ? (
+                <GoalsTab 
+                  goals={goals} 
+                  onAddGoal={handleAddGoal} 
+                  onSliderChange={handleUpdateGoalSlider} 
+                />
+              ) : (
+                <InvestmentsTab investmentGrowthData={aggregatedData.investmentGrowthData} />
+              )}
+            </div>
+          </div>
         );
-      case "investments":
-        return <InvestmentsTab investmentGrowthData={aggregatedData.investmentGrowthData} />;
-      case "goals":
-        return (
-          <GoalsTab 
-            goals={goals} 
-            onAddGoal={handleAddGoal} 
-            onSliderChange={handleUpdateGoalSlider} 
-          />
-        );
-      case "reports":
-        return <ReportsTab categoryBreakdown={aggregatedData.categoryBreakdown} transactions={transactions} />;
-      case "setup":
+      case "settings":
         return (
           <SettingsTab
             categories={categories}
@@ -395,11 +409,10 @@ export default function App() {
         );
       default:
         return (
-          <OverviewTab 
-            upcomingPayments={upcomingPayments} 
-            onTogglePayment={handleTogglePayment}
-            cashFlowSummary={aggregatedData.cashFlowSummary}
-            investmentGrowthData={aggregatedData.investmentGrowthData}
+          <Dashboard 
+            transactions={transactions}
+            creditCards={creditCards}
+            goals={goals}
           />
         );
     }
@@ -419,142 +432,90 @@ export default function App() {
   }
 
   return (
-    <div className="folder-container">
-      {/* Binder Spine line aesthetic */}
-      <div className="binder-spine-line" />
+    <MainLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {/* Binder Header */}
+      <div className="folder-header">
+        <div className="folder-title-block">
+          <h1 className="folder-title-main">IVAN'S FINANCIAL HUB</h1>
+          <p className="folder-subtitle">
+            {isDemoMode ? "ANNUAL TREASURY GENERAL LEDGER — DEMO VISITOR" : `ANNUAL TREASURY GENERAL LEDGER — ID: ${user.email.toUpperCase()}`}
+          </p>
+        </div>
 
-      {/* Left Sidebar (Vertical Manila Folder Tabs) */}
-      <div className="folder-sidebar">
-        <button 
-          className={`folder-tab ${activeTab === "overview" ? "active" : ""}`}
-          onClick={() => setActiveTab("overview")}
-        >
-          <span className="folder-tab-text">Overview</span>
-        </button>
+        <div className="folder-badge-strip">
+          {/* Live Mode Indicator or Logout Stamp */}
+          <button
+            onClick={handleLogout}
+            className="stamp stamp-red"
+            style={{
+              fontSize: "10px",
+              cursor: "pointer",
+              border: "2px solid var(--color-stamp-red)",
+              backgroundColor: "rgba(158, 42, 43, 0.08)",
+              transform: "rotate(-3deg)",
+              fontFamily: "var(--font-typewriter)",
+              letterSpacing: "1.5px"
+            }}
+            title="Secure Lock & Exit Account"
+          >
+            [ Audit Lock-Out ]
+          </button>
 
-        <button 
-          className={`folder-tab ${activeTab === "transactions" ? "active" : ""}`}
-          onClick={() => setActiveTab("transactions")}
-        >
-          <span className="folder-tab-text">Transactions</span>
-        </button>
-
-        <button 
-          className={`folder-tab ${activeTab === "budget" ? "active" : ""}`}
-          onClick={() => setActiveTab("budget")}
-        >
-          <span className="folder-tab-text">Budget</span>
-        </button>
-
-        <button 
-          className={`folder-tab ${activeTab === "investments" ? "active" : ""}`}
-          onClick={() => setActiveTab("investments")}
-        >
-          <span className="folder-tab-text">Investments</span>
-        </button>
-
-        <button 
-          className={`folder-tab ${activeTab === "goals" ? "active" : ""}`}
-          onClick={() => setActiveTab("goals")}
-        >
-          <span className="folder-tab-text">Goals</span>
-        </button>
-
-        <button 
-          className={`folder-tab ${activeTab === "reports" ? "active" : ""}`}
-          onClick={() => setActiveTab("reports")}
-        >
-          <span className="folder-tab-text">Reports</span>
-        </button>
-
-        <button 
-          className={`folder-tab ${activeTab === "setup" ? "active" : ""}`}
-          onClick={() => setActiveTab("setup")}
-        >
-          <span className="folder-tab-text">Setup</span>
-        </button>
-      </div>
-
-      {/* Main Manila Paper Sheet Content */}
-      <div className="folder-body">
-        {/* Binder Header */}
-        <div className="folder-header">
-          <div className="folder-title-block">
-            <h1 className="folder-title-main">IVAN'S FINANCIAL HUB</h1>
-            <p className="folder-subtitle">
-              {isDemoMode ? "ANNUAL TREASURY GENERAL LEDGER — DEMO VISITOR" : `ANNUAL TREASURY GENERAL LEDGER — ID: ${user.email.toUpperCase()}`}
-            </p>
-          </div>
-
-          <div className="folder-badge-strip">
-            {/* Live Mode Indicator or Logout Stamp */}
-            <button
-              onClick={handleLogout}
-              className="stamp stamp-red"
-              style={{
-                fontSize: "10px",
-                cursor: "pointer",
-                border: "2px solid var(--color-stamp-red)",
-                backgroundColor: "rgba(158, 42, 43, 0.08)",
-                transform: "rotate(-3deg)",
-                fontFamily: "var(--font-typewriter)",
-                letterSpacing: "1.5px"
-              }}
-              title="Secure Lock & Exit Account"
-            >
-              [ Audit Lock-Out ]
-            </button>
-
-            {/* Profile badge */}
-            <div 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '12px', 
-                border: '1.5px solid var(--color-paper-grid)', 
-                borderRadius: '6px', 
-                padding: '6px 12px', 
-                backgroundColor: 'rgba(235, 220, 185, 0.15)' 
-              }}
-            >
-              <svg width="32" height="32" viewBox="0 0 32 32" style={{ borderRadius: '50%', backgroundColor: 'var(--color-manila-dark)', border: '1px solid var(--color-ink-dark)' }}>
-                <path d="M16,14 C18.7614237,14 21,11.7614237 21,9 C21,6.23857625 18.7614237,4 16,4 C13.2385763,4 11,6.23857625 11,9 C11,11.7614237 13.2385763,14 16,14 Z M16,16 C10.4771525,16 6,20.4771525 6,26 L26,26 C26,20.4771525 21.5228475,16 16,16 Z" fill="var(--color-ink-dark)" />
-              </svg>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', fontFamily: 'var(--font-accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {isDemoMode ? "Guest Comptroller" : user.email.split("@")[0].toUpperCase()}
-                </span>
-                <span style={{ fontSize: '9px', fontFamily: 'var(--font-ledger)', color: 'rgba(32,30,28,0.6)' }}>
-                  Ledger Comptroller
-                </span>
-              </div>
+          {/* Profile badge */}
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px', 
+              border: '1.5px solid var(--color-paper-grid)', 
+              borderRadius: '6px', 
+              padding: '6px 12px', 
+              backgroundColor: 'rgba(235, 220, 185, 0.15)' 
+            }}
+          >
+            <svg width="32" height="32" viewBox="0 0 32 32" style={{ borderRadius: '50%', backgroundColor: 'var(--color-manila-dark)', border: '1px solid var(--color-ink-dark)' }}>
+              <path d="M16,14 C18.7614237,14 21,11.7614237 21,9 C21,6.23857625 18.7614237,4 16,4 C13.2385763,4 11,6.23857625 11,9 C11,11.7614237 13.2385763,14 16,14 Z M16,16 C10.4771525,16 6,20.4771525 6,26 L26,26 C26,20.4771525 21.5228475,16 16,16 Z" fill="var(--color-ink-dark)" />
+            </svg>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '11px', fontWeight: 'bold', fontFamily: 'var(--font-accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {isDemoMode ? "Guest Comptroller" : user.email.split("@")[0].toUpperCase()}
+              </span>
+              <span style={{ fontSize: '9px', fontFamily: 'var(--font-ledger)', color: 'rgba(32,30,28,0.6)' }}>
+                Ledger Comptroller
+              </span>
             </div>
           </div>
         </div>
-
-        {/* Tab Content Paper View */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {renderActiveTab()}
-        </div>
-
-        {/* Tactile Page Footer elements */}
-        <div 
-          style={{ 
-            marginTop: 'auto', 
-            paddingTop: '20px', 
-            borderTop: '1px dashed var(--color-paper-grid)', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            fontSize: '11px', 
-            fontFamily: 'var(--font-ledger)',
-            color: 'rgba(32,30,28,0.5)'
-          }}
-        >
-          <span>AUTORIZADO POR REGISTRO GENERAL DE FINANZAS</span>
-          <span>FOLIO NO. 2026-XLSX-001</span>
-        </div>
       </div>
-    </div>
+
+      {/* Tab Content Paper View */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {renderActiveTab()}
+      </div>
+
+      {/* Tactile Page Footer elements */}
+      <div 
+        style={{ 
+          marginTop: 'auto', 
+          paddingTop: '20px', 
+          borderTop: '1px dashed var(--color-paper-grid)', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          fontSize: '11px', 
+          fontFamily: 'var(--font-ledger)',
+          color: 'rgba(32,30,28,0.5)'
+        }}
+      >
+        <span>AUTORIZADO POR REGISTRO GENERAL DE FINANZAS</span>
+        <span>FOLIO NO. 2026-XLSX-001</span>
+      </div>
+
+      {/* Floating Transaction Modal trigger FAB */}
+      <TransactionModal 
+        categories={categories}
+        onAddTransaction={handleAddTransaction}
+      />
+    </MainLayout>
   );
 }
