@@ -856,4 +856,166 @@ body {
   display: none; /* Disable the 4px horizontal top bar to let active tab merge perfectly */
 }
 
+/* --- Skeuomorphic Manila Folder Layout & Budget Styles --- */
+
+:root {
+  --color-manila-folder-active: #f4ebd0;
+  --color-manila-folder-inactive: #d1c7ac;
+}
+
+/* Filing Cabinet Main Layout */
+.cabinet-container {
+  display: flex;
+  min-height: 850px;
+  background-color: #252220; /* desktop background / filing cabinet outer body */
+  border-radius: 16px;
+  position: relative;
+  width: 100%;
+}
+
+.cabinet-sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-end;
+  width: 65px;
+  padding-top: 40px;
+  gap: 15px;
+  z-index: 10;
+  background-color: transparent;
+  position: relative;
+}
+
+.cabinet-tab {
+  width: 65px;
+  height: 140px;
+  background-color: var(--color-manila-folder-inactive);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-right: none;
+  border-radius: 12px 0 0 12px; /* rounded left edge tab */
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: -5px 3px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease-in-out;
+  margin-right: -1px; /* stick exactly to the main content container's left border */
+  position: relative;
+  z-index: 5;
+}
+
+.cabinet-tab-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-accent);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: rgba(32, 30, 28, 0.6);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.cabinet-tab:hover {
+  background-color: var(--color-manila-light);
+  transform: translateX(-4px);
+  z-index: 6;
+}
+
+.cabinet-tab.active {
+  background-color: var(--color-manila-folder-active);
+  width: 70px;
+  border-color: rgba(0, 0, 0, 0.15);
+  border-right: none;
+  z-index: 8;
+  box-shadow: -7px 5px 12px rgba(0, 0, 0, 0.2);
+  
+  .cabinet-tab-text {
+    color: var(--color-ink-dark);
+  }
+}
+
+.cabinet-content {
+  flex: 1;
+  background-color: var(--color-manila-folder-active);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0 12px 12px 12px;
+  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 35px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  z-index: 7;
+}
+
+/* Horizontal Months Manila Tabs inside BudgetFolder */
+.budget-tabs-container {
+  display: flex;
+  margin-bottom: 25px;
+  padding-left: 10px;
+  gap: 4px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 10;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.budget-tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+.budget-month-tab {
+  background-color: var(--color-manila-folder-inactive);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-bottom: none;
+  border-radius: 8px 18px 0 0; /* classic folder sloped cut */
+  padding: 10px 18px;
+  font-family: var(--font-accent);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: rgba(32, 30, 28, 0.6);
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  margin-bottom: -2px; /* pulls tab slightly down to hide bottom border line */
+  transition: all 0.2s ease-in-out;
+}
+
+.budget-month-tab:hover {
+  background-color: var(--color-manila-light);
+  color: var(--color-ink-dark);
+  transform: translateY(-2px);
+  z-index: 2;
+}
+
+.budget-month-tab.active {
+  background-color: var(--color-manila-folder-active);
+  border-color: rgba(0, 0, 0, 0.15);
+  border-bottom: 2px solid var(--color-manila-folder-active); /* seamlessly merge active tab into background */
+  color: var(--color-ink-dark);
+  padding-top: 12px;
+  z-index: 5;
+}
+
+.budget-month-tab.active:hover {
+  transform: none; /* Keep active month stable */
+}
+
+.budget-ledger-sheet {
+  background-color: #faf8f5;
+  border: 1px solid var(--color-paper-grid);
+  box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  padding: 24px;
+}
+
+.typewriter-num {
+  font-family: var(--font-ledger) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px;
+}
+
+
 

@@ -316,14 +316,11 @@ export default function SettingsTab({
                     <th>Credit Card Name</th>
                     <th style={{ width: "120px" }}>Limit ($)</th>
                     <th style={{ width: "120px" }}>Balance ($)</th>
-                    <th style={{ width: "120px" }}>Available Credit ($)</th>
                     <th style={{ textAlign: "center", width: "80px" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {creditCards.map((c) => {
-                    const available = Math.max(0, c.limit - c.balance);
-
                     return (
                       <tr key={c.id}>
                         <td>
@@ -376,9 +373,6 @@ export default function SettingsTab({
                             onBlur={(e) => e.target.style.border = "1px dashed transparent"}
                           />
                         </td>
-                        <td style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold" }}>
-                          ${available.toLocaleString()}
-                        </td>
                         <td style={{ textAlign: "center" }}>
                           <button
                             onClick={() => handleDeleteCard(c.id)}
@@ -401,7 +395,7 @@ export default function SettingsTab({
                   })}
                   {creditCards.length === 0 && (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
+                      <td colSpan="4" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
                         No credit cards registered in available portfolio limits registry.
                       </td>
                     </tr>
