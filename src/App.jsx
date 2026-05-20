@@ -7,7 +7,7 @@ import OverviewTab from "./components/OverviewTab";
 import BudgetTab from "./components/BudgetTab";
 import InvestmentsTab from "./components/InvestmentsTab";
 import GoalsTab from "./components/GoalsTab";
-import ReportsTab from "./components/ReportsTab";
+import ReportsFolder from "./components/ReportsFolder";
 import TransactionTab from "./components/TransactionTab";
 import SetupTab from "./components/SetupTab";
 import Login from "./components/Login";
@@ -354,6 +354,13 @@ export default function App() {
             categories={categories}
             onAddTransaction={handleAddTransaction}
             onDeleteTransaction={handleDeleteTransaction}
+          />
+        );
+      case "reports":
+        return (
+          <ReportsFolder 
+            transactions={transactions}
+            goals={goals}
           />
         );
       case "planner":

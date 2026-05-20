@@ -13,6 +13,7 @@ export default function MainLayout({ activeTab, setActiveTab, children }) {
   const tabs = [
     { id: "dashboard", label: "Dashboard" },
     { id: "budget", label: "Budget" },
+    { id: "reports", label: "Reports" },
     { id: "planner", label: "Planner" },
     { id: "setup", label: "Setup" }
   ];
