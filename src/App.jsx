@@ -344,6 +344,7 @@ export default function App() {
             transactions={transactions}
             creditCards={creditCards}
             goals={goals}
+            upcomingPayments={upcomingPayments}
           />
         );
       case "budget":
@@ -420,6 +421,7 @@ export default function App() {
             transactions={transactions}
             creditCards={creditCards}
             goals={goals}
+            upcomingPayments={upcomingPayments}
           />
         );
     }

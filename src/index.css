@@ -9,20 +9,23 @@
   --color-manila-dark: #ebdcb9;
   --color-paper-light: #fdfcf7;
   --color-paper-grid: #eaddc3;
+  --color-paper-edge: #b5a98a; /* mimic soft paper boundaries */
   --color-ink-dark: #201e1c;
   --color-ink-blue: #162a45;
-  --color-stamp-red: #9e2a2b;
-  --color-stamp-green: #256046;
+  --color-stamp-red: #7f1d1d; /* darker accessible ink red */
+  --color-stamp-green: #14532d; /* darker accessible ink green */
   --color-amber-gold: #b27a18;
   --color-silver: #a1a1aa;
   
   /* Drop Shadows & Materials */
+  --shadow-layered-soft: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
   --shadow-tactile-heavy: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 
                            0 10px 20px -5px rgba(0, 0, 0, 0.3),
                            inset 0 1px 0 rgba(255, 255, 255, 0.4);
   --shadow-tactile-medium: 0 12px 20px -8px rgba(40, 30, 20, 0.25), 
                             0 4px 6px -2px rgba(40, 30, 20, 0.2);
-  --shadow-paper: 2px 2px 8px rgba(40, 30, 20, 0.12),
+  --shadow-paper: 0 4px 6px rgba(0, 0, 0, 0.05), 
+                  0 1px 3px rgba(0, 0, 0, 0.1),
                   inset 0 0 40px rgba(253, 252, 247, 0.8);
   --shadow-inset-groove: inset 0 2px 5px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.6);
 
@@ -347,12 +350,13 @@ body {
 /* Card base resembling stacked mechanical blueprint sheets */
 .tactile-card {
   background-color: var(--color-paper-light);
-  border: 1px solid var(--color-paper-grid);
+  border: 1px solid var(--color-paper-edge);
   border-radius: 8px;
   box-shadow: var(--shadow-paper);
   padding: 24px;
   position: relative;
   overflow: hidden;
+  transition: all 0.2s ease-in-out;
 }
 
 .tactile-card::before {
@@ -480,6 +484,10 @@ body {
     transform: translateX(4px);
     background-color: var(--color-manila-light);
   }
+  
+  &:active {
+    transform: translateX(2px) scale(0.98);
+  }
 }
 
 .payment-item-left {
@@ -552,7 +560,7 @@ body {
 /* --- Ledger Grid Tables --- */
 .ledger-table-container {
   overflow-x: auto;
-  border: 1px solid var(--color-paper-grid);
+  border: 1px solid var(--color-paper-edge);
   border-radius: 6px;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
 }
@@ -573,13 +581,13 @@ body {
   letter-spacing: 1px;
   font-size: 11px;
   padding: 12px 16px;
-  border-bottom: 2px solid var(--color-ink-dark);
+  border-bottom: 2px solid var(--color-paper-edge);
   color: var(--color-ink-dark);
 }
 
 .ledger-table td {
   padding: 12px 16px;
-  border-bottom: 1px dashed var(--color-paper-grid);
+  border-bottom: 1px dashed var(--color-paper-edge);
   font-family: var(--font-sans);
 }
 
@@ -587,17 +595,18 @@ body {
   background-color: rgba(235, 220, 185, 0.15);
 }
 
-.ledger-table .number-cell {
+.ledger-table .number-cell,
+.number-cell {
   font-family: var(--font-ledger);
   font-weight: 700;
-  text-align: right;
+  text-align: right !important;
 }
 
 .ledger-table .total-row {
   background-color: var(--color-manila-light);
   font-weight: bold;
-  border-top: 2px double var(--color-ink-dark);
-  border-bottom: 2px double var(--color-ink-dark);
+  border-top: 2px double var(--color-paper-edge);
+  border-bottom: 2px double var(--color-paper-edge);
   
   td {
     border-bottom: none;
@@ -703,7 +712,7 @@ body {
 
 .sub-tab-btn {
   background-color: var(--color-manila-light);
-  border: 1px solid var(--color-paper-grid);
+  border: 1px solid var(--color-paper-edge);
   border-radius: 4px;
   padding: 6px 12px;
   font-family: var(--font-accent);
@@ -716,6 +725,11 @@ body {
   
   &:hover {
     background-color: var(--color-manila-dark);
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(1px) scale(0.98);
   }
   
   &.active {
@@ -890,14 +904,14 @@ body {
   width: 65px;
   height: 140px;
   background-color: var(--color-manila-folder-inactive);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-paper-edge);
   border-right: none;
   border-radius: 12px 0 0 12px; /* rounded left edge tab */
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: -5px 3px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: -3px 3px 5px rgba(0,0,0,0.05), -1px 1px 2px rgba(0,0,0,0.1);
   transition: all 0.2s ease-in-out;
   margin-right: -1px; /* stick exactly to the main content container's left border */
   position: relative;
@@ -917,18 +931,22 @@ body {
 }
 
 .cabinet-tab:hover {
-  background-color: var(--color-manila-light);
-  transform: translateX(-4px);
-  z-index: 6;
+  background-color: #faf7ef;
+  transform: translateX(-4px) translateY(-1px);
+  z-index: 9;
+}
+
+.cabinet-tab:active {
+  transform: translateX(-2px) scale(0.98);
 }
 
 .cabinet-tab.active {
   background-color: var(--color-manila-folder-active);
   width: 70px;
-  border-color: rgba(0, 0, 0, 0.15);
+  border-color: var(--color-paper-edge);
   border-right: none;
   z-index: 8;
-  box-shadow: -7px 5px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: -4px 4px 8px rgba(0,0,0,0.08), -2px 2px 4px rgba(0,0,0,0.12);
   
   .cabinet-tab-text {
     color: var(--color-ink-dark);
@@ -938,9 +956,9 @@ body {
 .cabinet-content {
   flex: 1;
   background-color: var(--color-manila-folder-active);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-paper-edge);
   border-radius: 0 12px 12px 12px;
-  box-shadow: 8px 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08);
   padding: 35px;
   position: relative;
   display: flex;
@@ -954,7 +972,7 @@ body {
   margin-bottom: 25px;
   padding-left: 10px;
   gap: 4px;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+  border-bottom: 2px solid var(--color-paper-edge);
   position: relative;
   z-index: 10;
   overflow-x: auto;
@@ -967,7 +985,7 @@ body {
 
 .budget-month-tab {
   background-color: var(--color-manila-folder-inactive);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-paper-edge);
   border-bottom: none;
   border-radius: 8px 18px 0 0; /* classic folder sloped cut */
   padding: 10px 18px;
@@ -984,15 +1002,19 @@ body {
 }
 
 .budget-month-tab:hover {
-  background-color: var(--color-manila-light);
+  background-color: #faf7ef;
   color: var(--color-ink-dark);
   transform: translateY(-2px);
   z-index: 2;
 }
 
+.budget-month-tab:active {
+  transform: translateY(1px) scale(0.98);
+}
+
 .budget-month-tab.active {
   background-color: var(--color-manila-folder-active);
-  border-color: rgba(0, 0, 0, 0.15);
+  border-color: var(--color-paper-edge);
   border-bottom: 2px solid var(--color-manila-folder-active); /* seamlessly merge active tab into background */
   color: var(--color-ink-dark);
   padding-top: 12px;
@@ -1005,8 +1027,8 @@ body {
 
 .budget-ledger-sheet {
   background-color: #faf8f5;
-  border: 1px solid var(--color-paper-grid);
-  box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-paper-edge);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.03), 0 1px 3px rgba(0,0,0,0.06);
   border-radius: 6px;
   padding: 24px;
 }
@@ -1035,15 +1057,20 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .fab-trigger:hover {
-  transform: scale(1.1) rotate(90deg);
-  background-color: #059669;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  transform: scale(1.05) translateY(-2px) rotate(90deg);
+  background-color: #166534; /* slightly darker fresh ink green */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.fab-trigger:active {
+  transform: scale(0.95) translateY(1px) rotate(90deg);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .fab-plus {
@@ -1078,9 +1105,9 @@ body {
 /* Manila Folder Card Dialog */
 .modal-card.manila-folder-modal {
   position: relative;
-  border: 2px solid rgba(0, 0, 0, 0.18);
+  border: 2px solid var(--color-paper-edge);
   border-radius: 0 12px 12px 12px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   width: 90%;
   max-width: 550px;
   padding: 35px;
@@ -1107,7 +1134,7 @@ body {
   height: 30px;
   width: 170px;
   background-color: var(--color-manila-folder-active);
-  border: 2px solid rgba(0, 0, 0, 0.18);
+  border: 2px solid var(--color-paper-edge);
   border-bottom: none;
   border-radius: 8px 22px 0 0;
   display: flex;
@@ -1201,7 +1228,7 @@ body {
 .form-input {
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid var(--color-paper-grid);
+  border: 1px solid var(--color-paper-edge);
   border-radius: 4px;
   background-color: var(--color-paper-light);
   color: var(--color-ink-dark);
@@ -1220,6 +1247,11 @@ body {
 
 select.form-input {
   cursor: pointer;
+}
+
+input[type="number"] {
+  text-align: right;
+  font-family: var(--font-ledger);
 }
 
 /* Modal form controls alignment */
@@ -1251,7 +1283,12 @@ select.form-input {
 }
 
 .btn-cancel:hover {
-  background-color: rgba(158, 42, 43, 0.08);
+  background-color: rgba(127, 29, 29, 0.08);
+  transform: translateY(-1px);
+}
+
+.btn-cancel:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn-submit {
@@ -1261,9 +1298,14 @@ select.form-input {
 }
 
 .btn-submit:hover {
-  background-color: #059669;
+  background-color: #15803d;
   transform: translateY(-1px);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-submit:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .modal-stamp-container {
@@ -1276,6 +1318,188 @@ select.form-input {
   user-select: none;
 }
 
+/* --- Mobile Viewports Responsiveness & Bottom Navigation --- */
+@media (max-width: 768px) {
+  #root {
+    padding: 12px;
+  }
+
+  .cabinet-container {
+    flex-direction: column;
+    min-height: auto;
+    padding-bottom: 80px; /* leaves breathing room above bottom bar */
+  }
+
+  .cabinet-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 65px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 6px;
+    background-color: var(--color-manila-dark);
+    border-top: 2px solid var(--color-paper-edge);
+    border-left: none;
+    border-right: none;
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+    gap: 2px;
+  }
+
+  .cabinet-tab {
+    width: auto;
+    flex: 1;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid rgba(32, 30, 28, 0.08);
+    box-shadow: none;
+    margin-right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: transparent;
+  }
+
+  .cabinet-tab:last-child {
+    border-right: none;
+  }
+
+  .cabinet-tab:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .cabinet-tab:active {
+    transform: translateY(1px) scale(0.96);
+  }
+
+  .cabinet-tab-text {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+
+  .cabinet-tab.active {
+    background-color: var(--color-manila-folder-active);
+    border-top: 4px solid var(--color-amber-gold);
+    border-bottom: none;
+    border-left: none;
+    border-right: 1px solid rgba(32, 30, 28, 0.08);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    width: auto;
+    height: 100%;
+  }
+
+  .cabinet-content {
+    border-radius: 12px;
+    padding: 20px 14px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    border: 1px solid var(--color-paper-edge);
+  }
+
+  /* Compact spacing for cards and charts */
+  .tactile-card {
+    padding: 16px !important;
+    grid-column: span 1 !important; /* overrides grid column spans on single col grid */
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .modal-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .form-group.full-width {
+    grid-column: span 1 !important;
+  }
+}
+
+
+
+/* ═══════════════════════════════════════════════════════
+   RECESSED PAPER-CUTOUT SELECT (Category Trend Picker)
+═══════════════════════════════════════════════════════ */
+
+.paper-select-recessed {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-family: var(--font-accent);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ink-dark);
+  background-color: var(--color-paper-light);
+  border: 1.5px solid var(--color-paper-edge);
+  border-radius: 5px;
+  padding: 8px 32px 8px 12px;
+  box-shadow: var(--shadow-inset-groove);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  /* Custom dropdown chevron drawn as a CSS gradient arrow */
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-ink-dark) 50%),
+    linear-gradient(135deg, var(--color-ink-dark) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) center,
+    calc(100% - 10px) center;
+  background-size:
+    6px 6px,
+    6px 6px;
+  background-repeat: no-repeat;
+}
+
+.paper-select-recessed:hover {
+  border-color: var(--color-ink-dark);
+  box-shadow: var(--shadow-inset-groove), 0 0 0 2px rgba(22,42,69,0.06);
+}
+
+.paper-select-recessed:focus {
+  outline: none;
+  border-color: var(--color-ink-blue);
+  box-shadow: var(--shadow-inset-groove), 0 0 0 3px rgba(22,42,69,0.1);
+}
+
+.paper-select-recessed option {
+  font-family: var(--font-accent);
+  font-size: 12px;
+  padding: 6px 10px;
+  background-color: var(--color-paper-light);
+  color: var(--color-ink-dark);
+}
+
+/* Annual total badge used inside the category trend card */
+.category-trend-annual-total {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1.5px dashed var(--color-paper-edge);
+  border-radius: 4px;
+  background-color: rgba(181,169,138,0.06);
+  font-family: var(--font-ledger);
+  font-size: 11px;
+  color: rgba(32,30,28,0.6);
+}
+
+.category-trend-annual-total strong {
+  font-family: var(--font-ledger);
+  font-size: 13px;
+  color: var(--color-ink-dark);
+}
 
 
 

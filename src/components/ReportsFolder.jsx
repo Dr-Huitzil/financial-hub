@@ -10,6 +10,8 @@ import {
   Legend, 
   LineChart, 
   Line, 
+  AreaChart,
+  Area,
   PieChart, 
   Pie, 
   Cell 
@@ -96,8 +98,41 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
     "#6b7280"  // Graphite Grey (for "Other")
   ];
 
-  // 3. DATA FORMATTING FOR NET WORTH & ACCOUNTS (LINE CHART)
-  // Re-creates checking and savings pool balances over 12 months (spider legs)
+  // 3. HEARTBEAT — Daily running balance from all transactions, sorted chronologically
+  // Each point is one calendar day that has at least one transaction event
+  const heartbeatData = (() => {
+    if (transactions.length === 0) return [];
+
+    // Start balance is the net before the first transaction
+    let runningBalance = 0;
+
+    // Sort all transactions by date ascending
+    const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Build a map: date-string → net delta that day
+    const dayMap = {};
+    sorted.forEach(tx => {
+      const key = tx.date ? tx.date.slice(0, 10) : null;
+      if (!key) return;
+      const amt = parseFloat(tx.amount || 0);
+      const delta = tx.type === "Income" ? amt : -amt;
+      dayMap[key] = (dayMap[key] || 0) + delta;
+    });
+
+    // Convert to array of { day, balance } preserving order
+    const days = Object.keys(dayMap).sort();
+    const points = days.map(day => {
+      runningBalance += dayMap[day];
+      return {
+        day: day.slice(5), // "MM-DD"
+        balance: Math.round(runningBalance * 100) / 100,
+      };
+    });
+
+    return points;
+  })();
+
+  // ─── Legacy line data kept for the spider legs line chart (still used below) ───
   let checkingAcc = 12547.32;
   let savingsAcc = 4500.00;
   const lineData = monthlyBudgets.map((m, idx) => {
@@ -240,69 +275,62 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
             </div>
           </div>
 
-          {/* CARD 3: NET WORTH & ACCOUNTS (LineChart over 12 Months) */}
+          {/* CARD 3: HEARTBEAT — Daily Running Balance (AreaChart) */}
           <div className="tactile-card" style={{ gridColumn: "span 2", backgroundColor: "#fefdfb", border: "1px dashed var(--color-paper-grid)", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
               <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
-                Net Worth & Account Placements (Spider Legs PLOT)
+                Heartbeat — Daily Running Balance
               </span>
-              <span className="stamp stamp-blue" style={{ fontSize: "7px", transform: "rotate(-1deg)" }}>PORTFOLIO GRAPH</span>
+              <span className="stamp stamp-blue" style={{ fontSize: "7px", transform: "rotate(-1deg)" }}>LIVE PULSE</span>
             </div>
 
             <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.7)", marginBottom: "15px" }}>
-              Sharp linear plots (no curve, hand-drawn look) tracking Checking reserves, savings goals, and liquid Net Worth.
+              Sharp linear area chart tracing the account balance day-by-day. Each payday spike and bill drop creates the characteristic heartbeat pulse.
             </p>
 
             <div style={{ width: "100%", height: "230px" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={lineData} margin={{ top: 10, right: 15, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,41,59,0.08)" />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="var(--color-ink-dark)" 
-                    tick={{ fontFamily: "var(--font-accent)", fontSize: 9, fill: "rgba(30,41,59,0.7)" }} 
-                  />
-                  <YAxis 
-                    stroke="var(--color-ink-dark)" 
-                    tick={{ fontFamily: "var(--font-ledger)", fontSize: 9, fill: "rgba(30,41,59,0.7)" }} 
-                    domain={['auto', 'auto']}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={20}
-                    wrapperStyle={{ fontFamily: "var(--font-accent)", fontSize: 10, paddingTop: 10 }}
-                  />
-                  {/* Thin sharp linear lines with no curve */}
-                  <Line 
-                    type="linear" 
-                    dataKey="Net Worth" 
-                    stroke="var(--color-ink-blue)" 
-                    strokeWidth={2} 
-                    dot={{ r: 4, strokeWidth: 1.5, fill: "#faf8f5" }}
-                    activeDot={{ r: 6 }} 
-                    name="Consolidated Net Worth" 
-                  />
-                  <Line 
-                    type="linear" 
-                    dataKey="Checking Account" 
-                    stroke="#0f766e" 
-                    strokeWidth={1.5} 
-                    strokeDasharray="4 4"
-                    dot={{ r: 3, strokeWidth: 1, fill: "#faf8f5" }}
-                    name="Checking Reserves" 
-                  />
-                  <Line 
-                    type="linear" 
-                    dataKey="Savings Pool" 
-                    stroke="#b45309" 
-                    strokeWidth={1.5} 
-                    strokeDasharray="2 2"
-                    dot={{ r: 3, strokeWidth: 1, fill: "#faf8f5" }}
-                    name="Savings Milestones" 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {heartbeatData.length < 2 ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontFamily: "var(--font-ledger)", fontSize: "12px", color: "rgba(32,30,28,0.4)", fontStyle: "italic" }}>
+                  Post transactions to generate the heartbeat chart.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={heartbeatData} margin={{ top: 10, right: 15, left: -10, bottom: 5 }}>
+                    <defs>
+                      {/* Highly transparent muted fill beneath the line */}
+                      <linearGradient id="heartbeatFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#1e293b" stopOpacity={0.08} />
+                        <stop offset="95%" stopColor="#1e293b" stopOpacity={0.01} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,41,59,0.07)" />
+                    <XAxis
+                      dataKey="day"
+                      stroke="var(--color-ink-dark)"
+                      tick={{ fontFamily: "var(--font-ledger)", fontSize: 8, fill: "rgba(30,41,59,0.6)" }}
+                      interval={Math.max(1, Math.floor(heartbeatData.length / 12))}
+                    />
+                    <YAxis
+                      stroke="var(--color-ink-dark)"
+                      tick={{ fontFamily: "var(--font-ledger)", fontSize: 9, fill: "rgba(30,41,59,0.6)" }}
+                      domain={['auto', 'auto']}
+                      tickFormatter={v => `$${(v / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    {/* Sharp linear line — the 'heartbeat' — dark slate ink */}
+                    <Area
+                      type="linear"
+                      dataKey="balance"
+                      stroke="#1e293b"
+                      strokeWidth={1.5}
+                      fill="url(#heartbeatFill)"
+                      dot={false}
+                      activeDot={{ r: 5, strokeWidth: 1.5, fill: "#faf8f5", stroke: "#1e293b" }}
+                      name="Running Balance"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 

@@ -79,7 +79,89 @@ export default function BudgetFolder({
     if (!tx.date) return false;
     const txDateObj = new Date(tx.date);
     return txDateObj.getMonth() === activeMonthIndex;
-  });
+  }).sort((a, b) => new Date(a.date) - new Date(b.date)); // sort ascending by date
+
+  /**
+   * Returns the "week bucket" number for a given day-of-month:
+   *   1-7  → week 1,  8-14 → week 2,  15-21 → week 3,  22-28 → week 4,  29+ → week 5
+   */
+  const getWeekBucket = (isoDate) => {
+    if (!isoDate) return 0;
+    const day = new Date(isoDate).getDate();
+    return Math.ceil(day / 7);
+  };
+
+  /**
+   * Render the monthly ledger rows, inserting a subtle week-break separator
+   * row whenever consecutive transactions cross into a new week bucket.
+   */
+  const renderLedgerRows = () => {
+    if (monthlyTx.length === 0) {
+      return (
+        <tr>
+          <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "30px", color: "rgba(32,30,28,0.5)" }}>
+            No ledger records filed under {activeMonthName} 2026.
+          </td>
+        </tr>
+      );
+    }
+
+    const rows = [];
+    let prevWeek = null;
+
+    monthlyTx.forEach((tx, idx) => {
+      const thisWeek = getWeekBucket(tx.date);
+
+      // Insert week-break separator when the week bucket changes (but not before the first row)
+      if (prevWeek !== null && thisWeek !== prevWeek) {
+        rows.push(
+          <tr key={`week-break-${idx}`} aria-hidden="true">
+            <td
+              colSpan="6"
+              style={{
+                padding: 0,
+                borderBottom: "2px dashed #b5a98a",
+                backgroundColor: "rgba(181,169,138,0.07)",
+                height: "4px",
+              }}
+            />
+          </tr>
+        );
+      }
+
+      prevWeek = thisWeek;
+
+      rows.push(
+        <tr key={tx.id}>
+          <td className="typewriter-num">{tx.date}</td>
+          <td style={{ fontWeight: "bold" }}>{tx.description}</td>
+          <td>{tx.category}</td>
+          <td style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.7 }}>{tx.type}</td>
+          <td className="number-cell typewriter-num" style={{ color: tx.type === "Income" ? "var(--color-stamp-green)" : "inherit" }}>
+            {tx.type === "Income" ? "+" : "-"}${parseFloat(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </td>
+          <td style={{ textAlign: "center" }}>
+            <button
+              onClick={() => onDeleteTransaction && onDeleteTransaction(tx.id)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--color-stamp-red)",
+                cursor: "pointer",
+                fontFamily: "var(--font-typewriter)",
+                fontSize: "11px",
+                fontWeight: "bold"
+              }}
+            >
+              [VOID]
+            </button>
+          </td>
+        </tr>
+      );
+    });
+
+    return rows;
+  };
 
   // Calculate totals
   const totalIncome = monthlyTx
@@ -229,40 +311,7 @@ export default function BudgetFolder({
                 </tr>
               </thead>
               <tbody>
-                {monthlyTx.map((tx) => (
-                  <tr key={tx.id}>
-                    <td className="typewriter-num">{tx.date}</td>
-                    <td style={{ fontWeight: "bold" }}>{tx.description}</td>
-                    <td>{tx.category}</td>
-                    <td style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.7 }}>{tx.type}</td>
-                    <td className="number-cell typewriter-num" style={{ color: tx.type === "Income" ? "var(--color-stamp-green)" : "inherit" }}>
-                      {tx.type === "Income" ? "+" : "-"}${parseFloat(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <button
-                        onClick={() => onDeleteTransaction && onDeleteTransaction(tx.id)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "var(--color-stamp-red)",
-                          cursor: "pointer",
-                          fontFamily: "var(--font-typewriter)",
-                          fontSize: "11px",
-                          fontWeight: "bold"
-                        }}
-                      >
-                        [VOID]
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {monthlyTx.length === 0 && (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "30px", color: "rgba(32,30,28,0.5)" }}>
-                      No ledger records filed under {activeMonthName} 2026.
-                    </td>
-                  </tr>
-                )}
+                {renderLedgerRows()}
               </tbody>
             </table>
           </div>

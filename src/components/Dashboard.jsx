@@ -1,301 +1,596 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 /**
- * Dashboard Component
- * Contains three high-level skeuomorphic card containers:
- * 1. Cash Flow Summary: Income, Expenses, Bills, Debts, Savings, and Remaining Cash.
- * 2. 50/30/20 Budget Breakdown: Analysis of Essentials (Needs), Personal (Wants), and Reserve (Savings).
- * 3. Net Worth Tracker: Live asset and liability balancing sheet.
- * 
- * @param {Array} transactions - List of raw transaction vouchers
- * @param {Array} creditCards - Active credit card portfolio assets
- * @param {Array} goals - Registered savings milestones
+ * Dashboard Component — Actionable Command Center
+ *
+ * Three skeuomorphic paper cards:
+ *   1. "Safe to Spend"  — prominent monospaced number: balance minus upcoming bills
+ *   2. "Upcoming Docket" — next 5 upcoming recurring bills
+ *   3. "Recent Activity" — 5 most recent transactions (mini ledger)
+ *
+ * @param {Array}  transactions     - Raw transaction vouchers
+ * @param {Array}  creditCards      - Active credit card assets
+ * @param {Array}  goals            - Registered savings milestones
+ * @param {Array}  upcomingPayments - Scheduled recurring obligations
  */
-export default function Dashboard({ 
-  transactions = [], 
-  creditCards = [], 
-  goals = [] 
+export default function Dashboard({
+  transactions = [],
+  creditCards = [],
+  goals = [],
+  upcomingPayments = [],
 }) {
-  
-  // ==========================================
-  // DYNAMIC CALCULATIONS FROM REAL-TIME DATA
-  // ==========================================
-  
-  // 1. Cash Flow totals
-  const totalIncome = transactions
-    .filter(tx => tx.type === "Income")
-    .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
 
-  const totalExpenses = transactions
-    .filter(tx => tx.type === "Expense")
-    .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+  // ─── SAFE TO SPEND ────────────────────────────────────────────────────────
+  // Current checking balance = sum of income − sum of all outflows
+  const totalIncome = useMemo(() =>
+    transactions.filter(tx => tx.type === "Income")
+      .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0),
+    [transactions]
+  );
 
-  const totalBills = transactions
-    .filter(tx => tx.type === "Bill")
-    .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+  const totalOutflows = useMemo(() =>
+    transactions.filter(tx => tx.type !== "Income")
+      .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0),
+    [transactions]
+  );
 
-  const totalDebts = transactions
-    .filter(tx => tx.type === "Debt")
-    .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+  const currentBalance = totalIncome - totalOutflows;
 
-  const totalSavings = goals.reduce((sum, g) => sum + parseFloat(g.current || 0), 0);
+  // Upcoming bills = unpaid payments sorted by due-date (next 5 shown)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const totalOutflows = totalExpenses + totalBills + totalDebts;
-  const remainingCash = totalIncome - totalOutflows;
+  const upcomingUnpaid = useMemo(() =>
+    upcomingPayments
+      .filter(p => !p.paid && !p.isIncome && new Date(p.dueDate) >= today)
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
+    [upcomingPayments]
+  );
 
-  // 2. 50/30/20 Budgeting Rules
-  // Needs: Bills + Debts
-  // Wants: Expenses
-  // Savings: Milestone Goals / Reserves
-  const needsSpent = totalBills + totalDebts;
-  const wantsSpent = totalExpenses;
-  const savingsSpent = totalSavings;
-  const grandTotalAllocation = needsSpent + wantsSpent + savingsSpent;
+  const next5Bills = upcomingUnpaid.slice(0, 5);
+  const upcomingBillTotal = upcomingUnpaid.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
 
-  const needsPercentage = grandTotalAllocation > 0 ? Math.round((needsSpent / grandTotalAllocation) * 100) : 0;
-  const wantsPercentage = grandTotalAllocation > 0 ? Math.round((wantsSpent / grandTotalAllocation) * 100) : 0;
-  const savingsPercentage = grandTotalAllocation > 0 ? Math.round((savingsSpent / grandTotalAllocation) * 100) : 0;
+  const safeToSpend = currentBalance - upcomingBillTotal;
+  const safePositive = safeToSpend >= 0;
 
-  // 3. Net Worth Tracking
-  // Assets: Net remaining safe cash + cumulative registered goals balances
-  const totalAssets = Math.max(0, remainingCash) + totalSavings;
-  // Liabilities: Sum of all credit card debts
-  const totalLiabilities = creditCards.reduce((sum, c) => sum + parseFloat(c.balance || 0), 0);
-  const netWorth = totalAssets - totalLiabilities;
+  // ─── RECENT ACTIVITY ──────────────────────────────────────────────────────
+  const recent5 = useMemo(() =>
+    [...transactions]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5),
+    [transactions]
+  );
+
+  // ─── HELPERS ──────────────────────────────────────────────────────────────
+  const fmt = (n, opts = {}) =>
+    n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2, ...opts });
+
+  const fmtDate = (iso) => {
+    if (!iso) return "—";
+    const d = new Date(iso + "T12:00:00"); // avoid UTC offset shift
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  const daysUntil = (iso) => {
+    const due = new Date(iso + "T12:00:00");
+    const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return "Today";
+    if (diff === 1) return "Tomorrow";
+    return `${diff}d`;
+  };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
-      
-      {/* Overview Card Header */}
-      <div className="tactile-card" style={{ border: "2px solid var(--color-ink-dark)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+
+      {/* ── Folder title stamp bar ── */}
+      <div
+        className="tactile-card"
+        style={{
+          border: "2px solid var(--color-ink-dark)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div>
-          <h2 style={{ fontFamily: "var(--font-accent)", fontSize: "14px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
-            Annual Treasury Dashboard & Macro Ledger
+          <h2
+            style={{
+              fontFamily: "var(--font-accent)",
+              fontSize: "14px",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              margin: 0,
+            }}
+          >
+            Command Center — Daily Docket
           </h2>
-          <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "rgba(32,30,28,0.7)", fontFamily: "var(--font-sans)" }}>
-            Authorized comptroller audit overview. High-level liquidity summaries, target metrics, and total portfolio valuation.
+          <p
+            style={{
+              margin: "5px 0 0 0",
+              fontSize: "12px",
+              color: "rgba(32,30,28,0.65)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Actionable financial snapshot: safe cash position, upcoming obligations, and latest vouchers.
           </p>
         </div>
-        <span className="stamp stamp-blue" style={{ transform: "rotate(-3deg)", fontSize: "9px" }}>
-          MACRO RECONCILED
+        <span
+          className="stamp stamp-blue"
+          style={{ transform: "rotate(-3deg)", fontSize: "9px" }}
+        >
+          DAILY RECONCILED
         </span>
       </div>
 
-      {/* CARD 1: Cash Flow Summary */}
-      <div className="tactile-card">
-        <div className="card-title">
-          <span>Cash Flow Summary Sheet</span>
-          <span className="stamp stamp-green" style={{ fontSize: "8px", transform: "rotate(1deg)" }}>LIQUIDITY</span>
-        </div>
+      {/* ── 3-column grid on wide screens, stacked on mobile ── */}
+      <div
+        className="overview-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: "24px",
+          alignItems: "start",
+        }}
+      >
 
-        <p style={{ fontSize: "12.5px", color: "rgba(32,30,28,0.75)", marginBottom: "20px", fontFamily: "var(--font-sans)" }}>
-          Summary ledger containing dynamic aggregated records of all incoming and outgoing capital flows.
-        </p>
-
-        <div className="metrics-row" style={{ marginBottom: "20px" }}>
-          <div className="metric-stamp-card positive">
-            <span className="metric-stamp-label">Total Revenue (Income)</span>
-            <span className="metric-stamp-value typewriter-num">
-              ${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        {/* ══════════════════════════════════════════════
+            CARD 1 — SAFE TO SPEND
+        ══════════════════════════════════════════════ */}
+        <div
+          className="tactile-card"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            gridColumn: "1",
+          }}
+        >
+          {/* Card header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              borderBottom: "1px dashed var(--color-paper-grid)",
+              paddingBottom: "10px",
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontFamily: "var(--font-accent)",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.8px",
+                  fontWeight: "bold",
+                }}
+              >
+                Safe to Spend
+              </span>
+              <p
+                style={{
+                  margin: "3px 0 0 0",
+                  fontSize: "10.5px",
+                  color: "rgba(32,30,28,0.55)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Balance minus upcoming bills
+              </p>
+            </div>
+            <span
+              className={`stamp ${safePositive ? "stamp-green" : "stamp-red"}`}
+              style={{ fontSize: "7px", transform: "rotate(1.5deg)" }}
+            >
+              {safePositive ? "SOLVENT" : "DEFICIT"}
             </span>
           </div>
 
-          <div className="metric-stamp-card negative">
-            <span className="metric-stamp-label">Total Outflows (Debits)</span>
-            <span className="metric-stamp-value typewriter-num">
-              ${totalOutflows.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {/* Big hero number */}
+          <div style={{ textAlign: "center", padding: "12px 0" }}>
+            <span
+              style={{
+                display: "block",
+                fontFamily: "var(--font-ledger)",
+                fontSize: "11px",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                color: "rgba(32,30,28,0.5)",
+                marginBottom: "6px",
+              }}
+            >
+              Available Cash
+            </span>
+            <span
+              className="typewriter-num"
+              style={{
+                fontSize: "clamp(28px, 4vw, 40px)",
+                fontWeight: "bold",
+                letterSpacing: "1px",
+                color: safePositive ? "var(--color-stamp-green)" : "var(--color-stamp-red)",
+                lineHeight: 1.1,
+              }}
+            >
+              {safePositive ? "" : "−"}${fmt(Math.abs(safeToSpend))}
             </span>
           </div>
 
-          <div className={`metric-stamp-card ${remainingCash >= 0 ? "positive" : "negative"}`}>
-            <span className="metric-stamp-label">Net Remaining Balance</span>
-            <span className="metric-stamp-value typewriter-num">
-              ${remainingCash.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
-          <div className="ledger-text-row">
-            <span className="ledger-label">Primary Wages & Revenue</span>
-            <span className="ledger-value typewriter-num" style={{ color: "var(--color-stamp-green)" }}>
-              +${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="ledger-text-row">
-            <span className="ledger-label">Discretionary Spending (Expenses)</span>
-            <span className="ledger-value typewriter-num">
-              -${totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="ledger-text-row">
-            <span className="ledger-label">Scheduled Fixed Costs (Bills)</span>
-            <span className="ledger-value typewriter-num">
-              -${totalBills.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="ledger-text-row">
-            <span className="ledger-label">Debt Obligations Settled (Debts)</span>
-            <span className="ledger-value typewriter-num">
-              -${totalDebts.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* CARD 2: 50/30/20 Budget Breakdown */}
-      <div className="tactile-card">
-        <div className="card-title">
-          <span>50/30/20 Allocation Analysis</span>
-          <span className="barcode-text" style={{ fontSize: "9px" }}>LEDGER-ID: 50-30-20</span>
-        </div>
-
-        <p style={{ fontSize: "12.5px", color: "rgba(32,30,28,0.75)", marginBottom: "20px", fontFamily: "var(--font-sans)" }}>
-          Tracks your spending allocation ratios against the classic 50/30/20 rule (50% Essentials, 30% Wants, 20% Reserves).
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Needs: Bills & Debts */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
-              <strong>Essentials & Obligations (Needs — Target: 50%)</strong>
-              <span className="typewriter-num">
-                ${needsSpent.toLocaleString()} ({needsPercentage}%)
+          {/* Sub-breakdown ledger rows */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "7px",
+              borderTop: "1px dashed var(--color-paper-grid)",
+              paddingTop: "12px",
+            }}
+          >
+            <div className="ledger-text-row">
+              <span className="ledger-label">Current Balance</span>
+              <span
+                className="ledger-value typewriter-num"
+                style={{ color: currentBalance >= 0 ? "var(--color-stamp-green)" : "var(--color-stamp-red)" }}
+              >
+                ${fmt(currentBalance)}
               </span>
             </div>
-            <div className="category-bar-bg" style={{ height: "12px", borderRadius: "6px" }}>
-              <div 
-                className="category-bar-fill" 
-                style={{ 
-                  width: `${Math.min(100, needsPercentage)}%`, 
-                  height: "100%", 
-                  backgroundColor: "#1e3a8a", // Deep blue
-                  borderRadius: "6px",
-                  transition: "width 0.3s ease" 
-                }} 
-              />
-            </div>
-          </div>
-
-          {/* Wants: Expenses */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
-              <strong>Personal & Discretionary (Wants — Target: 30%)</strong>
-              <span className="typewriter-num">
-                ${wantsSpent.toLocaleString()} ({wantsPercentage}%)
-              </span>
-            </div>
-            <div className="category-bar-bg" style={{ height: "12px", borderRadius: "6px" }}>
-              <div 
-                className="category-bar-fill" 
-                style={{ 
-                  width: `${Math.min(100, wantsPercentage)}%`, 
-                  height: "100%", 
-                  backgroundColor: "#b45309", // Amber
-                  borderRadius: "6px",
-                  transition: "width 0.3s ease" 
-                }} 
-              />
-            </div>
-          </div>
-
-          {/* Savings: Goals */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
-              <strong>Milestone & Reserve Allocations (Savings — Target: 20%)</strong>
-              <span className="typewriter-num">
-                ${savingsSpent.toLocaleString()} ({savingsPercentage}%)
-              </span>
-            </div>
-            <div className="category-bar-bg" style={{ height: "12px", borderRadius: "6px" }}>
-              <div 
-                className="category-bar-fill" 
-                style={{ 
-                  width: `${Math.min(100, savingsPercentage)}%`, 
-                  height: "100%", 
-                  backgroundColor: "var(--color-stamp-green)",
-                  borderRadius: "6px",
-                  transition: "width 0.3s ease" 
-                }} 
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* CARD 3: Net Worth Tracker */}
-      <div className="tactile-card">
-        <div className="card-title">
-          <span>Total Asset & Liability Registry</span>
-          <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(-1.5deg)" }}>AUDIT BALANCE</span>
-        </div>
-
-        <p style={{ fontSize: "12.5px", color: "rgba(32,30,28,0.75)", marginBottom: "20px", fontFamily: "var(--font-sans)" }}>
-          Aggregated valuation balancing assets (liquid cash + milestone savings) against liabilities (total credit card balances).
-        </p>
-
-        <div className="metrics-row" style={{ marginBottom: "20px" }}>
-          <div className="metric-stamp-card positive">
-            <span className="metric-stamp-label">Registered Assets</span>
-            <span className="metric-stamp-value typewriter-num">
-              ${totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="metric-stamp-card negative">
-            <span className="metric-stamp-label">Active Liabilities</span>
-            <span className="metric-stamp-value typewriter-num">
-              -${totalLiabilities.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className={`metric-stamp-card ${netWorth >= 0 ? "positive" : "negative"}`}>
-            <span className="metric-stamp-label">Audit Net Worth Valuation</span>
-            <span className="metric-stamp-value typewriter-num">
-              ${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <h4 style={{ fontFamily: "var(--font-accent)", fontSize: "10px", textTransform: "uppercase", margin: "10px 0 5px 0", color: "rgba(32,30,28,0.6)" }}>
-            Assets breakdown
-          </h4>
-          <div className="ledger-text-row">
-            <span className="ledger-label">Safe Liquid Cash Buffer</span>
-            <span className="ledger-value typewriter-num" style={{ color: "var(--color-stamp-green)" }}>
-              ${Math.max(0, remainingCash).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-          <div className="ledger-text-row">
-            <span className="ledger-label">Cumulative Savings Milestones</span>
-            <span className="ledger-value typewriter-num" style={{ color: "var(--color-stamp-green)" }}>
-              ${totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <h4 style={{ fontFamily: "var(--font-accent)", fontSize: "10px", textTransform: "uppercase", margin: "15px 0 5px 0", color: "rgba(32,30,28,0.6)" }}>
-            Liabilities breakdown
-          </h4>
-          {creditCards.map(card => (
-            <div className="ledger-text-row" key={card.id}>
-              <span className="ledger-label">{card.name} Outstanding Balance</span>
+            <div className="ledger-text-row">
+              <span className="ledger-label">Upcoming Bills</span>
               <span className="ledger-value typewriter-num" style={{ color: "var(--color-stamp-red)" }}>
-                -${card.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                −${fmt(upcomingBillTotal)}
               </span>
             </div>
-          ))}
-          {creditCards.length === 0 && (
-            <span style={{ fontSize: "11px", fontStyle: "italic", opacity: 0.5 }}>
-              No liabilities registered.
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════
+            CARD 2 — UPCOMING DOCKET
+        ══════════════════════════════════════════════ */}
+        <div
+          className="tactile-card"
+          style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+        >
+          {/* Card header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              borderBottom: "1px dashed var(--color-paper-grid)",
+              paddingBottom: "10px",
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontFamily: "var(--font-accent)",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.8px",
+                  fontWeight: "bold",
+                }}
+              >
+                Upcoming Docket
+              </span>
+              <p
+                style={{
+                  margin: "3px 0 0 0",
+                  fontSize: "10.5px",
+                  color: "rgba(32,30,28,0.55)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Next 5 scheduled obligations
+              </p>
+            </div>
+            <span
+              className="stamp stamp-red"
+              style={{ fontSize: "7px", transform: "rotate(-1.5deg)" }}
+            >
+              DUE SOON
             </span>
+          </div>
+
+          {/* Docket list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            {next5Bills.length === 0 ? (
+              <span
+                style={{
+                  textAlign: "center",
+                  fontStyle: "italic",
+                  fontSize: "11.5px",
+                  opacity: 0.45,
+                  padding: "20px 0",
+                }}
+              >
+                No upcoming obligations on record.
+              </span>
+            ) : (
+              next5Bills.map((p, idx) => {
+                const due = new Date(p.dueDate + "T12:00:00");
+                const isOverdue = due < today;
+                const isImminent = !isOverdue && Math.ceil((due - today) / 86400000) <= 3;
+
+                return (
+                  <div
+                    key={p.id || idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "8px 10px",
+                      borderRadius: "4px",
+                      backgroundColor: isOverdue
+                        ? "rgba(127,29,29,0.05)"
+                        : isImminent
+                        ? "rgba(180,83,9,0.05)"
+                        : "transparent",
+                      borderLeft: `3px solid ${
+                        isOverdue
+                          ? "var(--color-stamp-red)"
+                          : isImminent
+                          ? "#b45309"
+                          : "var(--color-paper-grid)"
+                      }`,
+                    }}
+                  >
+                    {/* Due date badge */}
+                    <div
+                      style={{
+                        minWidth: "36px",
+                        textAlign: "center",
+                        fontFamily: "var(--font-ledger)",
+                        fontSize: "9px",
+                        fontWeight: "bold",
+                        color: isOverdue
+                          ? "var(--color-stamp-red)"
+                          : isImminent
+                          ? "#b45309"
+                          : "rgba(32,30,28,0.5)",
+                      }}
+                    >
+                      {fmtDate(p.dueDate)}
+                      <div
+                        style={{
+                          fontSize: "8px",
+                          fontWeight: "normal",
+                          marginTop: "1px",
+                        }}
+                      >
+                        {isOverdue ? "LATE" : daysUntil(p.dueDate)}
+                      </div>
+                    </div>
+
+                    {/* Name */}
+                    <span
+                      style={{
+                        flex: 1,
+                        fontSize: "12px",
+                        fontFamily: "var(--font-sans)",
+                        fontWeight: "600",
+                        color: "var(--color-ink-dark)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {p.name}
+                    </span>
+
+                    {/* Amount */}
+                    <span
+                      className="typewriter-num"
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        color: "var(--color-stamp-red)",
+                      }}
+                    >
+                      ${fmt(parseFloat(p.amount || 0))}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer tally */}
+          {next5Bills.length > 0 && (
+            <div
+              className="ledger-text-row"
+              style={{
+                borderTop: "1px dashed var(--color-paper-grid)",
+                paddingTop: "10px",
+                marginTop: "4px",
+              }}
+            >
+              <span className="ledger-label" style={{ fontWeight: "bold" }}>
+                Total Due ({upcomingUnpaid.length} bills)
+              </span>
+              <span
+                className="ledger-value typewriter-num"
+                style={{ color: "var(--color-stamp-red)", fontWeight: "bold" }}
+              >
+                ${fmt(upcomingBillTotal)}
+              </span>
+            </div>
           )}
         </div>
-      </div>
 
+        {/* ══════════════════════════════════════════════
+            CARD 3 — RECENT ACTIVITY
+        ══════════════════════════════════════════════ */}
+        <div
+          className="tactile-card"
+          style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+        >
+          {/* Card header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              borderBottom: "1px dashed var(--color-paper-grid)",
+              paddingBottom: "10px",
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontFamily: "var(--font-accent)",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.8px",
+                  fontWeight: "bold",
+                }}
+              >
+                Recent Activity
+              </span>
+              <p
+                style={{
+                  margin: "3px 0 0 0",
+                  fontSize: "10.5px",
+                  color: "rgba(32,30,28,0.55)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                5 most recent vouchers filed
+              </p>
+            </div>
+            <span
+              className="stamp stamp-green"
+              style={{ fontSize: "7px", transform: "rotate(1deg)" }}
+            >
+              LEDGER
+            </span>
+          </div>
+
+          {/* Mini ledger rows */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            {recent5.length === 0 ? (
+              <span
+                style={{
+                  textAlign: "center",
+                  fontStyle: "italic",
+                  fontSize: "11.5px",
+                  opacity: 0.45,
+                  padding: "20px 0",
+                }}
+              >
+                No transaction vouchers on file.
+              </span>
+            ) : (
+              recent5.map((tx, idx) => {
+                const isIncome = tx.type === "Income";
+                return (
+                  <div
+                    key={tx.id || idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "7px 8px",
+                      borderRadius: "4px",
+                      borderBottom: idx < recent5.length - 1
+                        ? "1px dashed rgba(181,169,138,0.4)"
+                        : "none",
+                    }}
+                  >
+                    {/* Type indicator dot */}
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        flexShrink: 0,
+                        backgroundColor: isIncome
+                          ? "var(--color-stamp-green)"
+                          : tx.type === "Bill"
+                          ? "#1e3a8a"
+                          : tx.type === "Debt"
+                          ? "#7f1d1d"
+                          : "#b45309",
+                      }}
+                    />
+
+                    {/* Description + category */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          color: "var(--color-ink-dark)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {tx.description || tx.name || "—"}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "9.5px",
+                          fontFamily: "var(--font-ledger)",
+                          color: "rgba(32,30,28,0.5)",
+                          marginTop: "1px",
+                        }}
+                      >
+                        {tx.category} · {fmtDate(tx.date)}
+                      </div>
+                    </div>
+
+                    {/* Amount */}
+                    <span
+                      className="typewriter-num"
+                      style={{
+                        fontSize: "12.5px",
+                        fontWeight: "bold",
+                        color: isIncome ? "var(--color-stamp-green)" : "var(--color-stamp-red)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isIncome ? "+" : "−"}${fmt(parseFloat(tx.amount || 0))}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer: net of shown transactions */}
+          {recent5.length > 0 && (
+            <div
+              style={{
+                borderTop: "1px dashed var(--color-paper-grid)",
+                paddingTop: "10px",
+                marginTop: "4px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "9.5px",
+                  fontFamily: "var(--font-ledger)",
+                  color: "rgba(32,30,28,0.5)",
+                  textTransform: "uppercase",
+                }}
+              >
+                {transactions.length} total vouchers on file
+              </span>
+              <span
+                className={`stamp ${currentBalance >= 0 ? "stamp-green" : "stamp-red"}`}
+                style={{ fontSize: "7px" }}
+              >
+                {currentBalance >= 0 ? "NET POSITIVE" : "NET NEGATIVE"}
+              </span>
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }
