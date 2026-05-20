@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   ResponsiveContainer, 
   BarChart, 
@@ -57,9 +57,85 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function ReportsFolder({ transactions = [], goals = [] }) {
+  // ─── CATEGORY TREND STATE ────────────────────────────────────────────────
+  const [selectedCategory, setSelectedCategory] = useState("");
+
   // Aggregate data using system layer
   const aggregates = aggregateFinancialData(transactions, goals);
   const { monthlyBudgets, categoryBreakdown } = aggregates;
+
+  // ─── UNIQUE CATEGORIES derived from live transactions for the selector ───
+  const availableCategories = useMemo(() => {
+    const cats = new Set();
+    transactions.forEach(tx => {
+      if (tx.category) cats.add(tx.category);
+    });
+    return Array.from(cats).sort();
+  }, [transactions]);
+
+  // ─── CATEGORY TREND BAR DATA (12 months for selected category) ──────────
+  const categoryTrendData = useMemo(() => {
+    if (!selectedCategory) return MONTH_SHORT.map(m => ({ month: m, amount: 0 }));
+
+    // Bucket spending by month index
+    const monthTotals = new Array(12).fill(0);
+    transactions.forEach(tx => {
+      if (tx.category !== selectedCategory) return;
+      if (tx.type === "Income") return; // only track outflows for trend
+      if (!tx.date) return;
+      const monthIdx = new Date(tx.date).getMonth();
+      monthTotals[monthIdx] += parseFloat(tx.amount || 0);
+    });
+
+    return MONTH_SHORT.map((m, idx) => ({
+      month: m,
+      amount: Math.round(monthTotals[idx] * 100) / 100,
+    }));
+  }, [transactions, selectedCategory]);
+
+  const categoryAnnualTotal = categoryTrendData.reduce((sum, d) => sum + d.amount, 0);
+
+  /*
+  // ═══════════════════════════════════════════════════════════════════════
+  // FIREBASE FIRESTORE — Dynamic Category Trend Data Fetch
+  // ═══════════════════════════════════════════════════════════════════════
+  // Uncomment and wire up when ready to query live Firestore data.
+  //
+  // useEffect(() => {
+  //   if (!user || !selectedCategory) return;
+  //
+  //   const currentYear = new Date().getFullYear();
+  //   const startOfYear = new Date(currentYear, 0, 1).toISOString();
+  //   const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
+  //
+  //   const txRef = collection(db, "users", user.uid, "transactions");
+  //   const q = query(
+  //     txRef,
+  //     where("category", "==", selectedCategory),
+  //     where("date", ">=", startOfYear),
+  //     where("date", "<=", endOfYear),
+  //     orderBy("date", "asc")
+  //   );
+  //
+  //   const unsubscribe = onSnapshot(q, (snapshot) => {
+  //     const monthTotals = new Array(12).fill(0);
+  //     snapshot.docs.forEach(doc => {
+  //       const data = doc.data();
+  //       if (data.type === "Income") return;
+  //       const monthIdx = new Date(data.date).getMonth();
+  //       monthTotals[monthIdx] += parseFloat(data.amount || 0);
+  //     });
+  //     // setCategoryTrendData(MONTH_SHORT.map((m, idx) => ({
+  //     //   month: m,
+  //     //   amount: Math.round(monthTotals[idx] * 100) / 100,
+  //     // })));
+  //   }, (err) => {
+  //     console.error("Firestore category trend fetch failed:", err);
+  //   });
+  //
+  //   return () => unsubscribe();
+  // }, [selectedCategory, user]);
+  */
 
   // 1. DATA FORMATTING FOR ANNUAL TRENDS (BAR CHART)
   const barData = monthlyBudgets.map(m => ({
@@ -336,7 +412,80 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
 
         </div>
 
-        {/* SECTION 3: THE MASTER LEDGER (Data Table) */}
+        {/* CARD 4: ANNUAL CATEGORY TREND (Interactive BarChart) */}
+        <div className="tactile-card" style={{ backgroundColor: "#fefdfb", border: "1px dashed var(--color-paper-grid)", display: "flex", flexDirection: "column" }}>
+          {/* Card header with stamp */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
+            <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
+              Annual Category Trend
+            </span>
+            <span className="stamp stamp-red" style={{ fontSize: "7px", transform: "rotate(-1.5deg)" }}>DRILLDOWN</span>
+          </div>
+
+          <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.7)", marginBottom: "15px" }}>
+            Select a ledger category to visualize its month-over-month spending pattern across the fiscal year.
+          </p>
+
+          {/* Selector row: dropdown + annual total badge */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px", flexWrap: "wrap" }}>
+            <select
+              className="paper-select-recessed"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              id="category-trend-selector"
+            >
+              <option value="">— Select a Category —</option>
+              {availableCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+
+            {selectedCategory && (
+              <div className="category-trend-annual-total">
+                <span>Annual Total:</span>
+                <strong className="typewriter-num">
+                  ${categoryAnnualTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </strong>
+              </div>
+            )}
+          </div>
+
+          {/* Chart area */}
+          <div style={{ width: "100%", height: "230px" }}>
+            {!selectedCategory ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontFamily: "var(--font-ledger)", fontSize: "12px", color: "rgba(32,30,28,0.4)", fontStyle: "italic" }}>
+                Pick a category above to plot its annual spending trend.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={categoryTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,41,59,0.07)" />
+                  <XAxis
+                    dataKey="month"
+                    stroke="var(--color-ink-dark)"
+                    tick={{ fontFamily: "var(--font-ledger)", fontSize: 9, fill: "rgba(30,41,59,0.7)" }}
+                  />
+                  <YAxis
+                    stroke="var(--color-ink-dark)"
+                    tick={{ fontFamily: "var(--font-ledger)", fontSize: 9, fill: "rgba(30,41,59,0.7)" }}
+                    tickFormatter={v => `$${v.toLocaleString()}`}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar
+                    dataKey="amount"
+                    fill="#1e3a8a"
+                    stroke="#0f2668"
+                    strokeWidth={1}
+                    radius={[3, 3, 0, 0]}
+                    name={selectedCategory}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* SECTION 5: THE MASTER LEDGER (Data Table) */}
         <div className="tactile-card" style={{ width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
             <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
