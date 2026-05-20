@@ -317,20 +317,12 @@ export default function SettingsTab({
                     <th style={{ width: "120px" }}>Limit ($)</th>
                     <th style={{ width: "120px" }}>Balance ($)</th>
                     <th style={{ width: "120px" }}>Available Credit ($)</th>
-                    <th style={{ width: "100px" }}>Utilization</th>
                     <th style={{ textAlign: "center", width: "80px" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {creditCards.map((c) => {
                     const available = Math.max(0, c.limit - c.balance);
-                    const utilization = c.limit > 0 ? Math.round((c.balance / c.limit) * 100) : 0;
-                    let utilColor = "var(--color-stamp-green)"; // < 30%
-                    if (utilization >= 50) {
-                      utilColor = "var(--color-stamp-red)"; // >= 50%
-                    } else if (utilization >= 30) {
-                      utilColor = "#b45309"; // 30% - 50% (amber)
-                    }
 
                     return (
                       <tr key={c.id}>
@@ -387,15 +379,6 @@ export default function SettingsTab({
                         <td style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold" }}>
                           ${available.toLocaleString()}
                         </td>
-                        <td>
-                          <span style={{ 
-                            fontWeight: "bold", 
-                            color: utilColor,
-                            fontFamily: "var(--font-ledger)"
-                          }}>
-                            {utilization}%
-                          </span>
-                        </td>
                         <td style={{ textAlign: "center" }}>
                           <button
                             onClick={() => handleDeleteCard(c.id)}
@@ -418,7 +401,7 @@ export default function SettingsTab({
                   })}
                   {creditCards.length === 0 && (
                     <tr>
-                      <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
+                      <td colSpan="5" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
                         No credit cards registered in available portfolio limits registry.
                       </td>
                     </tr>
