@@ -24,11 +24,6 @@ export default function SettingsTab({
   const [limitSearchTerm, setLimitSearchTerm] = useState("");
   const [limitSelectedType, setLimitSelectedType] = useState("Expense");
 
-  // Recurring Bill states
-  const [newBillName, setNewBillName] = useState("");
-  const [newBillAmount, setNewBillAmount] = useState("");
-  const [newBillDueDate, setNewBillDueDate] = useState("");
-
   // Goal states
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTarget, setNewGoalTarget] = useState("");
@@ -112,25 +107,27 @@ export default function SettingsTab({
       [category]: numericLimit
     };
     onUpdateBudgetLimits(updated);
+
+    // Sync with scheduled bills if it exists
+    const existingBill = upcomingPayments.find(p => p.name === category);
+    if (existingBill) {
+      onUpdatePayment(existingBill.id, { amount: numericLimit });
+    }
   };
 
-  // Handle adding recurring bill
-  const handleAddBill = (e) => {
-    e.preventDefault();
-    if (!newBillName || !newBillAmount || !newBillDueDate) return;
-
-    const newBill = {
-      id: Date.now(),
-      name: newBillName,
-      amount: parseFloat(newBillAmount),
-      dueDate: newBillDueDate,
-      paid: false
-    };
-
-    onAddPayment(newBill);
-    setNewBillName("");
-    setNewBillAmount("");
-    setNewBillDueDate("");
+  const handleToggleScheduled = (category, isCurrentlyScheduled, existingBill, currentLimit) => {
+    if (isCurrentlyScheduled) {
+      onDeletePayment(existingBill.id);
+    } else {
+      const newBill = {
+        id: Date.now(),
+        name: category,
+        amount: currentLimit,
+        dueDate: "",
+        paid: false
+      };
+      onAddPayment(newBill);
+    }
   };
 
   // Handle adding a savings goal in setup
@@ -168,9 +165,9 @@ export default function SettingsTab({
         </span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "30px" }} className="overview-grid">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px" }} className="overview-grid">
         
-        {/* Left Side: Categories Registry & Savings Goals Setup */}
+        {/* Left Side: Categories Registry */}
         <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
           
           {/* Card 1: Categories Registry */}
@@ -294,6 +291,10 @@ export default function SettingsTab({
             </form>
           </div>
 
+        </div>
+
+        {/* Right Side: Savings Goals Setup */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
           {/* Card 2: Milestone Savings Goals Setup */}
           <div className="tactile-card" style={{ height: "fit-content" }}>
             <div className="card-title" style={{ marginBottom: "15px" }}>
@@ -414,202 +415,15 @@ export default function SettingsTab({
               </button>
             </form>
           </div>
-
-        </div>
-
-        {/* Right Side: Recurring Bills Setup */}
-        <div className="tactile-card" style={{ height: "fit-content" }}>
-          <div className="card-title" style={{ marginBottom: "15px" }}>
-            <span>Scheduled Monthly Obligation Ledger</span>
-            <span className="barcode-stamp" style={{ opacity: 0.7 }}>
-              <span className="barcode-stripes" style={{ display: "inline-block", width: "70px", height: "12px" }}></span>
-              <span className="barcode-text" style={{ fontSize: "6px" }}>BILLS-IDX-88</span>
-            </span>
-          </div>
-
-          <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
-            These scheduled items populate your Overview Tab checkbox. Edit amounts or dates directly, and they will update your dashboard instantly.
-          </p>
-
-          {/* List of Bills Table */}
-          <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto", marginBottom: "20px" }}>
-            <table className="ledger-table" style={{ fontSize: "11.5px" }}>
-              <thead>
-                <tr>
-                  <th>Obligation Name</th>
-                  <th style={{ width: "80px" }}>Amount ($)</th>
-                  <th style={{ width: "100px" }}>Due Date</th>
-                  <th style={{ textAlign: "center", width: "80px" }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcomingPayments.map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <input
-                        type="text"
-                        value={p.name}
-                        onChange={(e) => onUpdatePayment(p.id, { name: e.target.value })}
-                        style={{
-                          width: "100%",
-                          padding: "4px",
-                          border: "1px dashed transparent",
-                          backgroundColor: "transparent",
-                          fontWeight: "bold"
-                        }}
-                        onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                        onBlur={(e) => e.target.style.border = "1px dashed transparent"}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        value={p.amount}
-                        onChange={(e) => onUpdatePayment(p.id, { amount: parseFloat(e.target.value) || 0 })}
-                        style={{
-                          width: "100%",
-                          padding: "4px",
-                          border: "1px dashed transparent",
-                          backgroundColor: "transparent",
-                          fontFamily: "var(--font-ledger)",
-                          fontWeight: "bold"
-                        }}
-                        onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                        onBlur={(e) => e.target.style.border = "1px dashed transparent"}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="date"
-                        value={p.dueDate}
-                        onChange={(e) => onUpdatePayment(p.id, { dueDate: e.target.value })}
-                        style={{
-                          width: "100%",
-                          padding: "2px",
-                          border: "1px dashed transparent",
-                          backgroundColor: "transparent",
-                          fontFamily: "var(--font-ledger)",
-                          fontSize: "10.5px"
-                        }}
-                        onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                        onBlur={(e) => e.target.style.border = "1px dashed transparent"}
-                      />
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <button
-                        onClick={() => onDeletePayment(p.id)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "var(--color-stamp-red)",
-                          cursor: "pointer",
-                          fontFamily: "var(--font-typewriter)",
-                          fontSize: "11px",
-                          fontWeight: "bold"
-                        }}
-                        title="Delete obligation"
-                      >
-                        [DELETE]
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {upcomingPayments.length === 0 && (
-                  <tr>
-                    <td colSpan="4" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
-                      No scheduled obligations registered.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Add Scheduled Bill Form */}
-          <form onSubmit={handleAddBill} style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "16px" }}>
-            <span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.6)" }}>Register Scheduled Recurring Obligation</span>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 0.8fr 1fr", gap: "10px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <label style={{ fontSize: "8px", fontWeight: "bold" }}>Bill Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. WiFi Bill..."
-                  value={newBillName}
-                  onChange={(e) => setNewBillName(e.target.value)}
-                  required
-                  style={{
-                    padding: "6px",
-                    border: "1px solid var(--color-paper-grid)",
-                    borderRadius: "4px",
-                    backgroundColor: "var(--color-paper-light)",
-                    fontSize: "11.5px"
-                  }}
-                />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <label style={{ fontSize: "8px", fontWeight: "bold" }}>Amount ($)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 50.00..."
-                  value={newBillAmount}
-                  onChange={(e) => setNewBillAmount(e.target.value)}
-                  required
-                  style={{
-                    padding: "6px",
-                    border: "1px solid var(--color-paper-grid)",
-                    borderRadius: "4px",
-                    backgroundColor: "var(--color-paper-light)",
-                    fontSize: "11.5px",
-                    fontFamily: "var(--font-ledger)"
-                  }}
-                />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <label style={{ fontSize: "8px", fontWeight: "bold" }}>Due Date</label>
-                <input
-                  type="date"
-                  value={newBillDueDate}
-                  onChange={(e) => setNewBillDueDate(e.target.value)}
-                  required
-                  style={{
-                    padding: "5px",
-                    border: "1px solid var(--color-paper-grid)",
-                    borderRadius: "4px",
-                    backgroundColor: "var(--color-paper-light)",
-                    fontSize: "11.5px",
-                    fontFamily: "var(--font-ledger)"
-                  }}
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              style={{
-                padding: "8px",
-                fontFamily: "var(--font-accent)",
-                fontSize: "9px",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                color: "var(--color-paper-light)",
-                backgroundColor: "var(--color-stamp-green)",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}
-            >
-              Add Scheduled Obligation
-            </button>
-          </form>
-        </div>
-
+        </div>
       </div>
 
-      {/* Card 3: Monthly Category Budget Limits Registry (Full Width) */}
+      {/* Card 3: Monthly Category Target Budget & Bills Registry (Full Width) */}
       <div className="tactile-card" style={{ height: "fit-content" }}>
         <div className="card-title" style={{ marginBottom: "15px" }}>
-          <span>Monthly Category Target Budget Limits Registry</span>
+          <span>Monthly Category Targets & Bills Registry</span>
           <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(1deg)" }}>LIMITS REG</span>
-        </div>
+        </div>>
 
         <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
           Set spending targets/caps for individual categories. These values are mapped against your actual expenditures in the <strong>Budget Tab</strong> to trace planned vs. actual execution. Set to $0 to leave unbudgeted.
@@ -647,13 +461,15 @@ export default function SettingsTab({
           />
         </div>
 
-        <div className="ledger-table-container" style={{ maxHeight: "300px", overflowY: "auto" }}>
+        <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto", marginBottom: "20px" }}>
           <table className="ledger-table" style={{ fontSize: "11.5px" }}>
             <thead>
               <tr>
                 <th>Category Name</th>
                 <th>Flow Type</th>
-                <th style={{ width: "200px" }}>Monthly Target Cap ($)</th>
+                <th style={{ width: "160px" }}>Monthly Target Cap ($)</th>
+                <th style={{ textAlign: "center", width: "120px" }}>Is Scheduled Bill?</th>
+                <th style={{ width: "140px" }}>Due Date</th>
               </tr>
             </thead>
             <tbody>
@@ -661,6 +477,9 @@ export default function SettingsTab({
                 .filter(cat => cat.toLowerCase().includes(limitSearchTerm.toLowerCase()))
                 .map((cat) => {
                   const currentLimit = budgetLimits[cat] !== undefined ? budgetLimits[cat] : 0;
+                  const existingBill = upcomingPayments.find(p => p.name === cat);
+                  const isScheduled = !!existingBill;
+
                   return (
                     <tr key={cat}>
                       <td style={{ fontWeight: "bold", fontFamily: "var(--font-sans)" }}>{cat}</td>
@@ -687,13 +506,42 @@ export default function SettingsTab({
                           />
                         </div>
                       </td>
+                      <td style={{ textAlign: "center" }}>
+                        <input 
+                          type="checkbox" 
+                          checked={isScheduled} 
+                          onChange={() => handleToggleScheduled(cat, isScheduled, existingBill, currentLimit)}
+                          style={{ cursor: "pointer" }}
+                        />
+                      </td>
+                      <td>
+                        {isScheduled ? (
+                          <input
+                            type="date"
+                            value={existingBill.dueDate}
+                            onChange={(e) => onUpdatePayment(existingBill.id, { dueDate: e.target.value })}
+                            style={{
+                              width: "100%",
+                              padding: "2px",
+                              border: "1px dashed transparent",
+                              backgroundColor: "transparent",
+                              fontFamily: "var(--font-ledger)",
+                              fontSize: "10.5px"
+                            }}
+                            onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
+                            onBlur={(e) => e.target.style.border = "1px dashed transparent"}
+                          />
+                        ) : (
+                          <span style={{ fontSize: "10px", color: "rgba(32,30,28,0.4)", fontStyle: "italic" }}>Not Scheduled</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
               {(categories[limitSelectedType] || [])
                 .filter(cat => cat.toLowerCase().includes(limitSearchTerm.toLowerCase())).length === 0 && (
                 <tr>
-                  <td colSpan="3" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
+                  <td colSpan="5" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
                     No categories found in registry for "{limitSelectedType}".
                   </td>
                 </tr>
