@@ -9,7 +9,7 @@ import InvestmentsTab from "./components/InvestmentsTab";
 import GoalsTab from "./components/GoalsTab";
 import ReportsTab from "./components/ReportsTab";
 import TransactionTab from "./components/TransactionTab";
-import SettingsTab from "./components/SettingsTab";
+import SetupTab from "./components/SetupTab";
 import Login from "./components/Login";
 
 import MainLayout from "./components/MainLayout";
@@ -388,9 +388,9 @@ export default function App() {
             </div>
           </div>
         );
-      case "settings":
+      case "setup":
         return (
-          <SettingsTab
+          <SetupTab
             categories={categories}
             onUpdateCategories={handleUpdateCategories}
             upcomingPayments={upcomingPayments}

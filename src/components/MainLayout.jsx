@@ -14,7 +14,7 @@ export default function MainLayout({ activeTab, setActiveTab, children }) {
     { id: "dashboard", label: "Dashboard" },
     { id: "budget", label: "Budget" },
     { id: "planner", label: "Planner" },
-    { id: "settings", label: "Settings" }
+    { id: "setup", label: "Setup" }
   ];
 
   return (
