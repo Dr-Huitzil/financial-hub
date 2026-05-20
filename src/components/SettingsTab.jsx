@@ -77,12 +77,12 @@ export default function SettingsTab({
     if (!newCategoryName.trim()) return;
     
     const catTrimmed = newCategoryName.trim();
-    const typeCats = categories[selectedType] || [];
+    const typeCats = categories[limitSelectedType] || [];
     if (typeCats.includes(catTrimmed)) return;
 
     const updated = {
       ...categories,
-      [selectedType]: [...typeCats, catTrimmed]
+      [limitSelectedType]: [...typeCats, catTrimmed]
     };
     onUpdateCategories(updated);
     setNewCategoryName("");
@@ -90,12 +90,17 @@ export default function SettingsTab({
 
   // Handle deleting flow category
   const handleDeleteCategory = (catToDelete) => {
-    const typeCats = categories[selectedType] || [];
+    const typeCats = categories[limitSelectedType] || [];
     const updated = {
       ...categories,
-      [selectedType]: typeCats.filter(c => c !== catToDelete)
+      [limitSelectedType]: typeCats.filter(c => c !== catToDelete)
     };
     onUpdateCategories(updated);
+    // Also delete any scheduled payment and budget limit
+    const existingBill = upcomingPayments.find(p => p.name === catToDelete);
+    if (existingBill) {
+      onDeletePayment(existingBill.id);
+    }
   };
 
   // Handle updating category budget limit target
@@ -167,133 +172,7 @@ export default function SettingsTab({
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px" }} className="overview-grid">
         
-        {/* Left Side: Categories Registry */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
-          
-          {/* Card 1: Categories Registry */}
-          <div className="tactile-card" style={{ height: "fit-content" }}>
-            <div className="card-title" style={{ marginBottom: "15px" }}>
-              <span>Flow Categories Registry</span>
-              <span className="stamp stamp-red" style={{ fontSize: "7px", transform: "rotate(3deg)" }}>INDEX REG</span>
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
-              {["Expense", "Income", "Bill", "Debt"].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  style={{
-                    flex: 1,
-                    padding: "6px 10px",
-                    fontFamily: "var(--font-accent)",
-                    fontSize: "10px",
-                    fontWeight: "bold",
-                    textTransform: "uppercase",
-                    backgroundColor: selectedType === type ? "var(--color-ink-dark)" : "var(--color-manila-light)",
-                    color: selectedType === type ? "var(--color-paper-light)" : "var(--color-ink-dark)",
-                    border: "1px solid var(--color-paper-grid)",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-
-            {/* List of active categories */}
-            <div style={{ 
-              display: "flex", 
-              flexWrap: "wrap", 
-              gap: "8px", 
-              padding: "12px", 
-              backgroundColor: "rgba(32,30,28,0.03)", 
-              border: "1px dashed var(--color-paper-grid)", 
-              borderRadius: "6px",
-              minHeight: "100px",
-              maxHeight: "200px",
-              overflowY: "auto",
-              marginBottom: "16px"
-            }}>
-              {(categories[selectedType] || []).map((cat) => (
-                <div 
-                  key={cat}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "4px 8px",
-                    backgroundColor: "var(--color-paper-light)",
-                    border: "1px solid var(--color-paper-grid)",
-                    borderRadius: "4px",
-                    fontSize: "11px",
-                    fontFamily: "var(--font-typewriter)"
-                  }}
-                >
-                  <span>{cat}</span>
-                  <button
-                    onClick={() => handleDeleteCategory(cat)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "var(--color-stamp-red)",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      padding: "0 2px"
-                    }}
-                    title={`Delete category: ${cat}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {(categories[selectedType] || []).length === 0 && (
-                <span style={{ fontSize: "11px", fontStyle: "italic", margin: "auto", color: "rgba(32,30,28,0.5)" }}>
-                  No categories in registry.
-                </span>
-              )}
-            </div>
-
-            {/* Add Category Form */}
-            <form onSubmit={handleAddCategory} style={{ display: "flex", gap: "10px" }}>
-              <input
-                type="text"
-                placeholder={`New ${selectedType} Category...`}
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                required
-                style={{
-                  flex: 1,
-                  padding: "8px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "12px"
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  padding: "8px 14px",
-                  fontFamily: "var(--font-accent)",
-                  fontSize: "9px",
-                  fontWeight: "bold",
-                  textTransform: "uppercase",
-                  color: "var(--color-paper-light)",
-                  backgroundColor: "var(--color-stamp-green)",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                + Add
-              </button>
-            </form>
-          </div>
-
-        </div>
-
-        {/* Right Side: Savings Goals Setup */}
+        {/* Left Side: Savings Goals Setup */}
         <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
           {/* Card 2: Milestone Savings Goals Setup */}
           <div className="tactile-card" style={{ height: "fit-content" }}>
@@ -415,18 +294,227 @@ export default function SettingsTab({
               </button>
             </form>
           </div>
-        </div>
+        </div>
+
+        {/* Right Side: Credit Card Registry */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+          {/* Card 4: Credit Card Available Credit Registry (Full Width) */}
+          <div className="tactile-card" style={{ height: "fit-content" }}>
+            <div className="card-title" style={{ marginBottom: "15px" }}>
+              <span>Credit Card Registry & Portfolio Limits</span>
+              <span className="stamp stamp-green" style={{ fontSize: "8px", transform: "rotate(-1deg)" }}>PORTFOLIO</span>
+            </div>
+
+            <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
+              Adjust your active credit limits and balances inline. Total available portfolio credit and utilization bars on the Overview Tab will update instantly.
+            </p>
+
+            <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto", marginBottom: "20px" }}>
+              <table className="ledger-table" style={{ fontSize: "11.5px" }}>
+                <thead>
+                  <tr>
+                    <th>Credit Card Name</th>
+                    <th style={{ width: "120px" }}>Limit ($)</th>
+                    <th style={{ width: "120px" }}>Balance ($)</th>
+                    <th style={{ width: "120px" }}>Available Credit ($)</th>
+                    <th style={{ width: "100px" }}>Utilization</th>
+                    <th style={{ textAlign: "center", width: "80px" }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {creditCards.map((c) => {
+                    const available = Math.max(0, c.limit - c.balance);
+                    const utilization = c.limit > 0 ? Math.round((c.balance / c.limit) * 100) : 0;
+                    let utilColor = "var(--color-stamp-green)"; // < 30%
+                    if (utilization >= 50) {
+                      utilColor = "var(--color-stamp-red)"; // >= 50%
+                    } else if (utilization >= 30) {
+                      utilColor = "#b45309"; // 30% - 50% (amber)
+                    }
+
+                    return (
+                      <tr key={c.id}>
+                        <td>
+                          <input
+                            type="text"
+                            value={c.name}
+                            onChange={(e) => handleUpdateCardField(c.id, "name", e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "4px",
+                              border: "1px dashed transparent",
+                              backgroundColor: "transparent",
+                              fontWeight: "bold"
+                            }}
+                            onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
+                            onBlur={(e) => e.target.style.border = "1px dashed transparent"}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            value={c.limit}
+                            onChange={(e) => handleUpdateCardField(c.id, "limit", e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "4px",
+                              border: "1px dashed transparent",
+                              backgroundColor: "transparent",
+                              fontFamily: "var(--font-ledger)",
+                              fontWeight: "bold"
+                            }}
+                            onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
+                            onBlur={(e) => e.target.style.border = "1px dashed transparent"}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            value={c.balance}
+                            onChange={(e) => handleUpdateCardField(c.id, "balance", e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "4px",
+                              border: "1px dashed transparent",
+                              backgroundColor: "transparent",
+                              fontFamily: "var(--font-ledger)",
+                              fontWeight: "bold"
+                            }}
+                            onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
+                            onBlur={(e) => e.target.style.border = "1px dashed transparent"}
+                          />
+                        </td>
+                        <td style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold" }}>
+                          ${available.toLocaleString()}
+                        </td>
+                        <td>
+                          <span style={{ 
+                            fontWeight: "bold", 
+                            color: utilColor,
+                            fontFamily: "var(--font-ledger)"
+                          }}>
+                            {utilization}%
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <button
+                            onClick={() => handleDeleteCard(c.id)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "var(--color-stamp-red)",
+                              cursor: "pointer",
+                              fontFamily: "var(--font-typewriter)",
+                              fontSize: "11px",
+                              fontWeight: "bold"
+                            }}
+                            title="Delete Card"
+                          >
+                            [DELETE]
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {creditCards.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
+                        No credit cards registered in available portfolio limits registry.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Add Card Form */}
+            <form onSubmit={handleAddCard} style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "16px" }}>
+              <span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.6)" }}>Register New Credit Card Portfolio Asset</span>
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "10px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <label style={{ fontSize: "8px", fontWeight: "bold" }}>Card Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Chase Sapphire..."
+                    value={newCardName}
+                    onChange={(e) => setNewCardName(e.target.value)}
+                    required
+                    style={{
+                      padding: "6px",
+                      border: "1px solid var(--color-paper-grid)",
+                      borderRadius: "4px",
+                      backgroundColor: "var(--color-paper-light)",
+                      fontSize: "11.5px"
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <label style={{ fontSize: "8px", fontWeight: "bold" }}>Credit Limit ($)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 5000..."
+                    value={newCardLimit}
+                    onChange={(e) => setNewCardLimit(e.target.value)}
+                    required
+                    style={{
+                      padding: "6px",
+                      border: "1px solid var(--color-paper-grid)",
+                      borderRadius: "4px",
+                      backgroundColor: "var(--color-paper-light)",
+                      fontSize: "11.5px",
+                      fontFamily: "var(--font-ledger)"
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <label style={{ fontSize: "8px", fontWeight: "bold" }}>Current Balance ($)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 1500..."
+                    value={newCardBalance}
+                    onChange={(e) => setNewCardBalance(e.target.value)}
+                    style={{
+                      padding: "6px",
+                      border: "1px solid var(--color-paper-grid)",
+                      borderRadius: "4px",
+                      backgroundColor: "var(--color-paper-light)",
+                      fontSize: "11.5px",
+                      fontFamily: "var(--font-ledger)"
+                    }}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                style={{
+                  padding: "8px",
+                  fontFamily: "var(--font-accent)",
+                  fontSize: "9px",
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  color: "var(--color-paper-light)",
+                  backgroundColor: "var(--color-stamp-green)",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}
+              >
+                Register Credit Card
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
 
-      {/* Card 3: Monthly Category Target Budget & Bills Registry (Full Width) */}
+      {/* Master Categories & Targets Table (Full Width) */}
       <div className="tactile-card" style={{ height: "fit-content" }}>
         <div className="card-title" style={{ marginBottom: "15px" }}>
-          <span>Monthly Category Targets & Bills Registry</span>
-          <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(1deg)" }}>LIMITS REG</span>
-        </div>>
+          <span>Master Category Targets & Bills Registry</span>
+          <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(1deg)" }}>MASTER REG</span>
+        </div>
 
         <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
-          Set spending targets/caps for individual categories. These values are mapped against your actual expenditures in the <strong>Budget Tab</strong> to trace planned vs. actual execution. Set to $0 to leave unbudgeted.
+          Set spending caps, manage scheduled bills, and organize categories all in one place.
         </p>
 
         <div style={{ display: "flex", gap: "15px", marginBottom: "15px", flexWrap: "wrap", alignItems: "center" }}>
@@ -445,7 +533,7 @@ export default function SettingsTab({
 
           <input
             type="text"
-            placeholder="Search category limits..."
+            placeholder="Search categories..."
             value={limitSearchTerm}
             onChange={(e) => setLimitSearchTerm(e.target.value)}
             style={{
@@ -465,11 +553,9 @@ export default function SettingsTab({
           <table className="ledger-table" style={{ fontSize: "11.5px" }}>
             <thead>
               <tr>
-                <th>Category Name</th>
-                <th>Flow Type</th>
+                <th>Category / Status</th>
                 <th style={{ width: "160px" }}>Monthly Target Cap ($)</th>
-                <th style={{ textAlign: "center", width: "120px" }}>Is Scheduled Bill?</th>
-                <th style={{ width: "140px" }}>Due Date</th>
+                <th style={{ textAlign: "center", width: "100px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -482,9 +568,39 @@ export default function SettingsTab({
 
                   return (
                     <tr key={cat}>
-                      <td style={{ fontWeight: "bold", fontFamily: "var(--font-sans)" }}>{cat}</td>
-                      <td style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6 }}>{limitSelectedType}</td>
                       <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <span style={{ fontWeight: "bold", fontFamily: "var(--font-sans)", fontSize: "13px" }}>{cat}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ textTransform: "uppercase", fontSize: "9px", opacity: 0.6, backgroundColor: "rgba(32,30,28,0.05)", padding: "2px 4px", borderRadius: "2px" }}>
+                              {limitSelectedType}
+                            </span>
+                            {isScheduled ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <span style={{ fontSize: "10px", color: "var(--color-stamp-blue)", fontWeight: "bold" }}>🗓️ Scheduled:</span>
+                                <input
+                                  type="date"
+                                  value={existingBill.dueDate}
+                                  onChange={(e) => onUpdatePayment(existingBill.id, { dueDate: e.target.value })}
+                                  style={{
+                                    padding: "0 2px",
+                                    border: "1px dashed transparent",
+                                    backgroundColor: "transparent",
+                                    fontFamily: "var(--font-ledger)",
+                                    fontSize: "10px",
+                                    color: "var(--color-stamp-blue)"
+                                  }}
+                                  onFocus={(e) => e.target.style.border = "1px dashed var(--color-stamp-blue)"}
+                                  onBlur={(e) => e.target.style.border = "1px dashed transparent"}
+                                />
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: "10px", color: "rgba(32,30,28,0.4)", fontStyle: "italic" }}>Not scheduled</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ verticalAlign: "top", paddingTop: "12px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <span style={{ fontSize: "11px", opacity: 0.5 }}>$</span>
                           <input
@@ -493,7 +609,7 @@ export default function SettingsTab({
                             onChange={(e) => handleUpdateLimit(cat, e.target.value)}
                             placeholder="0"
                             style={{
-                              width: "120px",
+                              width: "100px",
                               padding: "4px 8px",
                               border: "1px dashed var(--color-paper-grid)",
                               borderRadius: "4px",
@@ -506,34 +622,34 @@ export default function SettingsTab({
                           />
                         </div>
                       </td>
-                      <td style={{ textAlign: "center" }}>
-                        <input 
-                          type="checkbox" 
-                          checked={isScheduled} 
-                          onChange={() => handleToggleScheduled(cat, isScheduled, existingBill, currentLimit)}
-                          style={{ cursor: "pointer" }}
-                        />
-                      </td>
-                      <td>
-                        {isScheduled ? (
-                          <input
-                            type="date"
-                            value={existingBill.dueDate}
-                            onChange={(e) => onUpdatePayment(existingBill.id, { dueDate: e.target.value })}
+                      <td style={{ textAlign: "center", verticalAlign: "top", paddingTop: "12px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "9px", cursor: "pointer" }}>
+                            <input 
+                              type="checkbox" 
+                              checked={isScheduled} 
+                              onChange={() => handleToggleScheduled(cat, isScheduled, existingBill, currentLimit)}
+                              style={{ cursor: "pointer", margin: 0 }}
+                            />
+                            {isScheduled ? "Unschedule" : "Schedule"}
+                          </label>
+                          <button
+                            onClick={() => handleDeleteCategory(cat)}
                             style={{
-                              width: "100%",
-                              padding: "2px",
-                              border: "1px dashed transparent",
-                              backgroundColor: "transparent",
-                              fontFamily: "var(--font-ledger)",
-                              fontSize: "10.5px"
+                              background: "none",
+                              border: "none",
+                              color: "var(--color-stamp-red)",
+                              cursor: "pointer",
+                              fontFamily: "var(--font-typewriter)",
+                              fontSize: "10px",
+                              fontWeight: "bold",
+                              textDecoration: "underline"
                             }}
-                            onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                            onBlur={(e) => e.target.style.border = "1px dashed transparent"}
-                          />
-                        ) : (
-                          <span style={{ fontSize: "10px", color: "rgba(32,30,28,0.4)", fontStyle: "italic" }}>Not Scheduled</span>
-                        )}
+                            title="Delete Category"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -541,7 +657,7 @@ export default function SettingsTab({
               {(categories[limitSelectedType] || [])
                 .filter(cat => cat.toLowerCase().includes(limitSearchTerm.toLowerCase())).length === 0 && (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
+                  <td colSpan="3" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
                     No categories found in registry for "{limitSelectedType}".
                   </td>
                 </tr>
@@ -549,200 +665,31 @@ export default function SettingsTab({
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Card 4: Credit Card Available Credit Registry (Full Width) */}
-      <div className="tactile-card" style={{ height: "fit-content" }}>
-        <div className="card-title" style={{ marginBottom: "15px" }}>
-          <span>Credit Card Registry & Portfolio Limits</span>
-          <span className="stamp stamp-green" style={{ fontSize: "8px", transform: "rotate(-1deg)" }}>PORTFOLIO</span>
-        </div>
-
-        <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.75)", marginBottom: "16px", fontFamily: "var(--font-sans)" }}>
-          Adjust your active credit limits and balances inline. Total available portfolio credit and utilization bars on the Overview Tab will update instantly.
-        </p>
-
-        <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto", marginBottom: "20px" }}>
-          <table className="ledger-table" style={{ fontSize: "11.5px" }}>
-            <thead>
-              <tr>
-                <th>Credit Card Name</th>
-                <th style={{ width: "120px" }}>Limit ($)</th>
-                <th style={{ width: "120px" }}>Balance ($)</th>
-                <th style={{ width: "120px" }}>Available Credit ($)</th>
-                <th style={{ width: "100px" }}>Utilization</th>
-                <th style={{ textAlign: "center", width: "80px" }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {creditCards.map((c) => {
-                const available = Math.max(0, c.limit - c.balance);
-                const utilization = c.limit > 0 ? Math.round((c.balance / c.limit) * 100) : 0;
-                let utilColor = "var(--color-stamp-green)"; // < 30%
-                if (utilization >= 50) {
-                  utilColor = "var(--color-stamp-red)"; // >= 50%
-                } else if (utilization >= 30) {
-                  utilColor = "#b45309"; // 30% - 50% (amber)
-                }
-
-                return (
-                  <tr key={c.id}>
-                    <td>
-                      <input
-                        type="text"
-                        value={c.name}
-                        onChange={(e) => handleUpdateCardField(c.id, "name", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "4px",
-                          border: "1px dashed transparent",
-                          backgroundColor: "transparent",
-                          fontWeight: "bold"
-                        }}
-                        onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                        onBlur={(e) => e.target.style.border = "1px dashed transparent"}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        value={c.limit}
-                        onChange={(e) => handleUpdateCardField(c.id, "limit", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "4px",
-                          border: "1px dashed transparent",
-                          backgroundColor: "transparent",
-                          fontFamily: "var(--font-ledger)",
-                          fontWeight: "bold"
-                        }}
-                        onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                        onBlur={(e) => e.target.style.border = "1px dashed transparent"}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        value={c.balance}
-                        onChange={(e) => handleUpdateCardField(c.id, "balance", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "4px",
-                          border: "1px dashed transparent",
-                          backgroundColor: "transparent",
-                          fontFamily: "var(--font-ledger)",
-                          fontWeight: "bold"
-                        }}
-                        onFocus={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                        onBlur={(e) => e.target.style.border = "1px dashed transparent"}
-                      />
-                    </td>
-                    <td style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold" }}>
-                      ${available.toLocaleString()}
-                    </td>
-                    <td>
-                      <span style={{ 
-                        fontWeight: "bold", 
-                        color: utilColor,
-                        fontFamily: "var(--font-ledger)"
-                      }}>
-                        {utilization}%
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <button
-                        onClick={() => handleDeleteCard(c.id)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "var(--color-stamp-red)",
-                          cursor: "pointer",
-                          fontFamily: "var(--font-typewriter)",
-                          fontSize: "11px",
-                          fontWeight: "bold"
-                        }}
-                        title="Delete Card"
-                      >
-                        [DELETE]
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {creditCards.length === 0 && (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "20px" }}>
-                    No credit cards registered in available portfolio limits registry.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Add Card Form */}
-        <form onSubmit={handleAddCard} style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "16px" }}>
-          <span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.6)" }}>Register New Credit Card Portfolio Asset</span>
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "10px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <label style={{ fontSize: "8px", fontWeight: "bold" }}>Card Name</label>
-              <input
-                type="text"
-                placeholder="e.g. Chase Sapphire..."
-                value={newCardName}
-                onChange={(e) => setNewCardName(e.target.value)}
-                required
-                style={{
-                  padding: "6px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "11.5px"
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <label style={{ fontSize: "8px", fontWeight: "bold" }}>Credit Limit ($)</label>
-              <input
-                type="number"
-                placeholder="e.g. 5000..."
-                value={newCardLimit}
-                onChange={(e) => setNewCardLimit(e.target.value)}
-                required
-                style={{
-                  padding: "6px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "11.5px",
-                  fontFamily: "var(--font-ledger)"
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <label style={{ fontSize: "8px", fontWeight: "bold" }}>Current Balance ($)</label>
-              <input
-                type="number"
-                placeholder="e.g. 1500..."
-                value={newCardBalance}
-                onChange={(e) => setNewCardBalance(e.target.value)}
-                style={{
-                  padding: "6px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "11.5px",
-                  fontFamily: "var(--font-ledger)"
-                }}
-              />
-            </div>
-          </div>
+        {/* Inline Add Category Form */}
+        <form onSubmit={handleAddCategory} style={{ display: "flex", gap: "10px", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "16px" }}>
+          <input
+            type="text"
+            placeholder={`Add new ${limitSelectedType} category...`}
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            required
+            style={{
+              flex: 1,
+              padding: "8px 12px",
+              border: "1px solid var(--color-paper-grid)",
+              borderRadius: "4px",
+              backgroundColor: "var(--color-paper-light)",
+              fontSize: "12px",
+              fontFamily: "var(--font-sans)"
+            }}
+          />
           <button
             type="submit"
             style={{
-              padding: "8px",
+              padding: "8px 16px",
               fontFamily: "var(--font-accent)",
-              fontSize: "9px",
+              fontSize: "10px",
               fontWeight: "bold",
               textTransform: "uppercase",
               color: "var(--color-paper-light)",
@@ -752,7 +699,7 @@ export default function SettingsTab({
               cursor: "pointer"
             }}
           >
-            Register Credit Card
+            + Add
           </button>
         </form>
       </div>
