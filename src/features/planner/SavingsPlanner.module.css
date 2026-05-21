@@ -1,0 +1,106 @@
+.envelopeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.envelopeCard {
+  background-color: var(--color-manila-light);
+  border: 1px solid var(--color-paper-edge);
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.08);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.envelopeCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.08);
+}
+
+.envelopeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.goalName {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ink-dark);
+  margin: 0;
+}
+
+.goalAmounts {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.amountSaved {
+  font-family: var(--font-typewriter);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink-dark);
+  letter-spacing: -0.5px;
+}
+
+.amountTarget {
+  font-family: var(--font-typewriter);
+  font-size: 12px;
+  color: rgba(32, 30, 28, 0.6);
+  margin-top: 2px;
+}
+
+.progressContainer {
+  margin-top: auto;
+  margin-bottom: 16px;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 14px;
+  border: 1px solid var(--color-ink-dark);
+  background-color: transparent;
+  position: relative;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: rgba(37, 96, 70, 0.4); /* Faded green highlighter */
+  border-right: 1px solid var(--color-ink-dark);
+  transition: width 0.4s ease;
+}
+
+.depositButton {
+  align-self: flex-end;
+  background-color: transparent;
+  border: 2px dashed var(--color-paper-edge);
+  color: var(--color-ink-dark);
+  font-family: var(--font-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.depositButton:hover {
+  background-color: rgba(181, 169, 138, 0.1);
+  border-color: var(--color-ink-dark);
+}
+
+.depositButton:active {
+  transform: scale(0.98);
+}

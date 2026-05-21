@@ -6,7 +6,7 @@ import { auth, db } from "./firebase";
 import OverviewTab from "./components/OverviewTab";
 import BudgetTab from "./components/BudgetTab";
 import InvestmentsTab from "./components/InvestmentsTab";
-import GoalsTab from "./components/GoalsTab";
+import SavingsPlanner from "./features/planner/SavingsPlanner";
 import ReportsFolder from "./features/reports/ReportsFolder";
 import TransactionTab from "./components/TransactionTab";
 import SetupTab from "./components/SetupTab";
@@ -385,11 +385,7 @@ export default function App() {
 
             <div className="budget-ledger-sheet">
               {plannerSubTab === "goals" ? (
-                <GoalsTab 
-                  goals={goals} 
-                  onAddGoal={handleAddGoal} 
-                  onSliderChange={handleUpdateGoalSlider} 
-                />
+                <SavingsPlanner />
               ) : (
                 <InvestmentsTab investmentGrowthData={aggregatedData.investmentGrowthData} />
               )}
