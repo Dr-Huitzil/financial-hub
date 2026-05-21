@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import styles from "./BudgetFolder.module.css";
 
 /**
  * BudgetFolder component representing the "Inner Manila Folder" of the budget sheet.
@@ -116,15 +117,9 @@ export default function BudgetFolder({
       if (prevWeek !== null && thisWeek !== prevWeek) {
         rows.push(
           <tr key={`week-break-${idx}`} aria-hidden="true">
-            <td
-              colSpan="6"
-              style={{
-                padding: 0,
-                borderBottom: "2px dashed #b5a98a",
-                backgroundColor: "rgba(181,169,138,0.07)",
-                height: "4px",
-              }}
-            />
+            <td colSpan="6" style={{ padding: "8px 0" }}>
+              <div className="perforation"></div>
+            </td>
           </tr>
         );
       }
@@ -210,7 +205,13 @@ export default function BudgetFolder({
       </div>
 
       {/* Main folder content ledger card */}
-      <div className="budget-ledger-sheet">
+      <div className={`${styles.binderSheet} budget-ledger-sheet`}>
+        {/* Skeuomorphic Ring-Binder Punch Holes */}
+        <div className={styles.binderHoles} aria-hidden="true">
+          <div className={styles.binderHole}></div>
+          <div className={styles.binderHole}></div>
+          <div className={styles.binderHole}></div>
+        </div>
         {/* Header summary stamp card */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", flexWrap: "wrap", gap: "15px" }}>
           <div>
@@ -318,7 +319,8 @@ export default function BudgetFolder({
         </div>
 
         {/* Voucher dynamic entry form */}
-        <form onSubmit={handleSubmitVoucher} style={{ borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "25px" }}>
+        <div className="perforation"></div>
+        <form onSubmit={handleSubmitVoucher} style={{ paddingTop: "15px" }}>
           <h4 style={{ fontFamily: "var(--font-accent)", fontSize: "11px", textTransform: "uppercase", color: "rgba(32,30,28,0.6)", marginBottom: "15px", marginTop: 0 }}>
             Authorize New Transaction Voucher
           </h4>

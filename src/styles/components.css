@@ -3,20 +3,22 @@
    Used across 2+ components — remain unscoped
 ═══════════════════════════════════════════════════════ */
 
-/* Typewriter monospaced number formatting */
+/* Typewriter monospaced number formatting with ink bleed */
 .typewriter-num {
   font-family: var(--font-ledger) !important;
   font-weight: 700 !important;
   letter-spacing: -0.5px;
+  text-shadow: 0 0 1px rgba(32, 30, 28, 0.25); /* Typewriter Ink Bleed */
 }
 
 .number-cell {
   font-family: var(--font-ledger);
   font-weight: 700;
   text-align: right !important;
+  text-shadow: 0 0 1px rgba(32, 30, 28, 0.25); /* Typewriter Ink Bleed */
 }
 
-/* ── Ink Stamps ── */
+/* ── Ink Stamps (Distressed Rubber Stamp) ── */
 .stamp {
   font-family: var(--font-typewriter);
   font-weight: 700;
@@ -28,13 +30,51 @@
   transform: rotate(-3deg);
   user-select: none;
   display: inline-block;
-  opacity: 0.9;
-  letter-spacing: 1px;
+  opacity: 0.88;
+  letter-spacing: 1.5px;
+  mix-blend-mode: multiply; /* Blends stamp ink organically into paper grain */
+  /* distressed texture overlay */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='distress'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 15 -7'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23distress)' opacity='0.22'/%3E%3C/svg%3E");
 }
-.stamp-red   { color: var(--color-stamp-red);   background-color: rgba(158,42,43,0.05);  box-shadow: 0 0 2px rgba(158,42,43,0.1); }
-.stamp-green { color: var(--color-stamp-green); background-color: rgba(37,96,70,0.05);   box-shadow: 0 0 2px rgba(37,96,70,0.1); }
-.stamp-blue  { color: var(--color-ink-blue);    background-color: rgba(22,42,69,0.05);   box-shadow: 0 0 2px rgba(22,42,69,0.1); }
-.stamp-amber { color: var(--color-amber-gold);  background-color: rgba(178,122,24,0.05); box-shadow: 0 0 2px rgba(178,122,24,0.1); }
+.stamp-red   { color: var(--color-stamp-red);   background-color: rgba(158,42,43,0.08);  box-shadow: 0 0 2px rgba(158,42,43,0.15); }
+.stamp-green { color: var(--color-stamp-green); background-color: rgba(37,96,70,0.08);   box-shadow: 0 0 2px rgba(37,96,70,0.15); }
+.stamp-blue  { color: var(--color-ink-blue);    background-color: rgba(22,42,69,0.08);   box-shadow: 0 0 2px rgba(22,42,69,0.15); }
+.stamp-amber { color: var(--color-amber-gold);  background-color: rgba(178,122,24,0.08); box-shadow: 0 0 2px rgba(178,122,24,0.15); }
+
+/* ── Dog-Eared Folded Corners (Skeuomorphic Card Upgrade) ── */
+.dogEared {
+  position: relative !important;
+  border-top-right-radius: 0 !important;
+  background: linear-gradient(225deg, transparent 18px, var(--color-paper-light) 19px) !important;
+}
+
+.dogEared::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+  background: var(--color-manila-dark) !important;
+  border-bottom-left-radius: 4px !important;
+  box-shadow: -2px 2px 4px rgba(32, 30, 28, 0.25) !important;
+  border-left: 1px solid var(--color-paper-edge) !important;
+  border-bottom: 1px solid var(--color-paper-edge) !important;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ── Perforated Edges / Divider Lines (CSS Gradient Perforations) ── */
+.perforation {
+  height: 4px !important;
+  width: 100% !important;
+  background-image: radial-gradient(circle, var(--color-paper-edge) 1.5px, transparent 1.5px) !important;
+  background-size: 8px 100% !important;
+  background-repeat: repeat-x !important;
+  border: none !important;
+  margin: 16px 0 !important;
+  opacity: 0.85 !important;
+}
 
 /* Barcode elements */
 .barcode-text {
@@ -69,6 +109,12 @@
   position: absolute;
   top: 0; left: 0; right: 0; height: 4px;
   background-color: var(--color-binder-inner);
+}
+.tactile-card.dogEared {
+  overflow: visible !important; /* Allow the folded flap shadow to overlay nicely */
+}
+.tactile-card.dogEared::before {
+  right: 18px; /* Stop the top binder border before the dog-ear cutout */
 }
 .tactile-card.tabs-above { border-top-left-radius: 0; }
 .tactile-card.tabs-above::before { display: none; }
@@ -256,3 +302,70 @@ select.form-input { cursor: pointer; }
   .modal-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
   .form-group.full-width { grid-column: span 1 !important; }
 }
+
+/* ── Kraft Envelope (Darker Beige Manila for Cash Stash) ── */
+.kraft-envelope {
+  background-color: #dfc397 !important; /* Slightly darker kraft-paper beige */
+  border-color: #b59b73 !important; /* Muted darker border */
+}
+
+/* Override dogEared for kraft-envelope so the gradient uses the correct color */
+.kraft-envelope.dogEared {
+  background: linear-gradient(225deg, transparent 18px, #dfc397 19px) !important;
+}
+
+/* We also want to make sure the dog-ear corner itself is slightly darker to match the folded look */
+.kraft-envelope.dogEared::after {
+  background: #c3a677 !important; /* Darker fold for kraft paper */
+  border-left: 1px solid #b59b73 !important;
+  border-bottom: 1px solid #b59b73 !important;
+  box-shadow: -2px 2px 4px rgba(32, 30, 28, 0.3) !important;
+}
+
+/* Also override the top accent bar of tactile-card for kraft-envelope if it is used */
+.kraft-envelope::before {
+  background-color: #b59b73 !important; /* Muted kraft envelope top boundary */
+}
+
+/* ── Segmented Pressed-in Controls ── */
+.segmented-control {
+  display: flex;
+  border: 1px solid var(--color-paper-edge);
+  border-radius: 5px;
+  background-color: rgba(32, 30, 28, 0.05);
+  padding: 4px;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.segmented-tab {
+  flex: 1;
+  padding: 8px 6px;
+  font-family: var(--font-accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(32, 30, 28, 0.6);
+  background-color: var(--color-paper-light);
+  border: 1px solid var(--color-paper-edge);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-align: center;
+  user-select: none;
+}
+
+.segmented-tab:hover {
+  background-color: #ffffff;
+  color: var(--color-ink-dark);
+}
+
+.segmented-tab.active {
+  background-color: rgba(32, 30, 28, 0.09) !important;
+  color: var(--color-ink-dark) !important;
+  border-color: rgba(32, 30, 28, 0.3) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+  font-weight: bold;
+}
+

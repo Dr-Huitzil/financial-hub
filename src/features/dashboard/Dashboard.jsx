@@ -20,21 +20,44 @@ export default function Dashboard({
   upcomingPayments = [],
 }) {
 
-  // ─── SAFE TO SPEND ────────────────────────────────────────────────────────
-  // Current checking balance = sum of income − sum of all outflows
-  const totalIncome = useMemo(() =>
-    transactions.filter(tx => tx.type === "Income")
-      .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0),
-    [transactions]
-  );
+  // ─── LEDGER ACCOUNT BALANCES ────────────────────────────────────────────────
+  const checkingBalance = useMemo(() => {
+    let balance = 0;
+    transactions.forEach((tx) => {
+      const amt = parseFloat(tx.amount || 0);
+      if (tx.type === "Transfer") {
+        if (tx.toAccount === "Checking") balance += amt;
+        if (tx.fromAccount === "Checking") balance -= amt;
+      } else {
+        const acct = tx.account || "Checking";
+        if (acct === "Checking") {
+          if (tx.type === "Income") balance += amt;
+          else balance -= amt;
+        }
+      }
+    });
+    return balance;
+  }, [transactions]);
 
-  const totalOutflows = useMemo(() =>
-    transactions.filter(tx => tx.type !== "Income")
-      .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0),
-    [transactions]
-  );
+  const cashBalance = useMemo(() => {
+    let balance = 0;
+    transactions.forEach((tx) => {
+      const amt = parseFloat(tx.amount || 0);
+      if (tx.type === "Transfer") {
+        if (tx.toAccount === "Physical Cash") balance += amt;
+        if (tx.fromAccount === "Physical Cash") balance -= amt;
+      } else {
+        const acct = tx.account || "Checking";
+        if (acct === "Physical Cash") {
+          if (tx.type === "Income") balance += amt;
+          else balance -= amt;
+        }
+      }
+    });
+    return balance;
+  }, [transactions]);
 
-  const currentBalance = totalIncome - totalOutflows;
+  const currentBalance = checkingBalance;
 
   // Upcoming bills = unpaid payments sorted by due-date (next 5 shown)
   const today = new Date();
@@ -123,12 +146,12 @@ export default function Dashboard({
         </span>
       </div>
 
-      {/* ── 3-column grid on wide screens, stacked on mobile ── */}
+      {/* ── 4-column grid on wide screens, stacked on mobile ── */}
       <div
         className="overview-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
+          gridTemplateColumns: "1.1fr 1.1fr 1fr 1.2fr",
           gap: "24px",
           alignItems: "start",
         }}
@@ -239,6 +262,114 @@ export default function Dashboard({
               <span className="ledger-label">Upcoming Bills</span>
               <span className="ledger-value typewriter-num" style={{ color: "var(--color-stamp-red)" }}>
                 −${fmt(upcomingBillTotal)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════
+            CARD 1B — PHYSICAL CASH STASH (Kraft Envelope)
+        ══════════════════════════════════════════════ */}
+        <div
+          className="tactile-card kraft-envelope dogEared"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          {/* Card header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              borderBottom: "1px dashed rgba(32,30,28,0.15)",
+              paddingBottom: "10px",
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontFamily: "var(--font-accent)",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.8px",
+                  fontWeight: "bold",
+                  color: "var(--color-ink-dark)",
+                }}
+              >
+                Physical Cash Stash
+              </span>
+              <p
+                style={{
+                  margin: "3px 0 0 0",
+                  fontSize: "10.5px",
+                  color: "rgba(32,30,28,0.6)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Liquid envelope reserve
+              </p>
+            </div>
+            <span
+              className="stamp stamp-blue"
+              style={{ fontSize: "7px", transform: "rotate(-2deg)", color: "var(--color-ink-blue)", borderColor: "var(--color-ink-blue)" }}
+            >
+              SECURED CASH
+            </span>
+          </div>
+
+          {/* Big hero number */}
+          <div style={{ textAlign: "center", padding: "12px 0" }}>
+            <span
+              style={{
+                display: "block",
+                fontFamily: "var(--font-ledger)",
+                fontSize: "11px",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                color: "rgba(32,30,28,0.6)",
+                marginBottom: "6px",
+              }}
+            >
+              Envelope Total
+            </span>
+            <span
+              className="typewriter-num"
+              style={{
+                fontSize: "clamp(28px, 4vw, 40px)",
+                fontWeight: "bold",
+                letterSpacing: "1px",
+                color: "var(--color-ink-dark)",
+                lineHeight: 1.1,
+                textShadow: "0 0 1px rgba(32, 30, 28, 0.25)"
+              }}
+            >
+              ${fmt(cashBalance)}
+            </span>
+          </div>
+
+          {/* Sub-breakdown rows */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "7px",
+              borderTop: "1px dashed rgba(32,30,28,0.15)",
+              paddingTop: "12px",
+            }}
+          >
+            <div className="ledger-text-row" style={{ borderBottomColor: "rgba(32,30,28,0.15)" }}>
+              <span className="ledger-label" style={{ color: "rgba(32,30,28,0.8)" }}>Ledger Account</span>
+              <span className="ledger-value" style={{ fontFamily: "var(--font-typewriter)", fontSize: "11px" }}>
+                Vault Envelope
+              </span>
+            </div>
+            <div className="ledger-text-row" style={{ borderBottom: "none" }}>
+              <span className="ledger-label" style={{ color: "rgba(32,30,28,0.8)" }}>Status</span>
+              <span className="ledger-value" style={{ color: "var(--color-stamp-green)", fontWeight: "bold" }}>
+                RECONCILED
               </span>
             </div>
           </div>

@@ -38,7 +38,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
     <div className="overview-grid">
       <div className="overview-left-col">
         {/* Cash Flow Stamp Row */}
-        <div className="tactile-card">
+        <div className="tactile-card dogEared">
           <div className="card-title">
             <span>Cash Flow Ledgers</span>
             <div className="stamp stamp-green" style={{ fontSize: '10px', transform: 'rotate(2deg)' }}>Audited</div>
@@ -80,7 +80,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
         </div>
 
         {/* Blueprint Line Chart */}
-        <div className="tactile-card">
+        <div className="tactile-card dogEared">
           <div className="card-title">
             <span>Balance Overview</span>
             <span className="barcode-text" style={{ fontSize: '9px' }}>CHART-NO: 2026-F</span>
@@ -169,7 +169,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
  
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
         {/* Right Column: Upcoming Payments Ledger Checklist */}
-        <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="tactile-card dogEared" style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="card-title">
             <span>Upcoming Payments</span>
             <div className="stamp stamp-red" style={{ fontSize: '10px', transform: 'rotate(-2deg)' }}>Pending</div>
@@ -216,7 +216,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
         </div>
 
         {/* Available Credit Portfolio Card */}
-        <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div className="tactile-card dogEared" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div className="card-title">
             <span>Available Credit Portfolio</span>
             <div className="stamp stamp-blue" style={{ fontSize: '10px', transform: 'rotate(2deg)' }}>PORTFOLIO</div>

@@ -94,7 +94,7 @@ function EnvelopeCard({ goal, onUpdateGoal, onDeleteGoal }) {
       <div className={`${styles.cardInner} ${isFlipped ? styles.flipped : ''}`}>
         
         {/* FRONT FACE */}
-        <div className={styles.cardFront}>
+        <div className={`${styles.cardFront} ${styles.dogEaredFront}`}>
           {/* Discreet Delete / Void Button */}
           <button 
             className={styles.deleteButton} 
@@ -193,7 +193,7 @@ function EnvelopeCard({ goal, onUpdateGoal, onDeleteGoal }) {
         </div>
 
         {/* BACK FACE */}
-        <div className={styles.cardBack} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.cardBack} ${styles.dogEaredBack}`} onClick={(e) => e.stopPropagation()}>
           <h4 className={styles.backTitle}>Ledger Sheet: {goal.name}</h4>
           
           <div className={styles.backFormGroup}>

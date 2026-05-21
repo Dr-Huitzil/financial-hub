@@ -7,10 +7,6 @@ export default function SetupTab({
   onAddPayment, 
   onDeletePayment, 
   onUpdatePayment,
-  goals,
-  onAddGoal,
-  onDeleteGoal,
-  onUpdateGoal,
   creditCards = [],
   onUpdateCreditCards,
   budgetLimits = {},
@@ -24,10 +20,7 @@ export default function SetupTab({
   const [limitSearchTerm, setLimitSearchTerm] = useState("");
   const [limitSelectedType, setLimitSelectedType] = useState("Expense");
 
-  // Goal states
-  const [newGoalName, setNewGoalName] = useState("");
-  const [newGoalTarget, setNewGoalTarget] = useState("");
-  const newGoalCategory = "Savings";
+
 
   // Credit Card states
   const [newCardName, setNewCardName] = useState("");
@@ -135,23 +128,7 @@ export default function SetupTab({
     }
   };
 
-  // Handle adding a savings goal in setup
-  const handleAddGoalSetup = (e) => {
-    e.preventDefault();
-    if (!newGoalName || !newGoalTarget) return;
 
-    const newGoalObj = {
-      id: Date.now(),
-      name: newGoalName,
-      target: parseFloat(newGoalTarget),
-      current: 0,
-      category: newGoalCategory
-    };
-
-    onAddGoal(newGoalObj);
-    setNewGoalName("");
-    setNewGoalTarget("");
-  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -162,7 +139,7 @@ export default function SetupTab({
             Treasury Ledger Setup Control Panel
           </h2>
           <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "rgba(32,30,28,0.7)", fontFamily: "var(--font-sans)" }}>
-            Configure your master categories, credit portfolio, and milestone reserves below. Click on a folder tab to switch views.
+            Configure your master categories and credit portfolio below. Click on a folder tab to switch views.
           </p>
         </div>
         <span className="stamp stamp-blue" style={{ transform: "rotate(-4deg)", fontSize: "9px" }}>
@@ -186,13 +163,7 @@ export default function SetupTab({
         >
           Credit Portfolio
         </button>
-        <button
-          className={`budget-month-tab ${setupSubTab === "savings" ? "active" : ""}`}
-          onClick={() => setSetupSubTab("savings")}
-          style={{ minWidth: "150px" }}
-        >
-          Savings Milestones
-        </button>
+
       </div>
 
       {/* Main Setup Folder Sheet */}
@@ -590,141 +561,7 @@ export default function SetupTab({
           </div>
         )}
 
-        {/* SUB-TAB 3: Savings Goals Setup */}
-        {setupSubTab === "savings" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "12px", marginBottom: "15px" }}>
-              <div>
-                <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "13px", margin: 0, textTransform: "uppercase" }}>
-                  Milestone Savings Registry Setup
-                </h3>
-                <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "rgba(32,30,28,0.6)" }}>
-                  Configure your long-term savings pool, emergency reserves, and milestones target values.
-                </p>
-              </div>
-              <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(-2deg)" }}>SAVINGS</span>
-            </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
-              {goals.map((g) => (
-                <div 
-                  key={g.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "10px 14px",
-                    borderBottom: "1px dashed var(--color-paper-grid)",
-                    backgroundColor: "rgba(32,30,28,0.01)"
-                  }}
-                >
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: "13px", fontWeight: "bold" }}>{g.name}</span>
-                    <span style={{ fontSize: "10px", opacity: 0.6 }}>{g.category || "Savings"}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontSize: "10px", textTransform: "uppercase", opacity: 0.5 }}>Target:</span>
-                      <span style={{ fontSize: "11px", opacity: 0.7 }}>$</span>
-                      <input
-                        type="number"
-                        value={g.target}
-                        onChange={(e) => onUpdateGoal(g.id, { target: parseFloat(e.target.value) || 0 })}
-                        style={{
-                          width: "90px",
-                          padding: "6px",
-                          fontSize: "11.5px",
-                          fontFamily: "var(--font-ledger)",
-                          border: "1px dashed var(--color-paper-grid)",
-                          borderRadius: "4px",
-                          backgroundColor: "transparent",
-                          fontWeight: "bold"
-                        }}
-                        onFocus={(e) => e.target.style.border = "1px solid var(--color-paper-grid)"}
-                        onBlur={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                      />
-                    </div>
-                    <button
-                      onClick={() => onDeleteGoal(g.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "var(--color-stamp-red)",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        fontFamily: "var(--font-typewriter)",
-                        fontSize: "12px",
-                        padding: "5px"
-                      }}
-                      title="Delete Goal"
-                    >
-                      [DELETE]
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {goals.length === 0 && (
-                <span style={{ fontSize: "11.5px", fontStyle: "italic", textAlign: "center", padding: "20px" }}>
-                  No savings milestones registered in setup.
-                </span>
-              )}
-            </div>
-
-            {/* Quick Add Goal Form */}
-            <form onSubmit={handleAddGoalSetup} style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "16px" }}>
-              <span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.6)" }}>Register New Savings Milestone</span>
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "10px" }}>
-                <input
-                  type="text"
-                  placeholder="Milestone Name (e.g. Emergency Fund, Ford Insurance)..."
-                  value={newGoalName}
-                  onChange={(e) => setNewGoalName(e.target.value)}
-                  required
-                  style={{
-                    padding: "8px",
-                    border: "1px solid var(--color-paper-grid)",
-                    borderRadius: "4px",
-                    backgroundColor: "var(--color-paper-light)",
-                    fontSize: "12px"
-                  }}
-                />
-                <input
-                  type="number"
-                  placeholder="Target ($)..."
-                  value={newGoalTarget}
-                  onChange={(e) => setNewGoalTarget(e.target.value)}
-                  required
-                  style={{
-                    padding: "8px",
-                    border: "1px solid var(--color-paper-grid)",
-                    borderRadius: "4px",
-                    backgroundColor: "var(--color-paper-light)",
-                    fontSize: "12px",
-                    fontFamily: "var(--font-ledger)"
-                  }}
-                />
-              </div>
-              <button
-                type="submit"
-                style={{
-                  padding: "10px",
-                  fontFamily: "var(--font-accent)",
-                  fontSize: "10px",
-                  fontWeight: "bold",
-                  textTransform: "uppercase",
-                  color: "var(--color-paper-light)",
-                  backgroundColor: "var(--color-stamp-green)",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  marginTop: "5px"
-                }}
-              >
-                Register Goal Milestone
-              </button>
-            </form>
-          </div>
-        )}
 
       </div>
     </div>

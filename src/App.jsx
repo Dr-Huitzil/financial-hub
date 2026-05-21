@@ -406,10 +406,6 @@ export default function App() {
             onAddPayment={handleAddPayment}
             onDeletePayment={handleDeletePayment}
             onUpdatePayment={handleUpdatePayment}
-            goals={goals}
-            onAddGoal={handleAddGoal}
-            onDeleteGoal={handleDeleteGoal}
-            onUpdateGoal={handleUpdateGoal}
             creditCards={creditCards}
             onUpdateCreditCards={handleUpdateCreditCards}
             budgetLimits={budgetLimits}

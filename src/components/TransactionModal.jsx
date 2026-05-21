@@ -19,16 +19,27 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
   const [type, setType] = useState("Expense");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
+  // Account states for transfers
+  const [fromAccount, setFromAccount] = useState("Checking");
+  const [toAccount, setToAccount] = useState("Savings");
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!desc.trim() || !amount || !category) return;
+    const isTransfer = type === "Transfer";
+    if (!desc.trim() || !amount || (!isTransfer && !category)) return;
+
+    if (isTransfer && fromAccount === toAccount) {
+      alert("Comptroller Validation Error: Source and Destination accounts cannot be identical.");
+      return;
+    }
 
     const newTx = {
       description: desc.trim(),
       amount: parseFloat(amount) || 0,
-      category,
+      category: isTransfer ? "Transfer" : category,
       type,
-      date
+      date,
+      ...(isTransfer ? { fromAccount, toAccount } : {})
     };
 
     // Parent callback to submit transaction
@@ -36,9 +47,10 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
       onAddTransaction(newTx);
     }
 
-    // ==========================================
-    // COMMENTED FIREBASE SUBMISSION PROCESS
-    // ==========================================
+    // =========================================================================
+    // COMMENTED FIREBASE DOUBLE-ENTRY TRANSFER PROCESS
+    // Demonstrates logging two voucher entries to preserve global net worth.
+    // =========================================================================
     /*
     const postTransactionToFirestore = async (txData) => {
       try {
@@ -53,7 +65,49 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
         console.error("Failed to upload transaction voucher:", err);
       }
     };
-    postTransactionToFirestore(newTx);
+
+    const postTransferToFirestore = async (transferData) => {
+      try {
+        if (!auth.currentUser) return;
+        const batch = writeBatch(db);
+        const txCollectionRef = collection(db, "users", auth.currentUser.uid, "transactions");
+        
+        // Entry 1: Negative ledger entry (withdrawal from source account)
+        const debitDocRef = doc(txCollectionRef);
+        batch.set(debitDocRef, {
+          description: `Transfer Out: ${transferData.description}`,
+          amount: transferData.amount,
+          type: "Expense",
+          category: "Transfer",
+          account: transferData.fromAccount,
+          date: transferData.date,
+          createdAt: serverTimestamp()
+        });
+
+        // Entry 2: Positive ledger entry (deposit to destination account)
+        const creditDocRef = doc(txCollectionRef);
+        batch.set(creditDocRef, {
+          description: `Transfer In: ${transferData.description}`,
+          amount: transferData.amount,
+          type: "Income",
+          category: "Transfer",
+          account: transferData.toAccount,
+          date: transferData.date,
+          createdAt: serverTimestamp()
+        });
+
+        await batch.commit();
+        console.log("Double-entry transfer voucher posted successfully to Firestore batch!");
+      } catch (err) {
+        console.error("Double-entry transfer failed:", err);
+      }
+    };
+
+    if (isTransfer) {
+      postTransferToFirestore(newTx);
+    } else {
+      postTransactionToFirestore(newTx);
+    }
     */
 
     // Reset form states & close modal
@@ -123,49 +177,86 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
                   />
                 </div>
 
-                {/* Voucher Type */}
-                <div className="form-group">
-                  <label className="form-label">Voucher Class (Type)</label>
-                  <select
-                    value={type}
-                    onChange={(e) => {
-                      setType(e.target.value);
-                      // Auto-select first category of selected type to avoid mismatches
-                      const typeOptions = categories[e.target.value] || [];
-                      if (typeOptions.length > 0) {
-                        setCategory(typeOptions[0]);
-                      } else {
-                        setCategory("");
-                      }
-                    }}
-                    className="form-input"
-                  >
-                    <option value="Expense">Expense</option>
-                    <option value="Income">Income</option>
-                    <option value="Bill">Bill</option>
-                    <option value="Debt">Debt</option>
-                  </select>
-                </div>
+                 {/* Voucher Type (Skeuomorphic Segmented Controls) */}
+                 <div className="form-group full-width">
+                   <label className="form-label">Voucher Class (Type)</label>
+                   <div className="segmented-control">
+                     {["Expense", "Income", "Transfer"].map((t) => (
+                       <button
+                         key={t}
+                         type="button"
+                         className={`segmented-tab ${type === t ? "active" : ""}`}
+                         onClick={() => {
+                           setType(t);
+                           if (t !== "Transfer") {
+                             // Auto-select first category of selected type
+                             const typeOptions = categories[t] || [];
+                             if (typeOptions.length > 0) {
+                               setCategory(typeOptions[0]);
+                             } else {
+                               setCategory("");
+                             }
+                           } else {
+                             setCategory("");
+                           }
+                         }}
+                       >
+                         {t}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
 
-                {/* Category Dropdown */}
-                <div className="form-group">
-                  <label className="form-label">Budget Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    required
-                    className="form-input"
-                  >
-                    <option value="">-- Choose Category --</option>
-                    {Object.keys(categories).map((grp) => (
-                      <optgroup label={`${grp.toUpperCase()} CATEGORIES`} key={grp}>
-                        {categories[grp].map((cat) => (
-                          <option value={cat} key={cat}>{cat}</option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </div>
+                 {/* Conditional Category or Account Dropdowns */}
+                 {type !== "Transfer" ? (
+                   <div className="form-group">
+                     <label className="form-label">Budget Category</label>
+                     <select
+                       value={category}
+                       onChange={(e) => setCategory(e.target.value)}
+                       required
+                       className="form-input"
+                     >
+                       <option value="">-- Choose Category --</option>
+                       {Object.keys(categories).map((grp) => (
+                         <optgroup label={`${grp.toUpperCase()} CATEGORIES`} key={grp}>
+                           {categories[grp].map((cat) => (
+                             <option value={cat} key={cat}>{cat}</option>
+                           ))}
+                         </optgroup>
+                       ))}
+                     </select>
+                   </div>
+                 ) : (
+                   <>
+                     <div className="form-group">
+                       <label className="form-label">From Account</label>
+                       <select
+                         value={fromAccount}
+                         onChange={(e) => setFromAccount(e.target.value)}
+                         required
+                         className="form-input"
+                       >
+                         <option value="Checking">Checking</option>
+                         <option value="Savings">Savings</option>
+                         <option value="Physical Cash">Physical Cash</option>
+                       </select>
+                     </div>
+                     <div className="form-group">
+                       <label className="form-label">To Account</label>
+                       <select
+                         value={toAccount}
+                         onChange={(e) => setToAccount(e.target.value)}
+                         required
+                         className="form-input"
+                       >
+                         <option value="Checking">Checking</option>
+                         <option value="Savings">Savings</option>
+                         <option value="Physical Cash">Physical Cash</option>
+                       </select>
+                     </div>
+                   </>
+                 )}
 
                 {/* Date */}
                 <div className="form-group">

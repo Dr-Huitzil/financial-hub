@@ -382,6 +382,56 @@
   background-size: 100% 24px;
 }
 
+/* Dog-Eared Corners for front and back card faces */
+.dogEaredFront {
+  border-top-right-radius: 0 !important;
+  background: linear-gradient(225deg, transparent 18px, var(--color-manila-light) 19px) !important;
+  overflow: visible !important;
+}
+
+.dogEaredFront::after {
+  content: "" !important;
+  position: absolute !important;
+  top: -1px !important;
+  right: -1px !important;
+  width: 18px !important;
+  height: 18px !important;
+  background: var(--color-manila-dark) !important;
+  border-bottom-left-radius: 4px !important;
+  box-shadow: -2px 2px 4px rgba(32, 30, 28, 0.25) !important;
+  border-left: 1px solid var(--color-paper-edge) !important;
+  border-bottom: 1px solid var(--color-paper-edge) !important;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.dogEaredBack {
+  border-top-right-radius: 0 !important;
+  background-image: 
+    linear-gradient(rgba(181, 169, 138, 0.1) 1px, transparent 1px),
+    linear-gradient(225deg, transparent 18px, var(--color-manila-light) 19px) !important;
+  background-size: 100% 24px, 100% 100% !important;
+  background-repeat: repeat, no-repeat !important;
+  overflow: visible !important;
+}
+
+.dogEaredBack::after {
+  content: "" !important;
+  position: absolute !important;
+  top: -1px !important;
+  right: -1px !important;
+  width: 18px !important;
+  height: 18px !important;
+  background: var(--color-manila-dark) !important;
+  border-bottom-left-radius: 4px !important;
+  box-shadow: -2px 2px 4px rgba(32, 30, 28, 0.25) !important;
+  border-left: 1px solid var(--color-paper-edge) !important;
+  border-bottom: 1px solid var(--color-paper-edge) !important;
+  pointer-events: none;
+  z-index: 5;
+}
+
+
 /* Front Card Actions & Plan Tab */
 .planButton {
   align-self: flex-end;

@@ -1,3 +1,102 @@
 /* BudgetFolder.module.css — Scoped to BudgetFolder */
-/* BudgetFolder currently uses only shared global classes.
-   Add budget-specific styles here as needed. */
+
+.binderSheet {
+  position: relative !important;
+  padding-left: 55px !important; /* Make room on the left for the ring binders */
+  transition: all 0.25s ease;
+}
+
+/* Vertical binder margin line (red rule) */
+.binderSheet::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 45px !important;
+  width: 2px !important;
+  height: 100% !important;
+  background-color: rgba(198, 40, 40, 0.25) !important; /* red ink margin rule */
+  border-right: 1px solid rgba(198, 40, 40, 0.1) !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+/* Punch holes showing the desk background underneath */
+.binderHoles {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 45px !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  padding: 80px 0 !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
+.binderHole {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: var(--color-desk) !important; /* shows the desk behind the paper */
+  border-radius: 50% !important;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  position: relative !important;
+}
+
+/* reinforcement sticker ring around binder holes */
+.binderHole::before {
+  content: "" !important;
+  position: absolute !important;
+  top: -5px !important;
+  left: -5px !important;
+  right: -5px !important;
+  bottom: -5px !important;
+  border: 2px solid rgba(32, 30, 28, 0.12) !important; /* white reinforcement ring sticker */
+  background-color: rgba(253, 252, 247, 0.6) !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* small rip slit extending to the left edge to simulate being ripped out of binder */
+.binderHole::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 7px !important;
+  right: 12px !important;
+  width: 14px !important;
+  height: 2px !important;
+  background-color: var(--color-desk) !important;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.5) !important;
+  z-index: 1 !important;
+}
+
+@media (max-width: 768px) {
+  .binderSheet {
+    padding-left: 35px !important;
+  }
+  .binderSheet::before {
+    left: 28px !important;
+  }
+  .binderHoles {
+    width: 28px !important;
+    padding: 60px 0 !important;
+  }
+  .binderHole {
+    width: 10px !important;
+    height: 10px !important;
+  }
+  .binderHole::before {
+    top: -3px !important;
+    left: -3px !important;
+    right: -3px !important;
+    bottom: -3px !important;
+  }
+  .binderHole::after {
+    top: 4px !important;
+    right: 7px !important;
+    width: 10px !important;
+  }
+}
