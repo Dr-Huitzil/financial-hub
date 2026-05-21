@@ -16,7 +16,8 @@ import {
   Pie, 
   Cell 
 } from "recharts";
-import { aggregateFinancialData } from "../data/financialDataSync";
+import styles from "./ReportsFolder.module.css";
+import { aggregateFinancialData } from "../../data/financialDataSync";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -429,7 +430,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
           {/* Selector row: dropdown + annual total badge */}
           <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px", flexWrap: "wrap" }}>
             <select
-              className="paper-select-recessed"
+              className={styles.paperSelectRecessed}
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               id="category-trend-selector"
@@ -441,7 +442,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
             </select>
 
             {selectedCategory && (
-              <div className="category-trend-annual-total">
+              <div className={styles.categoryTrendAnnualTotal}>
                 <span>Annual Total:</span>
                 <strong className="typewriter-num">
                   ${categoryAnnualTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

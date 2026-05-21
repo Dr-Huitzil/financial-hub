@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&display=swap');
+
+:root {
+  /* Skeuomorphic Color Tokens */
+  --color-desk: #252220;
+  --color-binder-outer: #c5b9a5;
+  --color-binder-inner: #d7cdba;
+  --color-manila-light: #f5eedc;
+  --color-manila-dark: #ebdcb9;
+  --color-paper-light: #fdfcf7;
+  --color-paper-grid: #eaddc3;
+  --color-paper-edge: #b5a98a;
+  --color-ink-dark: #201e1c;
+  --color-ink-blue: #162a45;
+  --color-stamp-red: #7f1d1d;
+  --color-stamp-green: #14532d;
+  --color-amber-gold: #b27a18;
+  --color-silver: #a1a1aa;
+  --color-manila-folder-active: #f4ebd0;
+  --color-manila-folder-inactive: #d1c7ac;
+
+  /* Drop Shadows & Materials */
+  --shadow-layered-soft: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-tactile-heavy: 0 25px 50px -12px rgba(0, 0, 0, 0.4),
+                           0 10px 20px -5px rgba(0, 0, 0, 0.3),
+                           inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --shadow-tactile-medium: 0 12px 20px -8px rgba(40, 30, 20, 0.25),
+                            0 4px 6px -2px rgba(40, 30, 20, 0.2);
+  --shadow-paper: 0 4px 6px rgba(0, 0, 0, 0.05),
+                  0 1px 3px rgba(0, 0, 0, 0.1),
+                  inset 0 0 40px rgba(253, 252, 247, 0.8);
+  --shadow-inset-groove: inset 0 2px 5px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.6);
+
+  /* Fonts */
+  --font-typewriter: 'Special Elite', monospace;
+  --font-ledger: 'Courier Prime', monospace;
+  --font-sans: 'Outfit', sans-serif;
+  --font-accent: 'Space Grotesk', sans-serif;
+
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: var(--color-ink-dark);
+  background: var(--color-desk);
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.4) 100%),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0px, rgba(0, 0, 0, 0.1) 2px, transparent 2px, transparent 10px);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 1300px;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--color-paper-dark); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--color-manila-dark); border-radius: 4px; border: 2px solid var(--color-paper-dark); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-binder-outer); }
+
+input[type="number"] {
+  text-align: right;
+  font-family: var(--font-ledger);
+}
+
+@media (max-width: 768px) {
+  #root { padding: 12px; }
+}

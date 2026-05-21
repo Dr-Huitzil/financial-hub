@@ -7,14 +7,14 @@ import OverviewTab from "./components/OverviewTab";
 import BudgetTab from "./components/BudgetTab";
 import InvestmentsTab from "./components/InvestmentsTab";
 import GoalsTab from "./components/GoalsTab";
-import ReportsFolder from "./components/ReportsFolder";
+import ReportsFolder from "./features/reports/ReportsFolder";
 import TransactionTab from "./components/TransactionTab";
 import SetupTab from "./components/SetupTab";
 import Login from "./components/Login";
 
-import MainLayout from "./components/MainLayout";
-import Dashboard from "./components/Dashboard";
-import BudgetFolder from "./components/BudgetFolder";
+import MainLayout from "./components/layout/MainLayout";
+import Dashboard from "./features/dashboard/Dashboard";
+import BudgetFolder from "./features/budget/BudgetFolder";
 import TransactionModal from "./components/TransactionModal";
 
 import { initialUpcomingPayments, savingsGoals as initialGoals } from "./data/financialData";
