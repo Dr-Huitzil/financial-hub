@@ -385,7 +385,12 @@ export default function App() {
 
             <div className="budget-ledger-sheet">
               {plannerSubTab === "goals" ? (
-                <SavingsPlanner />
+                <SavingsPlanner 
+                  goals={goals}
+                  onAddGoal={handleAddGoal}
+                  onDeleteGoal={handleDeleteGoal}
+                  onUpdateGoal={handleUpdateGoal}
+                />
               ) : (
                 <InvestmentsTab investmentGrowthData={aggregatedData.investmentGrowthData} />
               )}

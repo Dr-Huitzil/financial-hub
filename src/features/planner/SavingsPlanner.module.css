@@ -104,3 +104,616 @@
 .depositButton:active {
   transform: scale(0.98);
 }
+
+/* Discreet Delete / Void Button */
+.deleteButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-accent);
+  font-size: 16px;
+  color: rgba(32, 30, 28, 0.3);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  z-index: 12;
+}
+
+.deleteButton:hover {
+  color: var(--color-stamp-red);
+  background-color: rgba(127, 29, 29, 0.08);
+}
+
+/* Void Stamp Overlay */
+.voidOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(127, 29, 29, 0.05); /* very faint red tint */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+  border-radius: 6px;
+}
+
+/* Show void stamp overlay when the delete button is hovered */
+.envelopeCard:has(.deleteButton:hover) .voidOverlay {
+  opacity: 1;
+}
+
+.voidStampText {
+  font-family: var(--font-typewriter);
+  font-size: 36px;
+  font-weight: bold;
+  color: var(--color-stamp-red);
+  border: 3px double var(--color-stamp-red);
+  padding: 4px 16px;
+  transform: rotate(-15deg);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  opacity: 0.85;
+}
+
+/* Blank Envelope Card */
+.blankEnvelope {
+  background-color: rgba(245, 238, 220, 0.4);
+  border: 2px dashed var(--color-paper-edge);
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 180px;
+  transition: all 0.25s ease;
+}
+
+.blankEnvelope:hover {
+  background-color: rgba(245, 238, 220, 0.7);
+  border-color: var(--color-ink-dark);
+  transform: translateY(-2px);
+}
+
+.blankEnvelopeContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(32, 30, 28, 0.5);
+  font-family: var(--font-accent);
+}
+
+.blankEnvelope:hover .blankEnvelopeContent {
+  color: var(--color-ink-dark);
+}
+
+.plusIcon {
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.blankEnvelopeLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Form Envelope Card */
+.formEnvelope {
+  background-color: var(--color-manila-light);
+  border: 1px solid var(--color-paper-edge);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+  cursor: default;
+}
+
+.formEnvelope:hover {
+  transform: none; /* Disable card hover animation for active forms */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+}
+
+.formTitle {
+  font-family: var(--font-accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-ink-dark);
+  margin-top: 0;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px dashed var(--color-paper-edge);
+  padding-bottom: 6px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.formLabel {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: rgba(32, 30, 28, 0.6);
+  letter-spacing: 0.5px;
+}
+
+.formInput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-ink-dark);
+  font-family: var(--font-ledger);
+  font-size: 14px;
+  color: var(--color-ink-dark);
+  padding: 4px 0;
+  outline: none;
+  width: 100%;
+  transition: border-bottom-color 0.2s ease;
+}
+
+.formInput::placeholder {
+  color: rgba(32, 30, 28, 0.35);
+  font-style: italic;
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.formInput:focus {
+  border-bottom: 2px solid var(--color-ink-dark);
+  padding-bottom: 3px;
+}
+
+/* Save / Cancel physical button styles */
+.formActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.cancelButton {
+  background: transparent;
+  border: none;
+  font-family: var(--font-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(127, 29, 29, 0.8);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background-color: rgba(127, 29, 29, 0.08);
+  color: var(--color-stamp-red);
+}
+
+.saveButton {
+  background-color: transparent;
+  border: 2px solid var(--color-stamp-green);
+  color: var(--color-stamp-green);
+  font-family: var(--font-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 0 0 0 var(--color-stamp-green);
+}
+
+.saveButton:hover {
+  background-color: rgba(20, 83, 45, 0.08);
+  box-shadow: 0 2px 4px rgba(20, 83, 45, 0.15);
+}
+
+.saveButton:active {
+  transform: scale(0.98);
+}
+
+/* 3D Card Flip Animation Layout */
+.cardContainer {
+  perspective: 1000px;
+  width: 100%;
+  height: 230px;
+}
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.cardInner.flipped {
+  transform: rotateY(180deg);
+}
+
+.cardFront, .cardBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--color-paper-edge);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.cardFront {
+  background-color: var(--color-manila-light);
+  transform: rotateY(0deg);
+  z-index: 2;
+}
+
+.cardBack {
+  background-color: var(--color-manila-light);
+  transform: rotateY(180deg);
+  z-index: 1;
+  background-image: linear-gradient(rgba(181, 169, 138, 0.1) 1px, transparent 1px);
+  background-size: 100% 24px;
+}
+
+/* Front Card Actions & Plan Tab */
+.planButton {
+  align-self: flex-end;
+  background-color: transparent;
+  border: 1px solid var(--color-paper-edge);
+  color: rgba(32, 30, 28, 0.7);
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.planButton:hover {
+  background-color: rgba(181, 169, 138, 0.1);
+  border-color: var(--color-ink-dark);
+  color: var(--color-ink-dark);
+}
+
+/* Back of Card Planning Details */
+.backTitle {
+  font-family: var(--font-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-ink-dark);
+  margin: 0 0 12px 0;
+  letter-spacing: 0.5px;
+  border-bottom: 1px dashed var(--color-paper-edge);
+  padding-bottom: 4px;
+}
+
+.backFormGroup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.backLabel {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: rgba(32, 30, 28, 0.6);
+  letter-spacing: 0.5px;
+}
+
+.backInput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-ink-dark);
+  font-family: var(--font-ledger);
+  font-size: 12.5px;
+  color: var(--color-ink-dark);
+  padding: 2px 0;
+  outline: none;
+  width: 110px;
+  text-align: right;
+}
+
+.backInput[type="date"] {
+  font-family: var(--font-ledger);
+  font-size: 11.5px;
+  width: 125px;
+  text-align: center;
+}
+
+.backInput:focus {
+  border-bottom: 2px solid var(--color-ink-dark);
+}
+
+.backSelect {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-ink-dark);
+  font-family: var(--font-ledger);
+  font-size: 11.5px;
+  color: var(--color-ink-dark);
+  padding: 2px 0;
+  outline: none;
+  width: 140px;
+  text-align: right;
+  cursor: pointer;
+}
+
+.backSelect:focus {
+  border-bottom: 2px solid var(--color-ink-dark);
+}
+
+.calculationArea {
+  margin-top: 6px;
+  padding: 8px;
+  background-color: rgba(32, 30, 28, 0.03);
+  border: 1px dashed var(--color-paper-edge);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.calcLabel {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  text-transform: uppercase;
+  color: rgba(32, 30, 28, 0.6);
+  font-weight: 600;
+}
+
+.calcAmount {
+  font-family: var(--font-typewriter);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-stamp-red);
+  letter-spacing: -0.5px;
+}
+
+.calcPlaceholder {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: rgba(32, 30, 28, 0.5);
+  font-style: italic;
+}
+
+.backActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  gap: 8px;
+}
+
+.cancelPlanButton {
+  background: transparent;
+  border: none;
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(32, 30, 28, 0.6);
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.cancelPlanButton:hover {
+  color: var(--color-ink-dark);
+}
+
+.savePlanButton {
+  background-color: transparent;
+  border: 1.5px solid var(--color-ink-blue);
+  color: var(--color-ink-blue);
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.savePlanButton:hover {
+  background-color: rgba(22, 42, 69, 0.08);
+  box-shadow: 0 2px 4px rgba(22, 42, 69, 0.15);
+}
+
+/* Skeuomorphic Delete Confirmation Overlay */
+.confirmOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-manila-dark);
+  border: 2px solid var(--color-stamp-red);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+  z-index: 20;
+  box-shadow: inset 0 0 15px rgba(127, 29, 29, 0.1);
+}
+
+.confirmTitle {
+  font-family: var(--font-typewriter);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-stamp-red);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  border-bottom: 2px double var(--color-stamp-red);
+  padding-bottom: 4px;
+}
+
+.confirmText {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--color-ink-dark);
+  margin-top: 4px;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.confirmNoButton {
+  background: transparent;
+  border: 1px solid var(--color-ink-dark);
+  color: var(--color-ink-dark);
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmNoButton:hover {
+  background-color: rgba(32, 30, 28, 0.05);
+}
+
+.confirmYesButton {
+  background-color: var(--color-stamp-red);
+  border: 1px solid var(--color-stamp-red);
+  color: #fff;
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmYesButton:hover {
+  background-color: #991b1b;
+  box-shadow: 0 2px 4px rgba(127, 29, 29, 0.3);
+}
+
+/* Skeuomorphic Add Confirmation View */
+.confirmAddOverlay {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+  padding: 10px;
+}
+
+.confirmAddTitle {
+  font-family: var(--font-typewriter);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-stamp-green);
+  border: 2px dashed var(--color-stamp-green);
+  padding: 4px 8px;
+  transform: rotate(-3deg);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.confirmAddText {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--color-ink-dark);
+  margin-top: 4px;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.confirmAddActions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.confirmAddNoButton {
+  background: transparent;
+  border: 1px solid var(--color-ink-dark);
+  color: var(--color-ink-dark);
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmAddNoButton:hover {
+  background-color: rgba(32, 30, 28, 0.05);
+}
+
+.confirmAddYesButton {
+  background-color: var(--color-stamp-green);
+  border: 1px solid var(--color-stamp-green);
+  color: #fff;
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(20, 83, 45, 0.2);
+}
+
+.confirmAddYesButton:hover {
+  background-color: #166534;
+  box-shadow: 0 4px 6px rgba(20, 83, 45, 0.3);
+}
