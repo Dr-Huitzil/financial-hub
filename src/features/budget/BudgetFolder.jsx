@@ -24,6 +24,7 @@ export default function BudgetFolder({
   
   const currentMonthIndex = new Date().getMonth();
   const [activeMonth, setActiveMonth] = useState(MONTHS[currentMonthIndex]);
+  const [viewLimit, setViewLimit] = useState("10");
 
   // Form states for new transaction voucher
   const [txDesc, setTxDesc] = useState("");
@@ -107,10 +108,12 @@ export default function BudgetFolder({
       );
     }
 
+    const displayedTx = viewLimit === "All" ? monthlyTx : monthlyTx.slice(0, parseInt(viewLimit));
+
     const rows = [];
     let prevWeek = null;
 
-    monthlyTx.forEach((tx, idx) => {
+    displayedTx.forEach((tx, idx) => {
       const thisWeek = getWeekBucket(tx.date);
 
       // Insert week-break separator when the week bucket changes (but not before the first row)
@@ -266,7 +269,7 @@ export default function BudgetFolder({
                 .filter(tx => tx.category === cat)
                 .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
 
-              const percent = Math.min(100, capLimit > 0 ? Math.round((actualSpent / capLimit) * 100) : 0);
+              const percent = capLimit > 0 ? Math.round((actualSpent / capLimit) * 100) : 0;
               const isOver = actualSpent > capLimit;
 
               return (
@@ -281,7 +284,7 @@ export default function BudgetFolder({
                     <div 
                       className="category-bar-fill" 
                       style={{ 
-                        width: `${percent}%`, 
+                        width: `${Math.min(100, percent)}%`, 
                         height: "100%", 
                         backgroundColor: isOver ? "var(--color-stamp-red)" : "var(--color-stamp-green)",
                         transition: "width 0.3s ease" 
@@ -296,9 +299,32 @@ export default function BudgetFolder({
 
         {/* Transaction History ledger grid */}
         <div style={{ marginBottom: "35px" }}>
-          <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>
-            Monthly Ledger Transactions Registry
-          </h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+            <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
+              Monthly Ledger Transactions Registry
+            </h3>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", textTransform: "uppercase", opacity: 0.7 }}>Show Limit:</span>
+              <select
+                value={viewLimit}
+                onChange={(e) => setViewLimit(e.target.value)}
+                className="paper-select-recessed"
+                style={{
+                  padding: "4px 28px 4px 10px",
+                  fontSize: "11px",
+                  height: "26px",
+                  fontFamily: "var(--font-sans)",
+                  lineHeight: "1"
+                }}
+              >
+                <option value="5">5 entries</option>
+                <option value="10">10 entries</option>
+                <option value="20">20 entries</option>
+                <option value="50">50 entries</option>
+                <option value="All">All entries</option>
+              </select>
+            </div>
+          </div>
           <div className="ledger-table-container">
             <table className="ledger-table">
               <thead>
@@ -318,139 +344,7 @@ export default function BudgetFolder({
           </div>
         </div>
 
-        {/* Voucher dynamic entry form */}
-        <div className="perforation"></div>
-        <form onSubmit={handleSubmitVoucher} style={{ paddingTop: "15px" }}>
-          <h4 style={{ fontFamily: "var(--font-accent)", fontSize: "11px", textTransform: "uppercase", color: "rgba(32,30,28,0.6)", marginBottom: "15px", marginTop: 0 }}>
-            Authorize New Transaction Voucher
-          </h4>
-          <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: "12px", marginBottom: "15px" }} className="overview-grid">
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "9px", fontWeight: "bold" }}>Voucher Description</label>
-              <input
-                type="text"
-                value={txDesc}
-                onChange={(e) => setTxDesc(e.target.value)}
-                placeholder="e.g. Costco Wholesale..."
-                required
-                style={{
-                  padding: "8px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "12.5px"
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "9px", fontWeight: "bold" }}>Amount ($)</label>
-              <input
-                type="number"
-                value={txAmount}
-                onChange={(e) => setTxAmount(e.target.value)}
-                placeholder="0.00"
-                required
-                step="0.01"
-                style={{
-                  padding: "8px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "12.5px",
-                  fontFamily: "var(--font-ledger)"
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "9px", fontWeight: "bold" }}>Category</label>
-              <select
-                value={txCategory}
-                onChange={(e) => setTxCategory(e.target.value)}
-                required
-                style={{
-                  padding: "8px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "12.5px"
-                }}
-              >
-                <option value="">-- Select --</option>
-                {Object.keys(categories).map(type => (
-                  <optgroup label={`${type}s`} key={type}>
-                    {categories[type].map(cat => (
-                      <option value={cat} key={cat}>{cat}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "9px", fontWeight: "bold" }}>Voucher Type</label>
-              <select
-                value={txType}
-                onChange={(e) => {
-                  setTxType(e.target.value);
-                  // Auto pick first category of that type if available
-                  const options = categories[e.target.value] || [];
-                  if (options.length > 0) setTxCategory(options[0]);
-                }}
-                style={{
-                  padding: "8px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "12.5px"
-                }}
-              >
-                <option value="Expense">Expense</option>
-                <option value="Income">Income</option>
-                <option value="Bill">Bill</option>
-                <option value="Debt">Debt</option>
-              </select>
-            </div>
-          </div>
 
-          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "9px", fontWeight: "bold" }}>Date of Record</label>
-              <input
-                type="date"
-                value={txDate}
-                onChange={(e) => setTxDate(e.target.value)}
-                required
-                style={{
-                  padding: "6px",
-                  border: "1px solid var(--color-paper-grid)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--color-paper-light)",
-                  fontSize: "12.5px",
-                  fontFamily: "var(--font-ledger)"
-                }}
-              />
-            </div>
-            <button
-              type="submit"
-              style={{
-                marginLeft: "auto",
-                alignSelf: "flex-end",
-                padding: "9px 24px",
-                fontFamily: "var(--font-accent)",
-                fontSize: "10px",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                color: "var(--color-paper-light)",
-                backgroundColor: "var(--color-stamp-green)",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
-              }}
-            >
-              Post Voucher
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

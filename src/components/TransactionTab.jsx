@@ -21,6 +21,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [selectedMonth, setSelectedMonth] = useState("All");
+  const [visibleLimit, setVisibleLimit] = useState("All");
 
   // Excel Batch Mode state
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -197,6 +198,10 @@ export default function TransactionTab({ transactions, categories, onAddTransact
     
     return matchesSearch && matchesType && matchesMonth;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const displayedTxs = visibleLimit === "All" 
+    ? filteredTxs 
+    : filteredTxs.slice(0, parseInt(visibleLimit, 10));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
@@ -467,7 +472,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
             </div>
             
             {/* Filter Log Bar */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 1fr", gap: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 1fr 0.8fr", gap: "10px" }}>
               <input
                 type="text"
                 placeholder="Search description/category..."
@@ -502,6 +507,22 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                 <option value="Bill">Bills Only</option>
                 <option value="Debt">Debts Only</option>
               </select>
+              <select
+                value={visibleLimit}
+                onChange={(e) => setVisibleLimit(e.target.value)}
+                style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
+                title="Visible Entries"
+              >
+                <option value="All">All Entries</option>
+                <option value="5">5 Entries</option>
+                <option value="7">7 Entries (1 Wk)</option>
+                <option value="10">10 Entries</option>
+                <option value="14">14 Entries (2 Wks)</option>
+                <option value="25">25 Entries</option>
+                <option value="30">30 Entries (1 Mo)</option>
+                <option value="50">50 Entries</option>
+                <option value="100">100 Entries</option>
+              </select>
             </div>
 
             <div className="ledger-table-container" style={{ maxHeight: "400px", overflowY: "auto" }}>
@@ -517,7 +538,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTxs.map((tx) => (
+                  {displayedTxs.map((tx) => (
                     <tr key={tx.id}>
                       <td style={{ fontFamily: "var(--font-ledger)" }}>{tx.date}</td>
                       <td>
@@ -579,7 +600,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-ledger)", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "12px" }}>
-              <span>Posted Entries: <strong>{filteredTxs.length}</strong></span>
+              <span>Posted Entries: <strong>{visibleLimit === "All" ? filteredTxs.length : `${displayedTxs.length} of ${filteredTxs.length}`}</strong></span>
               <span>Total Debited Out: <strong>${filteredTxs.filter(tx => tx.type !== "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
               <span>Total Credited In: <strong>${filteredTxs.filter(tx => tx.type === "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
             </div>
@@ -731,7 +752,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
             </div>
             
             {/* Table Controls */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 1fr", gap: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 1fr 0.8fr", gap: "10px" }}>
               <input 
                 type="text" 
                 placeholder="Search description/category..."
@@ -766,6 +787,23 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                 <option value="Bill">Bills Only</option>
                 <option value="Debt">Debts Only</option>
               </select>
+
+              <select
+                value={visibleLimit}
+                onChange={(e) => setVisibleLimit(e.target.value)}
+                style={{ padding: "8px", border: "1px solid var(--color-paper-grid)", borderRadius: "4px", backgroundColor: "var(--color-manila-light)", cursor: "pointer", fontSize: "11.5px", fontWeight: "bold", fontFamily: "var(--font-accent)" }}
+                title="Visible Entries"
+              >
+                <option value="All">All Entries</option>
+                <option value="5">5 Entries</option>
+                <option value="7">7 Entries (1 Wk)</option>
+                <option value="10">10 Entries</option>
+                <option value="14">14 Entries (2 Wks)</option>
+                <option value="25">25 Entries</option>
+                <option value="30">30 Entries (1 Mo)</option>
+                <option value="50">50 Entries</option>
+                <option value="100">100 Entries</option>
+              </select>
             </div>
 
             {/* Ledger Table */}
@@ -782,7 +820,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTxs.map((tx) => (
+                  {displayedTxs.map((tx) => (
                     <tr key={tx.id}>
                       <td style={{ fontFamily: "var(--font-ledger)" }}>{tx.date}</td>
                       <td>
@@ -848,7 +886,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontFamily: "var(--font-ledger)", borderTop: "1px dashed var(--color-paper-grid)", paddingTop: "12px" }}>
-              <span>Posted Entries: <strong>{filteredTxs.length}</strong></span>
+              <span>Posted Entries: <strong>{visibleLimit === "All" ? filteredTxs.length : `${displayedTxs.length} of ${filteredTxs.length}`}</strong></span>
               <span>Total Debited Out: <strong>${filteredTxs.filter(tx => tx.type !== "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
               <span>Total Credited In: <strong>${filteredTxs.filter(tx => tx.type === "Income").reduce((sum, tx) => sum + tx.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
             </div>

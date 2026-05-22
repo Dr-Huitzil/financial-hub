@@ -19,9 +19,19 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
   const [type, setType] = useState("Expense");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
+  // Search & Filter Category States
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState("");
+
   // Account states for transfers
   const [fromAccount, setFromAccount] = useState("Checking");
   const [toAccount, setToAccount] = useState("Savings");
+
+  // Compute filtered categories matching selected Voucher Class (type)
+  const categoryOptions = categories[type] || [];
+  const filteredCategories = categoryOptions.filter((cat) =>
+    cat.toLowerCase().includes(categorySearchQuery.toLowerCase())
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -113,6 +123,8 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
     // Reset form states & close modal
     setDesc("");
     setAmount("");
+    setCategorySearchQuery("");
+    setIsCategoryDropdownOpen(false);
     setIsOpen(false);
   };
 
@@ -121,7 +133,13 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
       {/* 1. Fixed FAB Trigger in bottom-right corner */}
       <button 
         className="fab-trigger" 
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+          const defaultCat = categories[type]?.[0] || "";
+          setCategory(defaultCat);
+          setCategorySearchQuery("");
+          setIsCategoryDropdownOpen(false);
+        }}
         title="Post New Transaction Voucher"
       >
         <span className="fab-plus">+</span>
@@ -181,13 +199,15 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
                  <div className="form-group full-width">
                    <label className="form-label">Voucher Class (Type)</label>
                    <div className="segmented-control">
-                     {["Expense", "Income", "Transfer"].map((t) => (
+                     {["Expense", "Income", "Bill", "Debt", "Transfer"].map((t) => (
                        <button
                          key={t}
                          type="button"
                          className={`segmented-tab ${type === t ? "active" : ""}`}
                          onClick={() => {
                            setType(t);
+                           setIsCategoryDropdownOpen(false);
+                           setCategorySearchQuery("");
                            if (t !== "Transfer") {
                              // Auto-select first category of selected type
                              const typeOptions = categories[t] || [];
@@ -209,23 +229,150 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
 
                  {/* Conditional Category or Account Dropdowns */}
                  {type !== "Transfer" ? (
-                   <div className="form-group">
+                   <div className="form-group" style={{ position: "relative" }}>
                      <label className="form-label">Budget Category</label>
-                     <select
-                       value={category}
-                       onChange={(e) => setCategory(e.target.value)}
-                       required
+                     
+                     {/* Custom Skeuomorphic Combobox Dropdown Trigger */}
+                     <div
                        className="form-input"
+                       onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                       style={{
+                         display: "flex",
+                         justifyContent: "space-between",
+                         alignItems: "center",
+                         cursor: "pointer",
+                         userSelect: "none",
+                         backgroundColor: "var(--color-paper-light)",
+                         border: "1px solid var(--color-paper-edge)",
+                         borderRadius: "4px",
+                         padding: "9px 12px",
+                         height: "38px",
+                         boxSizing: "border-box"
+                       }}
                      >
-                       <option value="">-- Choose Category --</option>
-                       {Object.keys(categories).map((grp) => (
-                         <optgroup label={`${grp.toUpperCase()} CATEGORIES`} key={grp}>
-                           {categories[grp].map((cat) => (
-                             <option value={cat} key={cat}>{cat}</option>
-                           ))}
-                         </optgroup>
-                       ))}
-                     </select>
+                       <span style={{ 
+                         color: category ? "var(--color-ink-dark)" : "rgba(32, 30, 28, 0.45)",
+                         fontFamily: "var(--font-sans)",
+                         fontSize: "13px"
+                       }}>
+                         {category || "-- Choose Category --"}
+                       </span>
+                       <span style={{ fontSize: "9px", opacity: 0.6 }}>▼</span>
+                     </div>
+
+                     {/* Floating Combobox Search & List Dropdown Popover */}
+                     {isCategoryDropdownOpen && (
+                       <>
+                         {/* Backdrop overlay to capture clicks outside and close dropdown */}
+                         <div
+                           onClick={() => setIsCategoryDropdownOpen(false)}
+                           style={{
+                             position: "fixed",
+                             top: 0,
+                             left: 0,
+                             right: 0,
+                             bottom: 0,
+                             zIndex: 2008,
+                             background: "transparent"
+                           }}
+                         />
+                         
+                         <div
+                           className="combobox-popover"
+                           style={{
+                             position: "absolute",
+                             top: "100%",
+                             left: 0,
+                             right: 0,
+                             marginTop: "4px",
+                             backgroundColor: "var(--color-paper-light)",
+                             border: "2px solid var(--color-paper-edge)",
+                             borderRadius: "6px",
+                             boxShadow: "0 10px 20px rgba(0, 0, 0, 0.15)",
+                             zIndex: 2009,
+                             padding: "8px",
+                             display: "flex",
+                             flexDirection: "column",
+                             gap: "8px"
+                           }}
+                         >
+                           {/* Filter Search Input */}
+                           <input
+                             type="text"
+                             placeholder="Search category..."
+                             value={categorySearchQuery}
+                             onChange={(e) => setCategorySearchQuery(e.target.value)}
+                             autoFocus
+                             className="form-input"
+                             style={{
+                               padding: "6px 10px",
+                               fontSize: "12.5px",
+                               border: "1px solid var(--color-paper-edge)",
+                               backgroundColor: "#ffffff"
+                             }}
+                             onClick={(e) => e.stopPropagation()} // Prevent dropdown closing on click inside search
+                           />
+
+                           {/* Category scrollable options list */}
+                           <div
+                             className="combobox-options-list"
+                             style={{
+                               maxHeight: "160px",
+                               overflowY: "auto",
+                               display: "flex",
+                               flexDirection: "column",
+                               gap: "2px"
+                             }}
+                           >
+                             {filteredCategories.length > 0 ? (
+                               filteredCategories.map((cat) => (
+                                 <div
+                                   key={cat}
+                                   onClick={() => {
+                                     setCategory(cat);
+                                     setIsCategoryDropdownOpen(false);
+                                     setCategorySearchQuery("");
+                                   }}
+                                   className={`combobox-option-item ${category === cat ? "active" : ""}`}
+                                   style={{
+                                     padding: "8px 12px",
+                                     fontSize: "13px",
+                                     cursor: "pointer",
+                                     borderRadius: "4px",
+                                     backgroundColor: category === cat ? "rgba(29, 53, 87, 0.12)" : "transparent",
+                                     color: category === cat ? "var(--color-ink-blue)" : "var(--color-ink-dark)",
+                                     fontWeight: category === cat ? "bold" : "normal",
+                                     transition: "background-color 0.1s ease"
+                                   }}
+                                   onMouseEnter={(e) => {
+                                     if (category !== cat) {
+                                       e.currentTarget.style.backgroundColor = "rgba(32, 30, 28, 0.05)";
+                                     }
+                                   }}
+                                   onMouseLeave={(e) => {
+                                     if (category !== cat) {
+                                       e.currentTarget.style.backgroundColor = "transparent";
+                                     }
+                                   }}
+                                 >
+                                   {cat}
+                                 </div>
+                               ))
+                             ) : (
+                               <div style={{
+                                 padding: "8px",
+                                 fontSize: "11px",
+                                 color: "rgba(32, 30, 28, 0.5)",
+                                 textAlign: "center",
+                                 fontStyle: "italic"
+                               }}>
+                                 No matching categories
+                               </div>
+                             )}
+                           </div>
+                         </div>
+                       </>
+                     )}
                    </div>
                  ) : (
                    <>
