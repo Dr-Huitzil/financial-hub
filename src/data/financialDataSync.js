@@ -4,7 +4,7 @@
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-export function aggregateFinancialData(transactions, savingsGoalsList = []) {
+export function aggregateFinancialData(transactions, savingsGoalsList = [], startingBalances = {}, activeYear) {
   // 1. Calculate Cash Flow Summary
   let totalIncome = 0;
   let totalExpenses = 0;
@@ -12,6 +12,9 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
   let totalDebtPaid = 0;
 
   transactions.forEach((tx) => {
+    if (!tx.date) return;
+    if (activeYear && new Date(tx.date).getFullYear() !== activeYear) return;
+
     const amt = parseFloat(tx.amount || 0);
     if (tx.type === "Income") {
       totalIncome += amt;
@@ -53,6 +56,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
     transactions.forEach((tx) => {
       if (!tx.date) return;
       const txDate = new Date(tx.date);
+      if (activeYear && txDate.getFullYear() !== activeYear) return;
       if (txDate.getMonth() === idx) {
         const amt = parseFloat(tx.amount || 0);
         if (tx.type === "Income") income += amt;
@@ -85,6 +89,8 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
   let totalOutflow = 0;
 
   transactions.forEach((tx) => {
+    if (!tx.date) return;
+    if (activeYear && new Date(tx.date).getFullYear() !== activeYear) return;
     if (tx.type === "Income") return; // Only expenses, bills, and debts in breakdown
     const amt = parseFloat(tx.amount || 0);
     const cat = tx.category || "Uncategorized";
@@ -111,7 +117,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
 
   // 4. Investment Growth Data
   // Build dynamic growth from actual savings pool account value!
-  const currentSavings = calculatedBalancesForInvestments(transactions)["Savings Pool"] || 4500;
+  const currentSavings = calculatedBalancesForInvestments(transactions, startingBalances, activeYear)["Savings Pool"] || 4500;
   const monthlyContrib = 500; // default simulate
   const investmentGrowthData = MONTH_SHORT.map((shortName, idx) => {
     // Standard growth simulation starting from currentSavings
@@ -128,31 +134,59 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
   });
 
   // 5. Calculate Annual Running Balance and 30-Day Balance
-  let chartYear = new Date().getFullYear();
-  if (transactions.length > 0) {
-    const dates = transactions.map(t => new Date(t.date).getTime()).filter(t => !isNaN(t));
-    if (dates.length > 0) {
-      chartYear = new Date(Math.min(...dates)).getFullYear();
-    }
-  }
+  const chartYear = activeYear || new Date().getFullYear();
 
   const yearStart = new Date(chartYear, 0, 1);
   const yearEnd = new Date(chartYear, 11, 31);
 
   const dailyCheckingNet = {};
   transactions.forEach(tx => {
-    if ((tx.account || "Checking") !== "Checking") return;
     if (!tx.date) return;
     const tDate = new Date(tx.date);
+    if (tDate.getFullYear() !== chartYear) return;
+
     // ensure local date extraction
     const dateStr = tDate.getFullYear() + "-" + String(tDate.getMonth()+1).padStart(2, '0') + "-" + String(tDate.getDate()).padStart(2, '0');
     const amt = parseFloat(tx.amount || 0);
-    dailyCheckingNet[dateStr] = (dailyCheckingNet[dateStr] || 0) + (tx.type === "Income" ? amt : -amt);
+
+    let delta = 0;
+    if (tx.type === "Transfer") {
+      if (tx.toAccount === "Checking") delta += amt;
+      if (tx.fromAccount === "Checking") delta -= amt;
+    } else {
+      const acct = tx.account || "Checking";
+      if (acct === "Checking") {
+        if (tx.type === "Income") delta += amt;
+        else delta -= amt;
+      }
+    }
+
+    if (delta !== 0) {
+      dailyCheckingNet[dateStr] = (dailyCheckingNet[dateStr] || 0) + delta;
+    }
   });
 
   const annualRunningBalance = [];
-  // Use starting balance from our config
-  let currentBal = 12547.32; // Checking
+  // Use starting balance from our config + roll over all prior year transactions
+  let currentBal = startingBalances?.Checking || 0;
+
+  transactions.forEach((tx) => {
+    if (!tx.date) return;
+    const txYear = new Date(tx.date).getFullYear();
+    if (txYear >= chartYear) return; // only prior transactions roll over!
+
+    const amt = parseFloat(tx.amount || 0);
+    if (tx.type === "Transfer") {
+      if (tx.toAccount === "Checking") currentBal += amt;
+      if (tx.fromAccount === "Checking") currentBal -= amt;
+    } else {
+      const acct = tx.account || "Checking";
+      if (acct === "Checking") {
+        if (tx.type === "Income") currentBal += amt;
+        else currentBal -= amt;
+      }
+    }
+  });
 
   const todayNormalized = new Date();
   todayNormalized.setHours(0,0,0,0);
@@ -195,24 +229,36 @@ export function aggregateFinancialData(transactions, savingsGoalsList = []) {
   };
 }
 
-function calculatedBalancesForInvestments(transactions) {
+function calculatedBalancesForInvestments(transactions, startingBalances = {}, activeYear) {
   const STARTING_BALANCES = {
-    Checking: 12547.32,
+    Checking: startingBalances?.Checking || 0,
     "Prepaid Card": 0,
     "Gift Card": 0,
     "Cash Envelopes": 0,
     "Cash Wallet": 0,
-    "Savings Pool": 4500.00
+    "Savings Pool": startingBalances?.["Savings Pool"] || 0
   };
 
   const calculatedBalances = { ...STARTING_BALANCES };
   transactions.forEach((tx) => {
+    if (!tx.date) return;
+    if (activeYear && new Date(tx.date).getFullYear() > activeYear) return;
+
     const amt = parseFloat(tx.amount || 0);
-    const acct = tx.account || "Checking";
-    if (tx.type === "Income") {
-      calculatedBalances[acct] = (calculatedBalances[acct] || 0) + amt;
+    if (tx.type === "Transfer") {
+      if (tx.toAccount) {
+        calculatedBalances[tx.toAccount] = (calculatedBalances[tx.toAccount] || 0) + amt;
+      }
+      if (tx.fromAccount) {
+        calculatedBalances[tx.fromAccount] = (calculatedBalances[tx.fromAccount] || 0) - amt;
+      }
     } else {
-      calculatedBalances[acct] = (calculatedBalances[acct] || 0) - amt;
+      const acct = tx.account || "Checking";
+      if (tx.type === "Income") {
+        calculatedBalances[acct] = (calculatedBalances[acct] || 0) + amt;
+      } else {
+        calculatedBalances[acct] = (calculatedBalances[acct] || 0) - amt;
+      }
     }
   });
 

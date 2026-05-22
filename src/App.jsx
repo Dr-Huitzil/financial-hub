@@ -57,8 +57,14 @@ const DEFAULT_BUDGET_LIMITS = {
   "Electronics": 500
 };
 
+const DEFAULT_STARTING_BALANCES = {
+  Checking: 0,
+  "Physical Cash": 0,
+  "Savings Pool": 0
+};
+
 export default function App() {
-  const { isReadOnly } = useApp();
+  const { isReadOnly, activeYear } = useApp();
   const [user, setUser] = useState(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -72,6 +78,7 @@ export default function App() {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [creditCards, setCreditCards] = useState(DEFAULT_CREDIT_CARDS);
   const [budgetLimits, setBudgetLimits] = useState(DEFAULT_BUDGET_LIMITS);
+  const [startingBalances, setStartingBalances] = useState(DEFAULT_STARTING_BALANCES);
   const [authLoading, setAuthLoading] = useState(true);
 
   // Auth State Listener
@@ -142,12 +149,16 @@ export default function App() {
         if (data.budgetLimits) {
           setBudgetLimits(data.budgetLimits);
         }
+        if (data.startingBalances) {
+          setStartingBalances(data.startingBalances);
+        }
       } else {
         // Seed default categories in Firestore
         setDoc(settingsRef, { 
           categories: DEFAULT_CATEGORIES, 
           creditCards: DEFAULT_CREDIT_CARDS,
-          budgetLimits: DEFAULT_BUDGET_LIMITS 
+          budgetLimits: DEFAULT_BUDGET_LIMITS,
+          startingBalances: DEFAULT_STARTING_BALANCES
         });
 
         // Seed default goals and payments on first login (when settings doesn't exist)
@@ -176,6 +187,7 @@ export default function App() {
     setGoals(initialGoals);
     setCreditCards(DEFAULT_CREDIT_CARDS);
     setBudgetLimits(DEFAULT_BUDGET_LIMITS);
+    setStartingBalances(DEFAULT_STARTING_BALANCES);
     setActiveTab("overview");
   };
 
@@ -188,6 +200,7 @@ export default function App() {
       setUpcomingPayments([]);
       setCreditCards(DEFAULT_CREDIT_CARDS);
       setBudgetLimits(DEFAULT_BUDGET_LIMITS);
+      setStartingBalances(DEFAULT_STARTING_BALANCES);
     } else {
       await signOut(auth);
     }
@@ -311,6 +324,16 @@ export default function App() {
     }
   };
 
+  // 14. Update starting balances
+  const handleUpdateStartingBalances = async (newBalances) => {
+    setStartingBalances(newBalances);
+    if (isDemoMode) {
+      // Keep in local guest state
+    } else if (user) {
+      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { startingBalances: newBalances }, { merge: true });
+    }
+  };
+
   // 9. Add recurring scheduled payment
   const handleAddPayment = async (newPayment) => {
     if (isDemoMode) {
@@ -342,7 +365,7 @@ export default function App() {
   };
 
   // Compute live cumulative aggregations from raw transaction flow
-  const aggregatedData = aggregateFinancialData(transactions, goals);
+  const aggregatedData = aggregateFinancialData(transactions, goals, startingBalances, activeYear);
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -353,6 +376,7 @@ export default function App() {
             creditCards={creditCards}
             goals={goals}
             upcomingPayments={upcomingPayments}
+            startingBalances={startingBalances}
           />
         );
       case "budget":
@@ -371,6 +395,7 @@ export default function App() {
           <ReportsFolder 
             transactions={transactions}
             goals={goals}
+            startingBalances={startingBalances}
           />
         );
       case "planner":
@@ -420,6 +445,8 @@ export default function App() {
             budgetLimits={budgetLimits}
             onUpdateBudgetLimits={handleUpdateBudgetLimits}
             transactions={transactions}
+            startingBalances={startingBalances}
+            onUpdateStartingBalances={handleUpdateStartingBalances}
           />
         );
       default:
@@ -429,6 +456,7 @@ export default function App() {
             creditCards={creditCards}
             goals={goals}
             upcomingPayments={upcomingPayments}
+            startingBalances={startingBalances}
           />
         );
     }

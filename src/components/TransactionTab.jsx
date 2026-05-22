@@ -17,7 +17,7 @@ const formatDateCompact = (isoString) => {
   return `${month}/${day}/${year.slice(2)}`;
 };
 
-export default function TransactionTab({ transactions, categories, onAddTransaction, onDeleteTransaction }) {
+export default function TransactionTab({ transactions, categories, startingBalances = {}, onAddTransaction, onDeleteTransaction }) {
   const [date, setDate] = useState(new Date().toISOString().substring(0, 10));
   const [type, setType] = useState("Expense");
   const [category, setCategory] = useState((categories?.Expense?.[0]) || "Groceries");
@@ -168,12 +168,12 @@ export default function TransactionTab({ transactions, categories, onAddTransact
   // Calculations for skeuomorphic balance cards
   // Base balances from Ivan's Excel Setup
   const STARTING_BALANCES = {
-    Checking: 12547.32,
+    Checking: startingBalances?.Checking || 0,
     "Prepaid Card": 0,
     "Gift Card": 0,
     "Cash Envelopes": 0,
     "Cash Wallet": 0,
-    "Savings Pool": 4500.00
+    "Savings Pool": startingBalances?.["Savings Pool"] || 0
   };
 
   const calculatedBalances = { ...STARTING_BALANCES };

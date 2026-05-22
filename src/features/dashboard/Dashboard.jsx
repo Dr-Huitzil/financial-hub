@@ -20,6 +20,7 @@ export default function Dashboard({
   creditCards = [],
   goals = [],
   upcomingPayments = [],
+  startingBalances = {},
 }) {
   const { activeYear, formatValue } = useApp();
   const { getIncomeForMonth, getPaydayDetailsForMonth, checkIsBonusMonth } = useIncomePredictor();
@@ -86,8 +87,12 @@ export default function Dashboard({
 
   // ─── LEDGER ACCOUNT BALANCES ────────────────────────────────────────────────
   const checkingBalance = useMemo(() => {
-    let balance = 0;
-    yearFilteredTransactions.forEach((tx) => {
+    let balance = startingBalances?.Checking || 0; 
+    transactions.forEach((tx) => {
+      if (!tx.date) return;
+      const txYear = new Date(tx.date).getFullYear();
+      if (txYear > activeYear) return;
+
       const amt = parseFloat(tx.amount || 0);
       if (tx.type === "Transfer") {
         if (tx.toAccount === "Checking") balance += amt;
@@ -101,11 +106,15 @@ export default function Dashboard({
       }
     });
     return balance;
-  }, [yearFilteredTransactions]);
+  }, [transactions, startingBalances, activeYear]);
 
   const cashBalance = useMemo(() => {
-    let balance = 0;
-    yearFilteredTransactions.forEach((tx) => {
+    let balance = startingBalances?.["Physical Cash"] || 0;
+    transactions.forEach((tx) => {
+      if (!tx.date) return;
+      const txYear = new Date(tx.date).getFullYear();
+      if (txYear > activeYear) return;
+
       const amt = parseFloat(tx.amount || 0);
       if (tx.type === "Transfer") {
         if (tx.toAccount === "Physical Cash") balance += amt;
@@ -119,7 +128,7 @@ export default function Dashboard({
       }
     });
     return balance;
-  }, [yearFilteredTransactions]);
+  }, [transactions, startingBalances, activeYear]);
 
   const currentBalance = checkingBalance;
 

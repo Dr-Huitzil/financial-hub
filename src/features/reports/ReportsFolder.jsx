@@ -59,7 +59,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function ReportsFolder({ transactions = [], goals = [] }) {
+export default function ReportsFolder({ transactions = [], goals = [], startingBalances = {} }) {
   const { activeYear, formatValue } = useApp();
 
   // ─── CATEGORY TREND STATE ────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
   }, [transactions, activeYear]);
 
   // Aggregate data using system layer
-  const aggregates = aggregateFinancialData(yearFilteredTransactions, goals);
+  const aggregates = aggregateFinancialData(transactions, goals, startingBalances, activeYear);
   const { monthlyBudgets, categoryBreakdown } = aggregates;
 
   // ─── UNIQUE CATEGORIES derived from live transactions for the selector ───
@@ -188,23 +188,56 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
 
   // 3. HEARTBEAT — Daily running balance from all transactions, sorted chronologically
   // Each point is one calendar day that has at least one transaction event
+  // Each point is one calendar day that has at least one transaction event
   const heartbeatData = (() => {
     if (yearFilteredTransactions.length === 0) return [];
 
-    // Start balance is the net before the first transaction
-    let runningBalance = 0;
+    // Start balance is the base starting checking balance + roll over prior years
+    let runningBalance = startingBalances?.Checking || 0;
+
+    transactions.forEach((tx) => {
+      if (!tx.date) return;
+      const txYear = new Date(tx.date).getFullYear();
+      if (txYear >= activeYear) return;
+
+      const amt = parseFloat(tx.amount || 0);
+      if (tx.type === "Transfer") {
+        if (tx.toAccount === "Checking") runningBalance += amt;
+        if (tx.fromAccount === "Checking") runningBalance -= amt;
+      } else {
+        const acct = tx.account || "Checking";
+        if (acct === "Checking") {
+          if (tx.type === "Income") runningBalance += amt;
+          else runningBalance -= amt;
+        }
+      }
+    });
 
     // Sort all transactions by date ascending
     const sorted = [...yearFilteredTransactions].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Build a map: date-string → net delta that day
+    // Build a map: date-string → checking net delta that day
     const dayMap = {};
     sorted.forEach(tx => {
       const key = tx.date ? tx.date.slice(0, 10) : null;
       if (!key) return;
+
       const amt = parseFloat(tx.amount || 0);
-      const delta = tx.type === "Income" ? amt : -amt;
-      dayMap[key] = (dayMap[key] || 0) + delta;
+      let delta = 0;
+      if (tx.type === "Transfer") {
+        if (tx.toAccount === "Checking") delta += amt;
+        if (tx.fromAccount === "Checking") delta -= amt;
+      } else {
+        const acct = tx.account || "Checking";
+        if (acct === "Checking") {
+          if (tx.type === "Income") delta += amt;
+          else delta -= amt;
+        }
+      }
+
+      if (delta !== 0) {
+        dayMap[key] = (dayMap[key] || 0) + delta;
+      }
     });
 
     // Convert to array of { day, balance } preserving order
@@ -221,8 +254,32 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
   })();
 
   // ─── Legacy line data kept for the spider legs line chart (still used below) ───
-  let checkingAcc = 12547.32;
-  let savingsAcc = 4500.00;
+  let checkingAcc = startingBalances?.Checking || 0;
+  let savingsAcc = startingBalances?.["Savings Pool"] || 0;
+
+  transactions.forEach((tx) => {
+    if (!tx.date) return;
+    const txYear = new Date(tx.date).getFullYear();
+    if (txYear >= activeYear) return;
+
+    const amt = parseFloat(tx.amount || 0);
+    if (tx.type === "Transfer") {
+      if (tx.toAccount === "Checking") checkingAcc += amt;
+      if (tx.fromAccount === "Checking") checkingAcc -= amt;
+      if (tx.toAccount === "Savings Pool") savingsAcc += amt;
+      if (tx.fromAccount === "Savings Pool") savingsAcc -= amt;
+    } else {
+      const acct = tx.account || "Checking";
+      if (acct === "Checking") {
+        if (tx.type === "Income") checkingAcc += amt;
+        else checkingAcc -= amt;
+      } else if (acct === "Savings Pool") {
+        if (tx.type === "Income") savingsAcc += amt;
+        else savingsAcc -= amt;
+      }
+    }
+  });
+
   const lineData = monthlyBudgets.map((m, idx) => {
     const netFlow = m.income - (m.expenses + m.bills + m.debts);
     checkingAcc += netFlow;

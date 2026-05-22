@@ -13,7 +13,9 @@ export default function SetupTab({
   onUpdateCreditCards,
   budgetLimits = {},
   onUpdateBudgetLimits,
-  transactions = []
+  transactions = [],
+  startingBalances = { Checking: 0, "Savings Pool": 0, "Physical Cash": 0 },
+  onUpdateStartingBalances
 }) {
   // Sub-tab navigation
   const [setupSubTab, setSetupSubTab] = useState("categories");
@@ -164,7 +166,7 @@ export default function SetupTab({
           onClick={() => setSetupSubTab("credit")}
           style={{ minWidth: "150px" }}
         >
-          Credit Portfolio
+          Accounts & Credit
         </button>
         <button
           className={`budget-month-tab ${setupSubTab === "employment" ? "active" : ""}`}
@@ -390,9 +392,54 @@ export default function SetupTab({
           </div>
         )}
 
-        {/* SUB-TAB 2: Credit Card Registry */}
+        {/* SUB-TAB 2: Credit Card Registry & Account Balances */}
         {setupSubTab === "credit" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            
+            {/* STARTING BALANCES SECTION */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "12px", marginBottom: "15px" }}>
+              <div>
+                <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "13px", margin: 0, textTransform: "uppercase" }}>
+                  Starting Account Balances
+                </h3>
+                <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "rgba(32,30,28,0.6)" }}>
+                  Set the historical starting point for your ledgers (e.g. at the beginning of the year).
+                </p>
+              </div>
+              <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(1deg)" }}>LEDGER INIT</span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px", marginBottom: "30px" }}>
+              {["Checking", "Savings Pool", "Physical Cash"].map((acct) => (
+                <div key={acct} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.6)" }}>
+                    {acct} Balance ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={startingBalances?.[acct] || ""}
+                    onChange={(e) => {
+                      const newBals = { ...startingBalances };
+                      let numericVal = parseFloat(e.target.value);
+                      if (isNaN(numericVal)) numericVal = 0;
+                      newBals[acct] = numericVal;
+                      onUpdateStartingBalances(newBals);
+                    }}
+                    placeholder="0"
+                    style={{
+                      padding: "8px",
+                      border: "1px solid var(--color-paper-grid)",
+                      borderRadius: "4px",
+                      backgroundColor: "var(--color-paper-light)",
+                      fontSize: "14px",
+                      fontFamily: "var(--font-ledger)",
+                      fontWeight: "bold"
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "12px", marginBottom: "15px" }}>
               <div>
                 <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "13px", margin: 0, textTransform: "uppercase" }}>
