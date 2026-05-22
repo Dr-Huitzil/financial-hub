@@ -12,12 +12,21 @@ import styles from "./BudgetFolder.module.css";
  * @param {function} onAddTransaction - Voucher submission handler
  * @param {function} onDeleteTransaction - Voucher voiding handler
  */
+const formatDateCompact = (isoString) => {
+  if (!isoString) return "";
+  const parts = isoString.split("-");
+  if (parts.length !== 3) return isoString;
+  const [year, month, day] = parts;
+  return `${month}/${day}/${year.slice(2)}`;
+};
+
 export default function BudgetFolder({ 
   transactions = [], 
   budgetLimits = {}, 
   categories = {}, 
   onAddTransaction,
-  onDeleteTransaction 
+  onDeleteTransaction,
+  onUpdateTransaction
 }) {
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const FULL_MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -32,6 +41,55 @@ export default function BudgetFolder({
   const [txCategory, setTxCategory] = useState("");
   const [txType, setTxType] = useState("Expense");
   const [txDate, setTxDate] = useState(new Date().toISOString().split("T")[0]);
+
+  // States for viewing/editing transaction details
+  const [selectedTx, setSelectedTx] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDesc, setEditDesc] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editType, setEditType] = useState("Expense");
+  const [editDate, setEditDate] = useState("");
+
+  const handleRowClick = (tx) => {
+    setSelectedTx(tx);
+    setIsEditing(false);
+    setEditDesc(tx.description || "");
+    setEditAmount(tx.amount || "");
+    setEditCategory(tx.category || "");
+    setEditType(tx.type || "Expense");
+    setEditDate(tx.date ? tx.date.split("T")[0] : new Date().toISOString().split("T")[0]);
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    if (!editDesc.trim() || !editAmount || !editCategory) return;
+
+    const updatedTx = {
+      description: editDesc.trim(),
+      amount: parseFloat(editAmount) || 0,
+      category: editCategory,
+      type: editType,
+      date: editDate
+    };
+
+    if (onUpdateTransaction) {
+      onUpdateTransaction(selectedTx.id, updatedTx);
+    }
+
+    setSelectedTx(null);
+    setIsEditing(false);
+  };
+
+  const handleTypeChange = (newType) => {
+    setEditType(newType);
+    const availableCats = categories[newType] || [];
+    if (availableCats.length > 0) {
+      setEditCategory(availableCats[0]);
+    } else {
+      setEditCategory("");
+    }
+  };
 
   // ==========================================
   // FIREBASE FIRESTORE DATA HOOKUP EXAMPLE
@@ -101,7 +159,7 @@ export default function BudgetFolder({
     if (monthlyTx.length === 0) {
       return (
         <tr>
-          <td colSpan="6" style={{ textAlign: "center", fontStyle: "italic", padding: "30px", color: "rgba(32,30,28,0.5)" }}>
+          <td colSpan="4" style={{ textAlign: "center", fontStyle: "italic", padding: "30px", color: "rgba(32,30,28,0.5)" }}>
             No ledger records filed under {activeMonthName} 2026.
           </td>
         </tr>
@@ -120,7 +178,7 @@ export default function BudgetFolder({
       if (prevWeek !== null && thisWeek !== prevWeek) {
         rows.push(
           <tr key={`week-break-${idx}`} aria-hidden="true">
-            <td colSpan="6" style={{ padding: "8px 0" }}>
+            <td colSpan="4" style={{ padding: "8px 0" }}>
               <div className="perforation"></div>
             </td>
           </tr>
@@ -130,29 +188,24 @@ export default function BudgetFolder({
       prevWeek = thisWeek;
 
       rows.push(
-        <tr key={tx.id}>
-          <td className="typewriter-num">{tx.date}</td>
-          <td style={{ fontWeight: "bold" }}>{tx.description}</td>
+        <tr 
+          key={tx.id} 
+          onClick={() => handleRowClick(tx)} 
+          style={{ cursor: "pointer" }}
+          title="Click to view details or edit/void transaction"
+        >
+          <td>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span style={{ fontWeight: "bold" }}>{tx.description}</span>
+              <span style={{ fontSize: "9.5px", opacity: 0.5, fontFamily: "var(--font-ledger)" }}>
+                {formatDateCompact(tx.date)}
+              </span>
+            </div>
+          </td>
           <td>{tx.category}</td>
           <td style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.7 }}>{tx.type}</td>
           <td className="number-cell typewriter-num" style={{ color: tx.type === "Income" ? "var(--color-stamp-green)" : "inherit" }}>
             {tx.type === "Income" ? "+" : "-"}${parseFloat(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </td>
-          <td style={{ textAlign: "center" }}>
-            <button
-              onClick={() => onDeleteTransaction && onDeleteTransaction(tx.id)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--color-stamp-red)",
-                cursor: "pointer",
-                fontFamily: "var(--font-typewriter)",
-                fontSize: "11px",
-                fontWeight: "bold"
-              }}
-            >
-              [VOID]
-            </button>
           </td>
         </tr>
       );
@@ -329,12 +382,10 @@ export default function BudgetFolder({
             <table className="ledger-table">
               <thead>
                 <tr>
-                  <th style={{ width: "110px" }}>Date</th>
-                  <th>Description</th>
-                  <th style={{ width: "130px" }}>Category</th>
+                  <th>Description & Date</th>
+                  <th style={{ width: "140px" }}>Category</th>
                   <th style={{ width: "100px" }}>Type</th>
-                  <th className="number-cell" style={{ width: "120px" }}>Amount ($)</th>
-                  <th style={{ textAlign: "center", width: "80px" }}>Voucher</th>
+                  <th className="number-cell" style={{ width: "130px" }}>Amount ($)</th>
                 </tr>
               </thead>
               <tbody>
@@ -346,6 +397,279 @@ export default function BudgetFolder({
 
 
       </div>
+
+      {/* Retro Manila Custom Dialog Voucher Overlay */}
+      {selectedTx && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(32, 30, 28, 0.45)",
+          backdropFilter: "blur(3px)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999
+        }} onClick={() => setSelectedTx(null)}>
+          <div className="tactile-card" style={{
+            width: "380px",
+            backgroundColor: "var(--color-paper-light)",
+            border: "3.5px solid var(--color-ink-dark)",
+            boxShadow: "0 25px 50px rgba(0,0,0,0.35)",
+            padding: "26px",
+            position: "relative",
+            transform: "rotate(-1deg)",
+            backgroundImage: "radial-gradient(var(--color-paper-grid) 1px, transparent 1px)",
+            backgroundSize: "18px 18px"
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            {/* Skeuomorphic Stamp Box */}
+            <span className={`stamp stamp-${isEditing ? (editType === "Income" ? "green" : (editType === "Bill" ? "blue" : "red")) : (selectedTx.type === "Income" ? "green" : (selectedTx.type === "Bill" ? "blue" : "red"))}`} style={{
+              position: "absolute",
+              top: "16px",
+              right: "16px",
+              fontSize: "11px",
+              fontWeight: "900",
+              letterSpacing: "1px",
+              transform: "rotate(8deg)",
+              borderWidth: "2px",
+              padding: "4px 8px"
+            }}>
+              {isEditing ? editType.toUpperCase() : selectedTx.type.toUpperCase()}
+            </span>
+
+            <div style={{
+              fontFamily: "var(--font-accent)",
+              fontSize: "13px",
+              fontWeight: "bold",
+              color: "var(--color-ink-dark)",
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              borderBottom: "2.5px solid var(--color-ink-dark)",
+              paddingBottom: "8px",
+              marginBottom: "18px"
+            }}>
+              {isEditing ? "Modify Voucher Details" : "Voucher Detail Audit"}
+            </div>
+
+            {!isEditing ? (
+              // READ-ONLY DETAIL VIEW
+              <>
+                <div style={{
+                  fontFamily: "var(--font-typewriter)",
+                  fontSize: "12px",
+                  lineHeight: "1.7",
+                  color: "var(--color-ink-dark)",
+                  marginBottom: "24px"
+                }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "10px", borderBottom: "1px dashed var(--color-paper-grid)", padding: "6px 0" }}>
+                    <span style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6, fontWeight: "bold" }}>Date:</span>
+                    <strong style={{ fontFamily: "var(--font-ledger)" }}>{formatDateCompact(selectedTx.date)}</strong>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "10px", borderBottom: "1px dashed var(--color-paper-grid)", padding: "6px 0" }}>
+                    <span style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6, fontWeight: "bold" }}>Description:</span>
+                    <strong>{selectedTx.description}</strong>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "10px", borderBottom: "1px dashed var(--color-paper-grid)", padding: "6px 0" }}>
+                    <span style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6, fontWeight: "bold" }}>Category:</span>
+                    <strong>{selectedTx.category}</strong>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "10px", borderBottom: "1px dashed var(--color-paper-grid)", padding: "6px 0" }}>
+                    <span style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6, fontWeight: "bold" }}>Voucher Class:</span>
+                    <strong>{selectedTx.type}</strong>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "10px", borderBottom: "1px dashed var(--color-paper-grid)", padding: "6px 0" }}>
+                    <span style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6, fontWeight: "bold" }}>Amount:</span>
+                    <strong style={{ fontFamily: "var(--font-ledger)", color: selectedTx.type === "Income" ? "var(--color-stamp-green)" : "var(--color-stamp-red)", fontSize: "14px" }}>
+                      {selectedTx.type === "Income" ? "+" : "-"}${parseFloat(selectedTx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
+                  <button
+                    onClick={() => {
+                      if (onDeleteTransaction) {
+                        onDeleteTransaction(selectedTx.id);
+                      }
+                      setSelectedTx(null);
+                    }}
+                    style={{
+                      padding: "10px",
+                      fontFamily: "var(--font-accent)",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      color: "var(--color-stamp-red)",
+                      backgroundColor: "transparent",
+                      border: "2px dashed var(--color-stamp-red)",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    VOID VOUCHER
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    style={{
+                      padding: "10px",
+                      fontFamily: "var(--font-accent)",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      color: "var(--color-ink-blue)",
+                      backgroundColor: "transparent",
+                      border: "2px dashed var(--color-ink-blue)",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    EDIT DETAILS
+                  </button>
+                </div>
+                <button
+                  onClick={() => setSelectedTx(null)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontFamily: "var(--font-accent)",
+                    fontSize: "10px",
+                    fontWeight: "bold",
+                    letterSpacing: "1px",
+                    textTransform: "uppercase",
+                    color: "var(--color-paper-light)",
+                    backgroundColor: "var(--color-ink-dark)",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.2)"
+                  }}
+                >
+                  RETAIN VOUCHER
+                </button>
+              </>
+            ) : (
+              // INLINE EDIT FORM VIEW
+              <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div>
+                  <label className="form-label" style={{ display: "block", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}>Description / Recipient</label>
+                  <input
+                    type="text"
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    required
+                    className="form-input"
+                    style={{ width: "100%" }}
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label className="form-label" style={{ display: "block", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}>Amount ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(e.target.value)}
+                      required
+                      className="form-input typewriter-num"
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ display: "block", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}>Voucher Class</label>
+                    <select
+                      value={editType}
+                      onChange={(e) => handleTypeChange(e.target.value)}
+                      className="paper-select-recessed form-input"
+                      style={{ width: "100%", height: "38px" }}
+                    >
+                      <option value="Expense">Expense</option>
+                      <option value="Bill">Bill</option>
+                      <option value="Income">Income</option>
+                      <option value="Debt">Debt</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label className="form-label" style={{ display: "block", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}>Category</label>
+                    <select
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      required
+                      className="paper-select-recessed form-input"
+                      style={{ width: "100%", height: "38px" }}
+                    >
+                      {(categories[editType] || []).map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ display: "block", marginBottom: "4px", fontSize: "11px", fontWeight: "bold" }}>Date</label>
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      required
+                      className="form-input"
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    style={{
+                      padding: "10px",
+                      fontFamily: "var(--font-accent)",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      color: "var(--color-stamp-red)",
+                      backgroundColor: "transparent",
+                      border: "2px dashed var(--color-stamp-red)",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "10px",
+                      fontFamily: "var(--font-accent)",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      color: "var(--color-paper-light)",
+                      backgroundColor: "var(--color-stamp-green)",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 5px rgba(0,0,0,0.2)"
+                    }}
+                  >
+                    SAVE CHANGES
+                  </button>
+                </div>
+              </form>
+            )}
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,6 +9,14 @@ const DEFAULT_CATEGORIES = {
 
 const DEFAULT_ACCOUNTS = ["Checking", "Prepaid Card", "Gift Card", "Cash Envelopes", "Cash Wallet", "Savings Pool"];
 
+const formatDateCompact = (isoString) => {
+  if (!isoString) return "";
+  const parts = isoString.split("-");
+  if (parts.length !== 3) return isoString;
+  const [year, month, day] = parts;
+  return `${month}/${day}/${year.slice(2)}`;
+};
+
 export default function TransactionTab({ transactions, categories, onAddTransaction, onDeleteTransaction }) {
   const [date, setDate] = useState(new Date().toISOString().substring(0, 10));
   const [type, setType] = useState("Expense");
@@ -540,7 +548,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                 <tbody>
                   {displayedTxs.map((tx) => (
                     <tr key={tx.id}>
-                      <td style={{ fontFamily: "var(--font-ledger)" }}>{tx.date}</td>
+                      <td style={{ fontFamily: "var(--font-ledger)" }}>{formatDateCompact(tx.date)}</td>
                       <td>
                         <div style={{ display: "flex", flexDirection: "column" }}>
                           <span style={{ fontWeight: "bold" }}>{tx.description}</span>
@@ -822,7 +830,7 @@ export default function TransactionTab({ transactions, categories, onAddTransact
                 <tbody>
                   {displayedTxs.map((tx) => (
                     <tr key={tx.id}>
-                      <td style={{ fontFamily: "var(--font-ledger)" }}>{tx.date}</td>
+                      <td style={{ fontFamily: "var(--font-ledger)" }}>{formatDateCompact(tx.date)}</td>
                       <td>
                         <div style={{ display: "flex", flexDirection: "column" }}>
                           <span style={{ fontWeight: "bold" }}>{tx.description}</span>

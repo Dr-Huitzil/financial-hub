@@ -1,3 +1,11 @@
+const formatDateCompact = (isoString) => {
+  if (!isoString) return "";
+  const parts = isoString.split("-");
+  if (parts.length !== 3) return isoString;
+  const [year, month, day] = parts;
+  return `${month}/${day}/${year.slice(2)}`;
+};
+
 export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData, thirtyDayBalance, creditCards = [] }) {
   // Calculate remaining dynamic budget
   const totalUpcomingToPay = upcomingPayments
@@ -190,7 +198,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
                   <div className="custom-checkbox"></div>
                   <div className="payment-item-details">
                     <span className="payment-item-name">{p.name}</span>
-                    <span className="payment-item-date">Due: {p.dueDate}</span>
+                    <span className="payment-item-date">Due: {formatDateCompact(p.dueDate)}</span>
                   </div>
                 </div>
                 

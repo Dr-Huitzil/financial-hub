@@ -244,7 +244,7 @@ export default function SetupTab({
                                 </span>
                                 {isScheduled ? (
                                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                    <span style={{ fontSize: "10px", color: "var(--color-stamp-blue)", fontWeight: "bold" }}>🗓️ Scheduled:</span>
+                                    <span style={{ fontSize: "10px", color: "var(--color-stamp-blue)", fontWeight: "bold" }}>🗓️ Due:</span>
                                     <input
                                       type="date"
                                       value={existingBill.dueDate}
@@ -255,7 +255,8 @@ export default function SetupTab({
                                         backgroundColor: "transparent",
                                         fontFamily: "var(--font-ledger)",
                                         fontSize: "10px",
-                                        color: "var(--color-stamp-blue)"
+                                        color: "var(--color-stamp-blue)",
+                                        width: "95px"
                                       }}
                                       onFocus={(e) => e.target.style.border = "1px dashed var(--color-stamp-blue)"}
                                       onBlur={(e) => e.target.style.border = "1px dashed transparent"}

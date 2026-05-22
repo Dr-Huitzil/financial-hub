@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 import OverviewTab from "./components/OverviewTab";
@@ -106,35 +106,21 @@ export default function App() {
     // 2. Sync Savings Goals
     const goalsRef = collection(db, "users", user.uid, "savingsGoals");
     const unsubGoals = onSnapshot(goalsRef, (snapshot) => {
-      if (snapshot.empty) {
-        // Seed default goals in DB on first login
-        initialGoals.forEach((goal) => {
-          setDoc(doc(goalsRef, String(goal.id)), goal);
-        });
-      } else {
-        const goalsList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setGoals(goalsList);
-      }
+      const goalsList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setGoals(goalsList);
     });
 
     // 3. Sync Upcoming Payments Checklists
     const paymentsRef = collection(db, "users", user.uid, "upcomingPayments");
     const unsubPayments = onSnapshot(paymentsRef, (snapshot) => {
-      if (snapshot.empty) {
-        // Seed default payments in DB on first login
-        initialUpcomingPayments.forEach((payment) => {
-          setDoc(doc(paymentsRef, String(payment.id)), payment);
-        });
-      } else {
-        const paymentsList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data()
-        })).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-        setUpcomingPayments(paymentsList);
-      }
+      const paymentsList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      })).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      setUpcomingPayments(paymentsList);
     });
 
     // 4. Sync Setup settings (Categories & Credit Cards & Budget Limits)
@@ -157,6 +143,14 @@ export default function App() {
           categories: DEFAULT_CATEGORIES, 
           creditCards: DEFAULT_CREDIT_CARDS,
           budgetLimits: DEFAULT_BUDGET_LIMITS 
+        });
+
+        // Seed default goals and payments on first login (when settings doesn't exist)
+        initialGoals.forEach((goal) => {
+          setDoc(doc(goalsRef, String(goal.id)), goal);
+        });
+        initialUpcomingPayments.forEach((payment) => {
+          setDoc(doc(paymentsRef, String(payment.id)), payment);
         });
       }
     });
@@ -210,6 +204,15 @@ export default function App() {
       setTransactions(transactions.filter((tx) => tx.id !== id));
     } else if (user) {
       await deleteDoc(doc(db, "users", user.uid, "transactions", id));
+    }
+  };
+
+  // 3. Edit / Update an existing transaction voucher
+  const handleUpdateTransaction = async (id, updatedTx) => {
+    if (isDemoMode) {
+      setTransactions(transactions.map((tx) => tx.id === id ? { ...tx, ...updatedTx } : tx));
+    } else if (user) {
+      await updateDoc(doc(db, "users", user.uid, "transactions", id), updatedTx);
     }
   };
 
@@ -355,6 +358,7 @@ export default function App() {
             categories={categories}
             onAddTransaction={handleAddTransaction}
             onDeleteTransaction={handleDeleteTransaction}
+            onUpdateTransaction={handleUpdateTransaction}
           />
         );
       case "reports":
