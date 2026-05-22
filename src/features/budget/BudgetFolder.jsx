@@ -36,19 +36,6 @@ export default function BudgetFolder({
   const [activeMonth, setActiveMonth] = useState(MONTHS[currentMonthIndex]);
   const [viewLimit, setViewLimit] = useState("10");
 
-  const currentYear = new Date().getFullYear();
-
-  // Dynamically extract unique years from transactions list, ensuring current year is always available
-  const uniqueYears = Array.from(new Set(
-    transactions
-      .map(tx => tx.date ? new Date(tx.date).getFullYear() : null)
-      .filter(Boolean)
-  ));
-  if (!uniqueYears.includes(currentYear)) {
-    uniqueYears.push(currentYear);
-  }
-  uniqueYears.sort((a, b) => b - a);
-
   const { activeYear, setActiveYear, isReadOnly } = useApp();
 
   // Form states for new transaction voucher
@@ -295,28 +282,8 @@ export default function BudgetFolder({
                 FILING LEDGER PERIOD:
               </span>
               <span style={{ fontSize: "12px", fontFamily: "var(--font-typewriter)", color: "rgba(32,30,28,0.6)", fontWeight: "bold" }}>
-                {activeMonthName.toUpperCase()}
+                {activeMonthName.toUpperCase()} {activeYear}
               </span>
-              <select
-                value={activeYear}
-                onChange={(e) => setActiveYear(parseInt(e.target.value))}
-                className="paper-select-recessed"
-                style={{
-                  padding: "2px 20px 2px 6px",
-                  fontSize: "11.5px",
-                  height: "22px",
-                  fontFamily: "var(--font-typewriter)",
-                  fontWeight: "bold",
-                  lineHeight: "1",
-                  borderWidth: "1.5px",
-                  marginLeft: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                {uniqueYears.map(yr => (
-                  <option key={yr} value={yr}>{yr}</option>
-                ))}
-              </select>
             </div>
           </div>
           

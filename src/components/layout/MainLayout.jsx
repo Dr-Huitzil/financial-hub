@@ -25,20 +25,18 @@ export default function MainLayout({ activeTab, setActiveTab, transactions = [],
   ];
 
   // Dynamically extract unique years from transactions list
-  const currentYear = new Date().getFullYear();
   const uniqueYears = Array.from(new Set(
     transactions
       .map(tx => tx.date ? new Date(tx.date).getFullYear() : null)
       .filter(Boolean)
   ));
   
-  // Ensure a reasonable spread of years is always available to select
-  const baseYears = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
-  baseYears.forEach(yr => {
-    if (!uniqueYears.includes(yr)) {
-      uniqueYears.push(yr);
-    }
-  });
+  // Only display years that are in the database. Ensure activeYear (or current year as fallback) is present for select integrity.
+  if (uniqueYears.length === 0) {
+    uniqueYears.push(activeYear || new Date().getFullYear());
+  } else if (activeYear && !uniqueYears.includes(activeYear)) {
+    uniqueYears.push(activeYear);
+  }
   uniqueYears.sort((a, b) => b - a);
 
   return (
