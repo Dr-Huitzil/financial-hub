@@ -12,7 +12,8 @@ export default function SetupTab({
   creditCards = [],
   onUpdateCreditCards,
   budgetLimits = {},
-  onUpdateBudgetLimits
+  onUpdateBudgetLimits,
+  transactions = []
 }) {
   // Sub-tab navigation
   const [setupSubTab, setSetupSubTab] = useState("categories");
@@ -585,7 +586,7 @@ export default function SetupTab({
 
         {/* SUB-TAB 4: Payroll Setup Registry */}
         {setupSubTab === "payroll" && (
-          <PayrollSettings />
+          <PayrollSettings transactions={transactions} />
         )}
 
       </div>

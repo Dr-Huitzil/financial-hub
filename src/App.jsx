@@ -419,6 +419,7 @@ export default function App() {
             onUpdateCreditCards={handleUpdateCreditCards}
             budgetLimits={budgetLimits}
             onUpdateBudgetLimits={handleUpdateBudgetLimits}
+            transactions={transactions}
           />
         );
       default:

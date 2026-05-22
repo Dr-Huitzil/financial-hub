@@ -6,7 +6,7 @@ import styles from "./PayrollSettings.module.css";
  * PayrollSettings component styled strictly like a physical HR payroll stub card,
  * featuring vintage monospaced grids, ink lines, and paycheck tear ticket displays.
  */
-export default function PayrollSettings() {
+export default function PayrollSettings({ transactions = [] }) {
   const { incomeStreams, setIncomeStreams, isReadOnly, formatValue, employmentData } = useApp();
 
   // Calculate predicted paycheck amount from W-4 timesheet profile
@@ -33,6 +33,39 @@ export default function PayrollSettings() {
         return rate * weeklyHours * 2;
       }
     }
+  };
+
+  // Calculate historical average amount based on matching stream name or fallback to all income
+  const getHistoricalAverage = (streamName) => {
+    const incomeTxs = transactions.filter((tx) => tx.type === "Income");
+    if (incomeTxs.length === 0) return null;
+
+    const trimmedName = (streamName || "").trim().toLowerCase();
+    if (trimmedName) {
+      // Look for specific matches: category or description matches streamName
+      const specificTxs = incomeTxs.filter(
+        (tx) =>
+          (tx.category && tx.category.toLowerCase().includes(trimmedName)) ||
+          (tx.description && tx.description.toLowerCase().includes(trimmedName))
+      );
+
+      if (specificTxs.length > 0) {
+        const sum = specificTxs.reduce((acc, tx) => acc + parseFloat(tx.amount || 0), 0);
+        return {
+          average: sum / specificTxs.length,
+          type: "specific",
+          count: specificTxs.length
+        };
+      }
+    }
+
+    // Fallback: general income average
+    const sum = incomeTxs.reduce((acc, tx) => acc + parseFloat(tx.amount || 0), 0);
+    return {
+      average: sum / incomeTxs.length,
+      type: "general",
+      count: incomeTxs.length
+    };
   };
 
   // Local state for the payroll stream addition form
@@ -186,6 +219,39 @@ export default function PayrollSettings() {
                   </button>
                 </div>
               )}
+
+              {(() => {
+                const histAvg = getHistoricalAverage(name);
+                if (!histAvg) return null;
+
+                const label = histAvg.type === "specific" 
+                  ? `Specific Ledger Average (${histAvg.count} txs): `
+                  : `General Income Average (${histAvg.count} txs): `;
+                const color = histAvg.type === "specific" ? "var(--color-stamp-green)" : "rgba(32, 30, 28, 0.7)";
+
+                return (
+                  <div style={{ marginTop: "4px", fontSize: "10px", fontFamily: "var(--font-typewriter)", color: "rgba(32, 30, 28, 0.6)" }}>
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAmount(histAvg.average.toFixed(2))}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: "0",
+                        color: color,
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        fontFamily: "var(--font-typewriter)",
+                        fontSize: "10px",
+                        fontWeight: "bold"
+                      }}
+                    >
+                      ${histAvg.average.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Auto-Fill)
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Segmented Pay Schedule Selector */}
