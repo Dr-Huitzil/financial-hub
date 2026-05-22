@@ -7,17 +7,61 @@ import styles from "./PayrollSettings.module.css";
  * featuring vintage monospaced grids, ink lines, and paycheck tear ticket displays.
  */
 export default function PayrollSettings() {
-  const { incomeStreams, setIncomeStreams, isReadOnly, formatValue } = useApp();
+  const { incomeStreams, setIncomeStreams, isReadOnly, formatValue, employmentData } = useApp();
+
+  // Calculate predicted paycheck amount from W-4 timesheet profile
+  const getPredictedPaycheckAmountForType = (type) => {
+    if (!employmentData || !employmentData.amount || parseFloat(employmentData.amount) <= 0) {
+      return null;
+    }
+
+    const rate = parseFloat(employmentData.amount);
+    const weeklyHours = employmentData.scheduleType === "Custom"
+      ? (parseFloat(employmentData.shiftsPerWeek) || 0) * (parseFloat(employmentData.hoursPerShift) || 0)
+      : (parseFloat(employmentData.hoursPerWeek) || 0);
+
+    if (employmentData.incomeType === "Salary") {
+      if (type === "semi-monthly") {
+        return rate / 24;
+      } else {
+        return rate / 26;
+      }
+    } else {
+      if (type === "semi-monthly") {
+        return (rate * weeklyHours * 52) / 24;
+      } else {
+        return rate * weeklyHours * 2;
+      }
+    }
+  };
 
   // Local state for the payroll stream addition form
   const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
   const [scheduleType, setScheduleType] = useState("semi-monthly");
+  
+  // Auto-predict initial amount based on the W-4 profile
+  const initialPrediction = getPredictedPaycheckAmountForType("semi-monthly");
+  const [amount, setAmount] = useState(initialPrediction !== null ? initialPrediction.toFixed(2) : "");
+  
   const [payday1, setPayday1] = useState("7");
   const [payday2, setPayday2] = useState("22");
   const [anchorDate, setAnchorDate] = useState("");
   
   const [isSaved, setIsSaved] = useState(false);
+
+  const handleScheduleTypeChange = (newType) => {
+    setScheduleType(newType);
+    
+    // Auto-predict amount if amount is empty, 0, or matches the predicted amount of the other frequency
+    const prevPredicted = getPredictedPaycheckAmountForType(scheduleType);
+    const nextPredicted = getPredictedPaycheckAmountForType(newType);
+    
+    if (nextPredicted !== null) {
+      if (!amount || parseFloat(amount) === 0 || (prevPredicted !== null && Math.abs(parseFloat(amount) - prevPredicted) < 0.01)) {
+        setAmount(nextPredicted.toFixed(2));
+      }
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -36,7 +80,10 @@ export default function PayrollSettings() {
     
     // Reset form inputs
     setName("");
-    setAmount("");
+    
+    const nextPrediction = getPredictedPaycheckAmountForType(scheduleType);
+    setAmount(nextPrediction !== null ? nextPrediction.toFixed(2) : "");
+    
     setAnchorDate("");
     
     // Visual rubber stamp notification
@@ -114,6 +161,31 @@ export default function PayrollSettings() {
                   disabled={isReadOnly}
                 />
               </div>
+              {getPredictedPaycheckAmountForType(scheduleType) !== null && (
+                <div style={{ marginTop: "6px", fontSize: "10px", fontFamily: "var(--font-typewriter)", color: "rgba(32, 30, 28, 0.6)" }}>
+                  <span>Timesheet Prediction: </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const pred = getPredictedPaycheckAmountForType(scheduleType);
+                      if (pred !== null) setAmount(pred.toFixed(2));
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: "0",
+                      color: "var(--color-stamp-blue)",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      fontFamily: "var(--font-typewriter)",
+                      fontSize: "10px",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    ${getPredictedPaycheckAmountForType(scheduleType).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Auto-Fill)
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Segmented Pay Schedule Selector */}
@@ -123,7 +195,7 @@ export default function PayrollSettings() {
                 <button
                   type="button"
                   className={`${styles.segmentBtn} ${scheduleType === "semi-monthly" ? styles.segmentActive : ""}`}
-                  onClick={() => setScheduleType("semi-monthly")}
+                  onClick={() => handleScheduleTypeChange("semi-monthly")}
                   disabled={isReadOnly}
                 >
                   Semi-Monthly (Specific Dates)
@@ -131,7 +203,7 @@ export default function PayrollSettings() {
                 <button
                   type="button"
                   className={`${styles.segmentBtn} ${scheduleType === "bi-weekly" ? styles.segmentActive : ""}`}
-                  onClick={() => setScheduleType("bi-weekly")}
+                  onClick={() => handleScheduleTypeChange("bi-weekly")}
                   disabled={isReadOnly}
                 >
                   Bi-Weekly (Every 14 Days)
