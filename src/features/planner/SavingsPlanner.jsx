@@ -3,6 +3,12 @@ import styles from './SavingsPlanner.module.css';
 
 const generateGoalId = () => String(Date.now());
 
+const getProgressColor = (pct) => {
+  if (pct <= 50) return 'rgba(239, 68, 68, 0.55)';   // Bright highlighter red/pink
+  if (pct < 80) return 'rgba(249, 115, 22, 0.55)';   // Bright highlighter orange
+  return 'rgba(34, 197, 94, 0.55)';                  // Bright highlighter green
+};
+
 // Child component representing an individual 3D flippable Envelope Card
 function EnvelopeCard({ goal, onUpdateGoal, onDeleteGoal }) {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -10,11 +16,23 @@ function EnvelopeCard({ goal, onUpdateGoal, onDeleteGoal }) {
   const [editDate, setEditDate] = useState(goal.targetDate || '');
   const [frequency, setFrequency] = useState(goal.frequency || 'monthly');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('100');
 
-  const handleDeposit = () => {
-    const nextAmount = Math.min(goal.target, goal.current + 100);
+  const handleCustomDeposit = (e) => {
+    if (e) e.stopPropagation();
+    const val = parseFloat(depositAmount);
+    if (isNaN(val) || val <= 0) return;
+    const nextAmount = Math.min(goal.target, goal.current + val);
     if (onUpdateGoal) {
       onUpdateGoal(goal.id, { current: nextAmount });
+    }
+    setIsDepositing(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleCustomDeposit(e);
     }
   };
 
@@ -157,7 +175,10 @@ function EnvelopeCard({ goal, onUpdateGoal, onDeleteGoal }) {
             <div className={styles.progressTrack}>
               <div 
                 className={styles.progressFill} 
-                style={{ width: `${percentCompleted}%` }} 
+                style={{ 
+                  width: `${percentCompleted}%`,
+                  backgroundColor: getProgressColor(percentCompleted)
+                }} 
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontFamily: 'var(--font-ledger)', fontSize: '11px', color: 'rgba(32,30,28,0.6)' }}>
@@ -170,26 +191,67 @@ function EnvelopeCard({ goal, onUpdateGoal, onDeleteGoal }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: 'auto' }}>
-            <button 
-              className={styles.planButton}
-              onClick={() => {
-                // Sync local input state with latest goal prop on opening the plan face
-                setEditTarget(goal.target);
-                setEditDate(goal.targetDate || '');
-                setFrequency(goal.frequency || 'monthly');
-                setIsFlipped(true);
-              }}
-            >
-              Plan
-            </button>
-            <button 
-              className={styles.depositButton}
-              onClick={handleDeposit}
-            >
-              Deposit
-            </button>
-          </div>
+          {isDepositing ? (
+            <div className={styles.depositForm} onClick={(e) => e.stopPropagation()}>
+              <span style={{ fontFamily: 'var(--font-ledger)', fontSize: '15px', color: 'var(--color-ink-dark)', fontWeight: 'bold', marginRight: '-2px' }}>$</span>
+              <input
+                type="number"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className={styles.depositInput}
+                placeholder="0.00"
+                min="0.01"
+                step="any"
+                autoFocus
+              />
+              <div className={styles.depositFormActions}>
+                <button
+                  type="button"
+                  className={styles.depositCancelButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDepositing(false);
+                    setDepositAmount('100');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.depositConfirmButton}
+                  onClick={handleCustomDeposit}
+                >
+                  Post
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: 'auto' }}>
+              <button 
+                className={styles.planButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Sync local input state with latest goal prop on opening the plan face
+                  setEditTarget(goal.target);
+                  setEditDate(goal.targetDate || '');
+                  setFrequency(goal.frequency || 'monthly');
+                  setIsFlipped(true);
+                }}
+              >
+                Plan
+              </button>
+              <button 
+                className={styles.depositButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDepositing(true);
+                }}
+              >
+                Deposit
+              </button>
+            </div>
+          )}
         </div>
 
         {/* BACK FACE */}

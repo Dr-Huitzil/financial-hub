@@ -78,7 +78,7 @@
   height: 100%;
   background-color: rgba(37, 96, 70, 0.4); /* Faded green highlighter */
   border-right: 1px solid var(--color-ink-dark);
-  transition: width 0.4s ease;
+  transition: width 0.4s ease, background-color 0.4s ease;
 }
 
 .depositButton {
@@ -766,4 +766,89 @@
 .confirmAddYesButton:hover {
   background-color: #166534;
   box-shadow: 0 4px 6px rgba(20, 83, 45, 0.3);
+}
+
+/* Inline Deposit Form on Front Face */
+.depositForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  width: 100%;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.depositInput {
+  background: transparent;
+  border: none;
+  border-bottom: 2px dashed var(--color-paper-edge);
+  font-family: var(--font-ledger);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink-dark);
+  padding: 2px 0;
+  outline: none;
+  width: 90px;
+  text-align: left;
+}
+
+.depositInput:focus {
+  border-bottom-style: solid;
+  border-bottom-color: var(--color-ink-dark);
+}
+
+/* Remove inner spin button for number input */
+.depositInput::-webkit-outer-spin-button,
+.depositInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.depositFormActions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.depositCancelButton {
+  background: transparent;
+  border: none;
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(127, 29, 29, 0.8);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.depositCancelButton:hover {
+  background-color: rgba(127, 29, 29, 0.08);
+  color: var(--color-stamp-red);
+}
+
+.depositConfirmButton {
+  background-color: transparent;
+  border: 1.5px solid var(--color-ink-blue);
+  color: var(--color-ink-blue);
+  font-family: var(--font-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.depositConfirmButton:hover {
+  background-color: rgba(22, 42, 69, 0.08);
+  box-shadow: 0 2px 4px rgba(22, 42, 69, 0.15);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
 }
