@@ -11,6 +11,37 @@ export function AppProvider({ children }) {
   const [activeYear, setActiveYear] = useState(() => new Date().getFullYear());
   const [lockPastYears, setLockPastYears] = useState(true);
 
+  // --- Income Predictor / Payroll State ---
+  const [incomeStreams, setIncomeStreams] = useState(() => {
+    try {
+      const saved = localStorage.getItem("financial_hub_income_streams");
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return [
+        {
+          id: "stream-1",
+          name: "Primary Paycheck",
+          amount: 2500,
+          type: "semi-monthly",
+          dates: [7, 22],
+          anchorDate: ""
+        }
+      ];
+    } catch {
+      return [
+        {
+          id: "stream-1",
+          name: "Primary Paycheck",
+          amount: 2500,
+          type: "semi-monthly",
+          dates: [7, 22],
+          anchorDate: ""
+        }
+      ];
+    }
+  });
+
   // --- Employment & Life Energy State ---
   const [employmentData, setEmploymentData] = useState(() => {
     try {
@@ -42,6 +73,15 @@ export function AppProvider({ children }) {
   });
 
   // Custom persistent wrapper functions
+  const updateIncomeStreams = (streams) => {
+    setIncomeStreams(streams);
+    try {
+      localStorage.setItem("financial_hub_income_streams", JSON.stringify(streams));
+    } catch (e) {
+      console.error("Failed to save income streams", e);
+    }
+  };
+
   const updateEmploymentData = (data) => {
     setEmploymentData(data);
     try {
@@ -122,12 +162,15 @@ export function AppProvider({ children }) {
         timeCostMode,
         setTimeCostMode: updateTimeCostMode,
         isEmploymentIncomplete,
-        formatValue
+        formatValue,
+        incomeStreams,
+        setIncomeStreams: updateIncomeStreams
       }}
     >
       {children}
     </AppContext.Provider>
   );
+
 }
 
 /**

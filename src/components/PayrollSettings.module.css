@@ -1,0 +1,457 @@
+/* PayrollSettings.module.css - HR Payroll Setup and Paycheck Styles */
+
+.payrollStubCard {
+  background-color: #f7efe6; /* Aged HR ledger paper */
+  background-image: linear-gradient(rgba(32, 30, 28, 0.04) 1px, transparent 1px);
+  background-size: 100% 24px;
+  border: 3.5px double var(--color-ink-dark);
+  border-radius: 4px;
+  padding: 30px 25px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 35px rgba(0,0,0,0.02);
+  font-family: var(--font-typewriter), Courier, monospace;
+  color: var(--color-ink-dark);
+  margin-top: 10px;
+}
+
+/* Perforated paper rip decoration */
+.tearEdge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background-image: radial-gradient(circle, transparent 3px, #f7efe6 3.5px);
+  background-size: 12px 12px;
+  background-position: top center;
+  border-bottom: 1.5px dashed rgba(32,30,28,0.2);
+  opacity: 0.8;
+}
+
+.headerBlock {
+  display: grid;
+  grid-template-columns: 210px 1fr 170px;
+  border-bottom: 4px solid var(--color-ink-dark);
+  padding-bottom: 15px;
+  margin-bottom: 25px;
+  align-items: center;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stubCode {
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.noticeText {
+  font-size: 8.5px;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.headerCenter {
+  text-align: center;
+  padding: 0 12px;
+}
+
+.stubTitle {
+  font-family: var(--font-accent);
+  font-size: 18px;
+  text-transform: uppercase;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.5px;
+  font-weight: bold;
+}
+
+.stubSubtitle {
+  font-size: 10px;
+  line-height: 1.3;
+  opacity: 0.75;
+}
+
+.headerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.statusBox {
+  font-size: 14px;
+  font-weight: bold;
+  border: 2px solid var(--color-ink-dark);
+  padding: 1px 8px;
+  border-radius: 3px;
+  line-height: 1.1;
+  background-color: var(--color-paper-light);
+}
+
+.stampNotice {
+  font-size: 8px;
+  font-weight: bold;
+  color: var(--color-ink-blue);
+  border: 1px dashed var(--color-ink-blue);
+  padding: 1.5px 3px;
+  transform: rotate(-1.5deg);
+  display: inline-block;
+  letter-spacing: 0.5px;
+}
+
+/* Two-column dashboard split */
+.splitLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+@media (max-width: 900px) {
+  .splitLayout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.formContainer {
+  background-color: rgba(255, 255, 255, 0.35);
+  border: 2px solid var(--color-ink-dark);
+  border-radius: 4px;
+  padding: 20px 18px;
+}
+
+.streamsContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.paneTitle {
+  font-family: var(--font-accent);
+  font-size: 13px;
+  text-transform: uppercase;
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px dashed var(--color-ink-dark);
+  padding-bottom: 6px;
+}
+
+/* Form Styles */
+.payrollForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formFieldRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldLabel {
+  font-size: 11.5px;
+  font-weight: bold;
+}
+
+.guideText {
+  font-size: 9.5px;
+  opacity: 0.7;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+}
+
+.textInput {
+  background-color: #ebdcb9;
+  border: 2.5px solid var(--color-ink-dark);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: var(--font-typewriter), monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+  outline: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.12);
+}
+
+.textInput::placeholder {
+  opacity: 0.4;
+}
+
+.recessedLedgerBox {
+  display: flex;
+  align-items: center;
+  background-color: #ebdcb9;
+  border: 2.5px solid var(--color-ink-dark);
+  border-radius: 4px;
+  padding: 4px 10px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.12);
+}
+
+.dollarSym {
+  font-size: 16px;
+  font-weight: bold;
+  opacity: 0.75;
+  margin-right: 6px;
+}
+
+.ledgerInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-ledger), Courier, monospace;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+  width: 100%;
+  text-align: right;
+}
+
+.ledgerInput::placeholder {
+  opacity: 0.3;
+}
+
+.unitLabel {
+  font-size: 9px;
+  font-weight: bold;
+  opacity: 0.65;
+  margin-left: 6px;
+  text-transform: uppercase;
+}
+
+.dateInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-typewriter), Courier, monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+  width: 100%;
+  text-transform: uppercase;
+}
+
+/* Segmented selector */
+.segmentedControl {
+  display: flex;
+  background-color: #ebdcb9;
+  border: 2.5px solid var(--color-ink-dark);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.segmentBtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 2px dashed var(--color-ink-dark);
+  padding: 8px 6px;
+  font-family: var(--font-typewriter), monospace;
+  font-size: 10.5px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+  cursor: pointer;
+  outline: none;
+  text-align: center;
+  transition: all 0.12s ease;
+}
+
+.segmentBtn:last-child {
+  border-right: none;
+}
+
+.segmentBtn:hover:not(:disabled) {
+  background-color: #dfd0ab;
+}
+
+.segmentActive {
+  background-color: var(--color-ink-dark) !important;
+  color: var(--color-paper-light) !important;
+}
+
+/* Submit stamp actions */
+.actionRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.stampBtn {
+  font-family: var(--font-accent);
+  font-size: 10.5px;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+  color: var(--color-stamp-green);
+  background-color: transparent;
+  border: 2.5px dashed var(--color-stamp-green);
+  border-radius: 4px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+  transform: rotate(-1deg);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  text-transform: uppercase;
+}
+
+.stampBtn:hover:not(:disabled) {
+  transform: rotate(-1deg) scale(1.02);
+  background-color: rgba(46, 117, 89, 0.05);
+}
+
+.stampBtn:active {
+  transform: rotate(-1deg) scale(0.97);
+}
+
+.rubberStamp {
+  position: absolute;
+  top: -20px;
+  right: -5px;
+  font-family: var(--font-accent);
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: var(--color-stamp-red);
+  border: 2.5px double var(--color-stamp-red);
+  padding: 3px 8px;
+  background-color: rgba(247, 239, 230, 0.95);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+  transform: rotate(-6deg);
+  animation: slamStamp 0.16s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+  pointer-events: none;
+}
+
+@keyframes slamStamp {
+  0% {
+    transform: scale(2) rotate(-30deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(-6deg);
+    opacity: 1;
+  }
+}
+
+.readOnlyWarning {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--color-stamp-red);
+  border: 2px dashed var(--color-stamp-red);
+  padding: 6px 12px;
+  width: 100%;
+  text-align: center;
+  border-radius: 4px;
+  background-color: rgba(127,29,29,0.04);
+}
+
+/* Paycheck Vouchers Listing */
+.vouchersScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.paycheckVoucher {
+  background-color: #fcfbf9; /* Clean payroll paper slip */
+  border: 2px solid var(--color-ink-dark);
+  border-radius: 4px;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  overflow: hidden;
+  transition: transform 0.12s ease;
+}
+
+.paycheckVoucher:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+/* Perforated voucher cut */
+.voucherTear {
+  height: 5px;
+  background-image: radial-gradient(circle, transparent 2px, #fcfbf9 2.5px);
+  background-size: 8px 8px;
+  border-bottom: 1.2px dashed rgba(32,30,28,0.18);
+  opacity: 0.8;
+}
+
+.voucherBody {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voucherTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.voucherName {
+  font-weight: bold;
+  font-size: 13.5px;
+  font-family: var(--font-sans);
+}
+
+.voucherFrequency {
+  font-size: 9.5px;
+  color: rgba(32,30,28,0.6);
+  margin-top: 2px;
+}
+
+.voucherAmount {
+  font-family: var(--font-ledger);
+  font-size: 15.5px;
+  font-weight: bold;
+  color: var(--color-stamp-green);
+}
+
+.voucherBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px dashed rgba(181, 169, 138, 0.4);
+  padding-top: 8px;
+}
+
+.voucherSystemId {
+  font-size: 8px;
+  opacity: 0.55;
+  letter-spacing: 0.5px;
+}
+
+.voidBtn {
+  background: none;
+  border: none;
+  color: var(--color-stamp-red);
+  font-family: var(--font-accent);
+  font-size: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+}
+
+.voidBtn:hover {
+  text-decoration: underline;
+}
+
+.emptyRegistry {
+  font-size: 11px;
+  font-style: italic;
+  opacity: 0.5;
+  text-align: center;
+  padding: 40px 0;
+  border: 1.5px dashed rgba(32,30,28,0.2);
+  border-radius: 4px;
+}

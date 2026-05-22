@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useApp } from "../../context/AppContext.jsx";
+import useIncomePredictor from "../../hooks/useIncomePredictor.js";
 
 /**
  * Dashboard Component — Actionable Command Center
@@ -20,7 +21,19 @@ export default function Dashboard({
   goals = [],
   upcomingPayments = [],
 }) {
-  const { activeYear } = useApp();
+  const { activeYear, formatValue } = useApp();
+  const { getIncomeForMonth, getPaydayDetailsForMonth, checkIsBonusMonth } = useIncomePredictor();
+
+  const currentMonthIndex = useMemo(() => new Date().getMonth(), []);
+  const monthNames = useMemo(() => [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ], []);
+  const currentMonthName = monthNames[currentMonthIndex];
+
+  const expectedIncome = getIncomeForMonth(currentMonthIndex, activeYear);
+  const isBonusMonth = checkIsBonusMonth(currentMonthIndex, activeYear);
+  const paydayDetails = getPaydayDetailsForMonth(currentMonthIndex, activeYear);
 
   // Filter transactions by the globally selected activeYear
   const yearFilteredTransactions = useMemo(() => {
@@ -197,12 +210,12 @@ export default function Dashboard({
         </span>
       </div>
 
-      {/* ── 4-column grid on wide screens, stacked on mobile ── */}
+      {/* ── 5-column grid on wide screens, stacked on mobile ── */}
       <div
         className="overview-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "1.1fr 1.1fr 1fr 1.2fr",
+          gridTemplateColumns: "1.1fr 1.1fr 1fr 1fr 1.2fr",
           gap: "24px",
           alignItems: "start",
         }}
@@ -423,6 +436,203 @@ export default function Dashboard({
                 RECONCILED
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════
+            CARD 1C — EXPECTED PAYROLL INCOME
+        ══════════════════════════════════════════════ */}
+        <div
+          className="tactile-card"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            position: "relative"
+          }}
+        >
+          {/* Card header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              borderBottom: "1px dashed var(--color-paper-grid)",
+              paddingBottom: "10px",
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontFamily: "var(--font-accent)",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.8px",
+                  fontWeight: "bold",
+                }}
+              >
+                Expected Payroll
+              </span>
+              <p
+                style={{
+                  margin: "3px 0 0 0",
+                  fontSize: "10.5px",
+                  color: "rgba(32,30,28,0.55)",
+                  fontFamily: "var(--font-sans)",
+                }}
+              >
+                Projected {currentMonthName} {activeYear}
+              </p>
+            </div>
+            <span
+              className="stamp stamp-green"
+              style={{ fontSize: "7px", transform: "rotate(-1.5deg)" }}
+            >
+              ESTIMATED
+            </span>
+          </div>
+
+          {/* Big hero number & Bonus Stamp */}
+          <div style={{ textAlign: "center", padding: "12px 0", position: "relative" }}>
+            <span
+              style={{
+                display: "block",
+                fontFamily: "var(--font-ledger)",
+                fontSize: "11px",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                color: "rgba(32,30,28,0.5)",
+                marginBottom: "6px",
+              }}
+            >
+              Total Expected Income
+            </span>
+            <span
+              className="typewriter-num"
+              style={{
+                fontSize: "clamp(24px, 3.5vw, 36px)",
+                fontWeight: "bold",
+                letterSpacing: "0.5px",
+                color: "var(--color-stamp-green)",
+                lineHeight: 1.1,
+              }}
+            >
+              {formatValue(expectedIncome)}
+            </span>
+            {isBonusMonth && (
+              <span
+                className="stamp stamp-red"
+                style={{
+                  position: "absolute",
+                  bottom: "-10px",
+                  right: "5%",
+                  transform: "rotate(-12deg) scale(0.85)",
+                  fontSize: "9px",
+                  padding: "3px 6px",
+                  letterSpacing: "0.5px",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                BONUS MONTH
+              </span>
+            )}
+          </div>
+
+          {/* Paycheck envelopes list */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "7px",
+              borderTop: "1px dashed var(--color-paper-grid)",
+              paddingTop: "12px",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-accent)",
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                color: "rgba(32,30,28,0.6)",
+                marginBottom: "4px"
+              }}
+            >
+              Wage Envelopes:
+            </span>
+            {paydayDetails.length === 0 ? (
+              <span
+                style={{
+                  textAlign: "center",
+                  fontStyle: "italic",
+                  fontSize: "11px",
+                  opacity: 0.45,
+                  padding: "15px 0",
+                }}
+              >
+                No payroll streams configured.
+              </span>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "150px", overflowY: "auto" }}>
+                {paydayDetails.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "6px 8px",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(224, 212, 185, 0.25)",
+                      border: "1px dashed var(--color-paper-grid)",
+                      borderLeft: "3px solid var(--color-stamp-green)",
+                    }}
+                  >
+                    {/* Payday date/label */}
+                    <div
+                      style={{
+                        minWidth: "32px",
+                        textAlign: "center",
+                        fontFamily: "var(--font-ledger)",
+                        fontSize: "8.5px",
+                        fontWeight: "bold",
+                        color: "var(--color-stamp-green)"
+                      }}
+                    >
+                      {item.dayLabel}
+                    </div>
+
+                    {/* Paycheck name */}
+                    <span
+                      style={{
+                        flex: 1,
+                        fontSize: "11px",
+                        fontFamily: "var(--font-sans)",
+                        fontWeight: "600",
+                        color: "var(--color-ink-dark)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
+                      {item.name}
+                    </span>
+
+                    {/* Amount */}
+                    <span
+                      className="typewriter-num"
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "bold",
+                        color: "var(--color-stamp-green)"
+                      }}
+                    >
+                      {formatValue(item.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

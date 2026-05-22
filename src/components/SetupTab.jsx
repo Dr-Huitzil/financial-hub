@@ -1,5 +1,6 @@
 import { useState } from "react";
 import EmploymentProfile from "./EmploymentProfile";
+import PayrollSettings from "./PayrollSettings";
 
 export default function SetupTab({ 
   categories, 
@@ -170,6 +171,13 @@ export default function SetupTab({
           style={{ minWidth: "150px" }}
         >
           Employment Profile
+        </button>
+        <button
+          className={`budget-month-tab ${setupSubTab === "payroll" ? "active" : ""}`}
+          onClick={() => setSetupSubTab("payroll")}
+          style={{ minWidth: "150px" }}
+        >
+          Payroll Streams
         </button>
 
       </div>
@@ -573,6 +581,11 @@ export default function SetupTab({
         {/* SUB-TAB 3: Employment Profile */}
         {setupSubTab === "employment" && (
           <EmploymentProfile />
+        )}
+
+        {/* SUB-TAB 4: Payroll Setup Registry */}
+        {setupSubTab === "payroll" && (
+          <PayrollSettings />
         )}
 
       </div>
