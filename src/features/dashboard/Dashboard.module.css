@@ -1,3 +1,15 @@
 /* Dashboard.module.css — Scoped to Dashboard */
-/* Dashboard currently uses only shared global classes.
-   Add dashboard-specific styles here as needed. */
+
+.overviewGrid3Col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .overviewGrid3Col {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

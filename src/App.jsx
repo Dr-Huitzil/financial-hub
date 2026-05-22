@@ -377,6 +377,8 @@ export default function App() {
             goals={goals}
             upcomingPayments={upcomingPayments}
             startingBalances={startingBalances}
+            categories={categories}
+            onUpdateTransaction={handleUpdateTransaction}
           />
         );
       case "budget":
@@ -457,6 +459,8 @@ export default function App() {
             goals={goals}
             upcomingPayments={upcomingPayments}
             startingBalances={startingBalances}
+            categories={categories}
+            onUpdateTransaction={handleUpdateTransaction}
           />
         );
     }

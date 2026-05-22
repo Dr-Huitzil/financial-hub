@@ -1,6 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
 import useIncomePredictor from "../../hooks/useIncomePredictor.js";
+import UncategorizedReviewDesk from "./UncategorizedReviewDesk";
+import styles from "./Dashboard.module.css";
 
 /**
  * Dashboard Component — Actionable Command Center
@@ -21,6 +23,8 @@ export default function Dashboard({
   goals = [],
   upcomingPayments = [],
   startingBalances = {},
+  categories = {},
+  onUpdateTransaction,
 }) {
   const { activeYear, formatValue } = useApp();
   const { getIncomeForMonth, getPaydayDetailsForMonth, checkIsBonusMonth } = useIncomePredictor();
@@ -36,6 +40,8 @@ export default function Dashboard({
   const isBonusMonth = checkIsBonusMonth(currentMonthIndex, activeYear);
   const paydayDetails = getPaydayDetailsForMonth(currentMonthIndex, activeYear);
 
+  const [isReviewDeskOpen, setIsReviewDeskOpen] = useState(false);
+
   // Filter transactions by the globally selected activeYear
   const yearFilteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
@@ -43,6 +49,12 @@ export default function Dashboard({
       return new Date(tx.date).getFullYear() === activeYear;
     });
   }, [transactions, activeYear]);
+
+  const uncategorizedTransactions = useMemo(() => {
+    return yearFilteredTransactions.filter((tx) => tx.category === "Uncategorized");
+  }, [yearFilteredTransactions]);
+  const uncategorizedCount = uncategorizedTransactions.length;
+  const uncategorizedTotal = uncategorizedTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
 
   // Filter upcoming payments by the activeYear to align upcoming docket with select view
   const yearFilteredUpcoming = useMemo(() => {
@@ -219,6 +231,117 @@ export default function Dashboard({
         </span>
       </div>
 
+      {/* ── Reconciliation Exception Alert Widget ── */}
+      {uncategorizedCount > 0 && (
+        <div
+          className="tactile-card dogEared"
+          style={{
+            border: "2px dashed var(--color-stamp-red)",
+            backgroundColor: "rgba(224, 212, 185, 0.45)",
+            padding: "20px 24px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "relative",
+            overflow: "hidden",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "8px",
+                border: "2px solid var(--color-stamp-red)",
+                backgroundColor: "var(--color-paper-light)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                fontFamily: "var(--font-typewriter)",
+                fontSize: "20px",
+                fontWeight: "bold",
+                color: "var(--color-stamp-red)",
+                transform: "rotate(-4deg)",
+                boxShadow: "2px 2px 5px rgba(0,0,0,0.1)",
+              }}
+            >
+              ⚠
+            </div>
+            <div>
+              <h3
+                style={{
+                  fontFamily: "var(--font-typewriter)",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  color: "var(--color-stamp-red)",
+                  margin: 0,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                * COMPTROL EXCEPTION: RECONCILIATION AUDIT REQUIRED *
+              </h3>
+              <p
+                style={{
+                  margin: "6px 0 0 0",
+                  fontSize: "12px",
+                  color: "var(--color-ink-dark)",
+                  fontFamily: "var(--font-sans)",
+                  lineHeight: "1.4",
+                }}
+              >
+                There are <strong>{uncategorizedCount}</strong> imported transaction voucher(s) in suspense (Uncategorized) totaling <strong style={{ color: "var(--color-stamp-red)", fontFamily: "var(--font-ledger)" }}>${fmt(Math.abs(uncategorizedTotal))}</strong>. 
+                Reconcile these inputs to ensure budget sheets and balance sheets remain true.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+            <span
+              className="stamp stamp-red"
+              style={{
+                transform: "rotate(-6deg) scale(0.95)",
+                fontSize: "10px",
+                padding: "4px 8px",
+                fontWeight: "900",
+                letterSpacing: "1px",
+              }}
+            >
+              AUDIT REQUIRED
+            </span>
+            <button
+              onClick={() => setIsReviewDeskOpen(true)}
+              style={{
+                padding: "10px 20px",
+                fontFamily: "var(--font-accent)",
+                fontSize: "11px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                color: "var(--color-paper-light)",
+                backgroundColor: "var(--color-stamp-red)",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                boxShadow: "0 4px 6px rgba(127,29,29,0.3)",
+                transition: "all 0.1s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#991b1b";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "var(--color-stamp-red)";
+                e.currentTarget.style.transform = "translateY(0px)";
+              }}
+            >
+              Open Reconciliation Desk
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── 5-column grid on wide screens, stacked on mobile ── */}
       <div
         className="overview-grid"
@@ -275,12 +398,30 @@ export default function Dashboard({
                 Balance minus upcoming bills
               </p>
             </div>
-            <span
-              className={`stamp ${safePositive ? "stamp-green" : "stamp-red"}`}
-              style={{ fontSize: "7px", transform: "rotate(1.5deg)" }}
-            >
-              {safePositive ? "SOLVENT" : "DEFICIT"}
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+              <span
+                className={`stamp ${safePositive ? "stamp-green" : "stamp-red"}`}
+                style={{ fontSize: "7px", transform: "rotate(1.5deg)" }}
+              >
+                {safePositive ? "SOLVENT" : "DEFICIT"}
+              </span>
+              {uncategorizedCount === 0 && (
+                <span
+                  className="stamp stamp-green"
+                  style={{
+                    fontSize: "6px",
+                    transform: "rotate(-2.5deg)",
+                    padding: "2px 4px",
+                    borderColor: "var(--color-stamp-green)",
+                    color: "var(--color-stamp-green)",
+                    letterSpacing: "0.2px",
+                  }}
+                  title="All transaction records are verified and categorized"
+                >
+                  AUDIT: RECONCILED ✓
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Big hero number */}
@@ -992,6 +1133,15 @@ export default function Dashboard({
         </div>
 
       </div>
+
+      {/* ── Reconciliation Audit Desk Workbook Modal ── */}
+      <UncategorizedReviewDesk
+        isOpen={isReviewDeskOpen}
+        onClose={() => setIsReviewDeskOpen(false)}
+        transactions={transactions}
+        categories={categories}
+        onUpdateTransaction={onUpdateTransaction}
+      />
     </div>
   );
 }
