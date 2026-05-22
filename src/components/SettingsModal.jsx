@@ -11,7 +11,13 @@ import { useApp } from "../context/AppContext.jsx";
  * @param {function} onClose - Handler triggered when retaining voucher / securing controls
  */
 export default function SettingsModal({ isOpen, onClose }) {
-  const { lockPastYears, setLockPastYears } = useApp();
+  const { 
+    lockPastYears, 
+    setLockPastYears, 
+    timeCostMode, 
+    setTimeCostMode, 
+    isEmploymentIncomplete 
+  } = useApp();
 
   if (!isOpen) return null;
 
@@ -50,6 +56,26 @@ export default function SettingsModal({ isOpen, onClose }) {
               <span>Lock Past Years (Read-Only)</span>
               <span className={styles.settingDesc}>
                 Prevents entry additions or voiding/editing transactions in calendar periods prior to the current year.
+              </span>
+            </div>
+          </label>
+        </div>
+
+        {/* 4. Life Energy 'Evil Toggle' */}
+        <div className={isEmploymentIncomplete ? `${styles.settingRow} ${styles.disabledRow}` : styles.settingRow}>
+          <label className={styles.checkboxContainer}>
+            <input 
+              type="checkbox"
+              checked={timeCostMode}
+              disabled={isEmploymentIncomplete}
+              onChange={(e) => setTimeCostMode(e.target.checked)}
+              id="life-energy-checkbox"
+            />
+            <span className={styles.hazardSwitch} />
+            <div>
+              <span>Display Cost in Life Energy</span>
+              <span className={styles.settingDesc}>
+                Converts all financial currency metrics globally into equivalent hours of physical labor.
               </span>
             </div>
           </label>

@@ -1,3 +1,5 @@
+import { useApp } from "../context/AppContext.jsx";
+
 const formatDateCompact = (isoString) => {
   if (!isoString) return "";
   const parts = isoString.split("-");
@@ -7,6 +9,7 @@ const formatDateCompact = (isoString) => {
 };
 
 export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlowSummary, investmentGrowthData, thirtyDayBalance, creditCards = [] }) {
+  const { formatValue } = useApp();
   // Calculate remaining dynamic budget
   const totalUpcomingToPay = upcomingPayments
     .filter(p => !p.paid && !p.isIncome)
@@ -55,33 +58,33 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
           <div className="metrics-row">
             <div className="metric-stamp-card positive">
               <span className="metric-stamp-label">Total Income</span>
-              <span className="metric-stamp-value">${cashFlowSummary.totalIncome.toLocaleString()}</span>
+              <span className="metric-stamp-value">{formatValue(cashFlowSummary.totalIncome)}</span>
             </div>
             
             <div className="metric-stamp-card negative">
               <span className="metric-stamp-label">Total Expenses</span>
-              <span className="metric-stamp-value">${cashFlowSummary.totalExpenses.toLocaleString()}</span>
+              <span className="metric-stamp-value">{formatValue(cashFlowSummary.totalExpenses)}</span>
             </div>
 
             <div className="metric-stamp-card negative">
               <span className="metric-stamp-label">Debt Paid</span>
-              <span className="metric-stamp-value">${cashFlowSummary.totalDebtPaid.toLocaleString()}</span>
+              <span className="metric-stamp-value">{formatValue(cashFlowSummary.totalDebtPaid)}</span>
             </div>
           </div>
 
           <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px dashed var(--color-paper-grid)' }}>
             <div className="ledger-text-row">
               <span className="ledger-label">Total Bills Summary:</span>
-              <span className="ledger-value">${cashFlowSummary.totalBills.toLocaleString()}</span>
+              <span className="ledger-value">{formatValue(cashFlowSummary.totalBills)}</span>
             </div>
             <div className="ledger-text-row">
               <span className="ledger-label">Savings Allotted:</span>
-              <span className="ledger-value">${cashFlowSummary.totalSavings.toLocaleString()}</span>
+              <span className="ledger-value">{formatValue(cashFlowSummary.totalSavings)}</span>
             </div>
             <div className="ledger-text-row" style={{ borderBottom: 'none', fontWeight: 'bold' }}>
               <span className="ledger-label" style={{ color: 'var(--color-ink-blue)' }}>Actual Net Surplus:</span>
               <span className="ledger-value" style={{ color: 'var(--color-ink-blue)', fontSize: '18px' }}>
-                ${remainingDynamic.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatValue(remainingDynamic)}
               </span>
             </div>
           </div>
@@ -203,7 +206,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
                 </div>
                 
                 <div className="payment-item-value" style={{ color: p.isIncome ? 'var(--color-stamp-green)' : 'var(--color-ink-dark)' }}>
-                  {p.isIncome ? `+ $${p.amount.toLocaleString()}` : `$${p.amount.toLocaleString()}`}
+                  {p.isIncome ? `+ ${formatValue(p.amount)}` : formatValue(p.amount)}
                   {p.paid && (
                     <span 
                       className={`stamp ${p.isIncome ? "stamp-green" : "stamp-red"}`} 

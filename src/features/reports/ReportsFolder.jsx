@@ -29,6 +29,7 @@ const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 
 // Skeuomorphic Monospaced Typewriter Tooltip
 const CustomTooltip = ({ active, payload, label }) => {
+  const { formatValue } = useApp();
   if (active && payload && payload.length) {
     const title = label || payload[0].payload.name || payload[0].name;
     return (
@@ -44,7 +45,7 @@ const CustomTooltip = ({ active, payload, label }) => {
           📂 {title}
         </div>
         {payload.map((p, idx) => {
-          const val = typeof p.value === "number" ? `$${p.value.toLocaleString()}` : p.value;
+          const val = typeof p.value === "number" ? formatValue(p.value) : p.value;
           return (
             <div key={idx} style={{ fontSize: "11.5px", color: p.color || "var(--color-ink-dark)", display: "flex", justifyContent: "space-between", gap: "10px" }} className="typewriter-num">
               <span>{p.name}:</span>
@@ -59,7 +60,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function ReportsFolder({ transactions = [], goals = [] }) {
-  const { activeYear } = useApp();
+  const { activeYear, formatValue } = useApp();
 
   // ─── CATEGORY TREND STATE ────────────────────────────────────────────────
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -356,7 +357,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
                 <span style={{ fontSize: "9px", fontFamily: "var(--font-accent)", fontWeight: "bold", opacity: 0.5 }}>OUTFLOW</span>
                 <br />
                 <strong className="typewriter-num" style={{ fontSize: "13px", color: "var(--color-stamp-red)", fontWeight: "bold" }}>
-                  ${totalExpenseOutflow.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  {formatValue(totalExpenseOutflow)}
                 </strong>
               </div>
             </div>
@@ -455,7 +456,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
               <div className={styles.categoryTrendAnnualTotal}>
                 <span>Annual Total:</span>
                 <strong className="typewriter-num">
-                  ${categoryAnnualTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatValue(categoryAnnualTotal)}
                 </strong>
               </div>
             )}
@@ -531,19 +532,19 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
                     <tr key={idx}>
                       <td style={{ fontWeight: "bold", fontFamily: "var(--font-sans)", color: "var(--color-ink-dark)" }}>{m.month}</td>
                       <td className="number-cell typewriter-num" style={{ color: m.income > 0 ? "#059669" : "rgba(32,30,28,0.25)", fontFamily: "var(--font-ledger)" }}>
-                        {m.income > 0 ? `$${m.income.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "$0.00"}
+                        {formatValue(m.income)}
                       </td>
                       <td className="number-cell typewriter-num" style={{ color: m.expenses > 0 ? "var(--color-ink-dark)" : "rgba(32,30,28,0.25)", fontFamily: "var(--font-ledger)" }}>
-                        {m.expenses > 0 ? `$${m.expenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "$0.00"}
+                        {formatValue(m.expenses)}
                       </td>
                       <td className="number-cell typewriter-num" style={{ color: m.bills > 0 ? "var(--color-ink-dark)" : "rgba(32,30,28,0.25)", fontFamily: "var(--font-ledger)" }}>
-                        {m.bills > 0 ? `$${m.bills.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "$0.00"}
+                        {formatValue(m.bills)}
                       </td>
                       <td className="number-cell typewriter-num" style={{ color: m.debts > 0 ? "var(--color-ink-dark)" : "rgba(32,30,28,0.25)", fontFamily: "var(--font-ledger)" }}>
-                        {m.debts > 0 ? `$${m.debts.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "$0.00"}
+                        {formatValue(m.debts)}
                       </td>
                       <td className="number-cell typewriter-num" style={{ color: m.savings > 0 ? "#b45309" : "rgba(32,30,28,0.25)", fontFamily: "var(--font-ledger)" }}>
-                        {m.savings > 0 ? `$${m.savings.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "$0.00"}
+                        {formatValue(m.savings)}
                       </td>
                       <td className="number-cell typewriter-num" style={{ 
                         fontWeight: "bold", 
@@ -551,7 +552,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
                         borderLeft: "1.5px solid var(--color-ink-dark)",
                         color: netDiff >= 0 ? "var(--color-ink-blue)" : "var(--color-stamp-red)"
                       }}>
-                        {netDiff >= 0 ? "+" : ""}${netDiff.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {netDiff >= 0 ? "+" : ""}{formatValue(netDiff)}
                       </td>
                     </tr>
                   );
@@ -561,19 +562,19 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
                 <tr className="total-row" style={{ borderTop: "2px solid var(--color-ink-dark)", backgroundColor: "rgba(32,30,28,0.02)" }}>
                   <td style={{ fontWeight: "bold", textTransform: "uppercase" }}>General Totals</td>
                   <td className="number-cell typewriter-num" style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold", color: "#059669" }}>
-                    ${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatValue(totalIncome)}
                   </td>
                   <td className="number-cell typewriter-num" style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold", color: "var(--color-ink-dark)" }}>
-                    ${totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatValue(totalExpenses)}
                   </td>
                   <td className="number-cell typewriter-num" style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold", color: "var(--color-ink-dark)" }}>
-                    ${totalBills.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatValue(totalBills)}
                   </td>
                   <td className="number-cell typewriter-num" style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold", color: "var(--color-ink-dark)" }}>
-                    ${totalDebts.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatValue(totalDebts)}
                   </td>
                   <td className="number-cell typewriter-num" style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold", color: "#b45309" }}>
-                    ${totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatValue(totalSavings)}
                   </td>
                   <td className="number-cell typewriter-num" style={{ 
                     fontWeight: "bold", 
@@ -581,7 +582,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
                     borderLeft: "1.5px solid var(--color-ink-dark)",
                     color: totalRemaining >= 0 ? "var(--color-ink-blue)" : "var(--color-stamp-red)"
                   }}>
-                    {totalRemaining >= 0 ? "+" : ""}${totalRemaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {totalRemaining >= 0 ? "+" : ""}{formatValue(totalRemaining)}
                   </td>
                 </tr>
               </tbody>

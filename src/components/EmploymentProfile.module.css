@@ -1,0 +1,397 @@
+/* EmploymentProfile.module.css - W-4 Tax Form Timesheet Styles */
+
+.w4Sheet {
+  background-color: #f7efe6; /* Light W-4 paper beige */
+  background-image: linear-gradient(rgba(32, 30, 28, 0.05) 1px, transparent 1px);
+  background-size: 100% 24px; /* ruled writing lines */
+  border: 3px double var(--color-ink-dark);
+  border-radius: 4px;
+  padding: 35px 25px;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), inset 0 0 40px rgba(0,0,0,0.03);
+  font-family: var(--font-typewriter), Courier, monospace;
+  color: var(--color-ink-dark);
+  margin-top: 10px;
+}
+
+/* Perforated tear strip at the top */
+.tearEdge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background-image: radial-gradient(circle, transparent 3px, #f7efe6 3.5px);
+  background-size: 12px 12px;
+  background-position: top center;
+  border-bottom: 1.5px dashed rgba(32,30,28,0.25);
+  opacity: 0.85;
+}
+
+.headerBlock {
+  display: grid;
+  grid-template-columns: 200px 1fr 150px;
+  border-bottom: 4px solid var(--color-ink-dark);
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.formCode {
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.deptNotice {
+  font-size: 8px;
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+.headerCenter {
+  text-align: center;
+  padding: 0 10px;
+}
+
+.formTitle {
+  font-family: var(--font-accent);
+  font-size: 18px;
+  text-transform: uppercase;
+  margin: 0 0 5px 0;
+  letter-spacing: 0.5px;
+  font-weight: bold;
+}
+
+.formSubtitle {
+  font-size: 10px;
+  line-height: 1.3;
+  opacity: 0.8;
+}
+
+.headerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.fiscalYear {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: var(--font-accent);
+  border: 2px solid var(--color-ink-dark);
+  padding: 0px 8px;
+  border-radius: 4px;
+  line-height: 1.1;
+  background-color: var(--color-paper-light);
+}
+
+.confidentialStamp {
+  font-size: 8px;
+  font-weight: bold;
+  color: var(--color-stamp-red);
+  border: 1px dashed var(--color-stamp-red);
+  padding: 2px 4px;
+  transform: rotate(4deg);
+  display: inline-block;
+  letter-spacing: 1px;
+}
+
+.w4FormBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid var(--color-ink-dark);
+}
+
+.sectionHeader {
+  display: flex;
+  background-color: var(--color-ink-dark);
+  color: var(--color-paper-light);
+  font-weight: bold;
+  font-size: 11px;
+  padding: 6px 12px;
+  gap: 15px;
+  letter-spacing: 0.5px;
+}
+
+.stepNum {
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.stepTitle {
+  text-transform: uppercase;
+}
+
+.sectionFields {
+  padding: 15px 10px;
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.fieldGuide {
+  font-size: 11px;
+  line-height: 1.6;
+  opacity: 0.85;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+/* Tactile Radio Options */
+.tactileRadio {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.tactileRadio input {
+  position: absolute;
+  opacity: 0;
+  height: 0;
+  width: 0;
+}
+
+.radioBox {
+  width: 20px;
+  height: 20px;
+  background-color: #ebdcb9;
+  border: 2px solid var(--color-ink-dark);
+  border-radius: 4px;
+  margin-right: 8px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.12s ease;
+}
+
+.tactileRadio:hover .radioBox {
+  background-color: #dfd0ab;
+}
+
+/* Handdrawn checkmark in radio box if selected */
+.radioBox::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--color-ink-blue);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(43deg);
+}
+
+.tactileRadio input:checked ~ .radioBox::after {
+  display: block;
+}
+
+.radioLabel {
+  font-weight: bold;
+}
+
+/* Recessed input box with dollar signs */
+.ledgerFieldBox {
+  display: flex;
+  align-items: center;
+  background-color: #ebdcb9;
+  border: 2.5px solid var(--color-ink-dark);
+  border-radius: 4px;
+  padding: 4px 10px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.dollarSymbol {
+  font-size: 16px;
+  font-weight: bold;
+  opacity: 0.8;
+  margin-right: 6px;
+}
+
+.ledgerInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-ledger), Courier, monospace;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+  width: 100%;
+  text-align: right;
+}
+
+.ledgerInput::placeholder {
+  opacity: 0.3;
+}
+
+.ledgerInput:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.unitLabel {
+  font-size: 11px;
+  font-weight: bold;
+  opacity: 0.7;
+  margin-left: 8px;
+}
+
+.hourlyNote {
+  font-size: 9.5px;
+}
+
+/* Submission and Stamps area */
+.signOffArea {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 15px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.signatureLine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.signatureGraphic {
+  font-family: "Northwell", "Reenie Beanie", "Alex Brush", cursive, "Courier New";
+  font-size: 20px;
+  color: var(--color-ink-blue);
+  line-height: 1;
+  text-align: center;
+  padding-bottom: 2px;
+  letter-spacing: 0.5px;
+}
+
+.sigLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  opacity: 0.65;
+  border-top: 1px solid var(--color-ink-dark);
+  padding-top: 4px;
+  width: 250px;
+  text-align: center;
+}
+
+/* Red Stamped Action button */
+.stampButton {
+  font-family: var(--font-accent);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: var(--color-stamp-green);
+  background-color: transparent;
+  border: 2.5px dashed var(--color-stamp-green);
+  border-radius: 4px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-transform: uppercase;
+}
+
+.stampButton:hover {
+  transform: rotate(-1.5deg) scale(1.03);
+  background-color: rgba(46, 117, 89, 0.05);
+}
+
+.stampButton:active {
+  transform: rotate(-1.5deg) scale(0.97);
+}
+
+/* Saved overlay badge stamp */
+.appliedStamp {
+  position: absolute;
+  top: -24px;
+  right: -10px;
+  font-family: var(--font-accent);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: var(--color-stamp-red);
+  border: 3px double var(--color-stamp-red);
+  padding: 4px 10px;
+  background-color: rgba(247, 239, 230, 0.95);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transform: rotate(-8deg);
+  animation: slamStamp 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: none;
+}
+
+@keyframes slamStamp {
+  0% {
+    transform: scale(2.2) rotate(-35deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+}
+
+/* Segmented toggle for custom shift formats */
+.segmentedControl {
+  display: flex;
+  background-color: #ebdcb9;
+  border: 2.5px solid var(--color-ink-dark);
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.segmentBtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 2px dashed var(--color-ink-dark);
+  padding: 8px 12px;
+  font-family: var(--font-typewriter), monospace;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+  cursor: pointer;
+  outline: none;
+  text-align: center;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.segmentBtn:last-child {
+  border-right: none;
+}
+
+.segmentBtn:hover:not(:disabled) {
+  background-color: #dfd0ab;
+}
+
+.segmentActive {
+  background-color: var(--color-ink-dark) !important;
+  color: var(--color-paper-light) !important;
+}
+
+.segmentBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import EmploymentProfile from "./EmploymentProfile";
 
 export default function SetupTab({ 
   categories, 
@@ -162,6 +163,13 @@ export default function SetupTab({
           style={{ minWidth: "150px" }}
         >
           Credit Portfolio
+        </button>
+        <button
+          className={`budget-month-tab ${setupSubTab === "employment" ? "active" : ""}`}
+          onClick={() => setSetupSubTab("employment")}
+          style={{ minWidth: "150px" }}
+        >
+          Employment Profile
         </button>
 
       </div>
@@ -562,7 +570,10 @@ export default function SetupTab({
           </div>
         )}
 
-
+        {/* SUB-TAB 3: Employment Profile */}
+        {setupSubTab === "employment" && (
+          <EmploymentProfile />
+        )}
 
       </div>
     </div>

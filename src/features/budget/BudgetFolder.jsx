@@ -36,7 +36,7 @@ export default function BudgetFolder({
   const [activeMonth, setActiveMonth] = useState(MONTHS[currentMonthIndex]);
   const [viewLimit, setViewLimit] = useState("10");
 
-  const { activeYear, setActiveYear, isReadOnly } = useApp();
+  const { activeYear, setActiveYear, isReadOnly, formatValue } = useApp();
 
   // Form states for new transaction voucher
   const [txDesc, setTxDesc] = useState("");
@@ -208,7 +208,7 @@ export default function BudgetFolder({
           <td>{tx.category}</td>
           <td style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.7 }}>{tx.type}</td>
           <td className="number-cell typewriter-num" style={{ color: tx.type === "Income" ? "var(--color-stamp-green)" : "inherit" }}>
-            {tx.type === "Income" ? "+" : "-"}${parseFloat(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {tx.type === "Income" ? "+" : "-"}{formatValue(tx.amount)}
           </td>
         </tr>
       );
@@ -297,21 +297,21 @@ export default function BudgetFolder({
           <div className="metric-stamp-card positive">
             <span className="metric-stamp-label">Total Monthly Income</span>
             <span className="metric-stamp-value typewriter-num">
-              ${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatValue(totalIncome)}
             </span>
           </div>
 
           <div className="metric-stamp-card negative">
             <span className="metric-stamp-label">Total Expenses & Bills</span>
             <span className="metric-stamp-value typewriter-num">
-              ${totalOutflows.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatValue(totalOutflows)}
             </span>
           </div>
 
           <div className={`metric-stamp-card ${remainingBalance >= 0 ? "positive" : "negative"}`}>
             <span className="metric-stamp-label">Remaining Safe Buffer</span>
             <span className="metric-stamp-value typewriter-num">
-              ${remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatValue(remainingBalance)}
             </span>
           </div>
         </div>
@@ -338,7 +338,7 @@ export default function BudgetFolder({
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11.5px" }}>
                     <span style={{ fontWeight: "bold" }}>{cat}</span>
                     <span className="typewriter-num" style={{ color: isOver ? "var(--color-stamp-red)" : "inherit" }}>
-                      ${actualSpent.toLocaleString()} / ${capLimit.toLocaleString()} ({percent}%)
+                      {formatValue(actualSpent)} / {formatValue(capLimit)} ({percent}%)
                     </span>
                   </div>
                   <div className="category-bar-bg" style={{ height: "8px" }}>
@@ -491,7 +491,7 @@ export default function BudgetFolder({
                   <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "10px", borderBottom: "1px dashed var(--color-paper-grid)", padding: "6px 0" }}>
                     <span style={{ textTransform: "uppercase", fontSize: "10px", opacity: 0.6, fontWeight: "bold" }}>Amount:</span>
                     <strong style={{ fontFamily: "var(--font-ledger)", color: selectedTx.type === "Income" ? "var(--color-stamp-green)" : "var(--color-stamp-red)", fontSize: "14px" }}>
-                      {selectedTx.type === "Income" ? "+" : "-"}${parseFloat(selectedTx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {selectedTx.type === "Income" ? "+" : "-"}{formatValue(selectedTx.amount)}
                     </strong>
                   </div>
                 </div>
