@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useApp } from "../../context/AppContext.jsx";
 
 /**
  * Dashboard Component — Actionable Command Center
@@ -19,11 +20,61 @@ export default function Dashboard({
   goals = [],
   upcomingPayments = [],
 }) {
+  const { activeYear } = useApp();
+
+  // Filter transactions by the globally selected activeYear
+  const yearFilteredTransactions = useMemo(() => {
+    return transactions.filter((tx) => {
+      if (!tx.date) return false;
+      return new Date(tx.date).getFullYear() === activeYear;
+    });
+  }, [transactions, activeYear]);
+
+  // Filter upcoming payments by the activeYear to align upcoming docket with select view
+  const yearFilteredUpcoming = useMemo(() => {
+    return upcomingPayments.filter((p) => {
+      if (!p.dueDate) return false;
+      return new Date(p.dueDate).getFullYear() === activeYear;
+    });
+  }, [upcomingPayments, activeYear]);
+
+  // =========================================================================
+  // FIREBASE FIRESTORE DATA HOOKUP EXAMPLE (WITH ACTIVE YEAR FILTERING)
+  // =========================================================================
+  /*
+  useEffect(() => {
+    if (!user) return;
+
+    // Define ISO-8601 date boundaries for the selected active year
+    const startOfYear = `${activeYear}-01-01T00:00:00.000Z`;
+    const endOfYear = `${activeYear}-12-31T23:59:59.999Z`;
+
+    const txCollectionRef = collection(db, "users", user.uid, "transactions");
+    const q = query(
+      txCollectionRef,
+      where("date", ">=", startOfYear),
+      where("date", "<=", endOfYear),
+      orderBy("date", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const yearTxList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      // setTransactions(yearTxList);
+    }, (err) => {
+      console.error("Firestore loading failed for active year: " + activeYear, err);
+    });
+
+    return () => unsubscribe();
+  }, [activeYear, user]);
+  */
 
   // ─── LEDGER ACCOUNT BALANCES ────────────────────────────────────────────────
   const checkingBalance = useMemo(() => {
     let balance = 0;
-    transactions.forEach((tx) => {
+    yearFilteredTransactions.forEach((tx) => {
       const amt = parseFloat(tx.amount || 0);
       if (tx.type === "Transfer") {
         if (tx.toAccount === "Checking") balance += amt;
@@ -37,11 +88,11 @@ export default function Dashboard({
       }
     });
     return balance;
-  }, [transactions]);
+  }, [yearFilteredTransactions]);
 
   const cashBalance = useMemo(() => {
     let balance = 0;
-    transactions.forEach((tx) => {
+    yearFilteredTransactions.forEach((tx) => {
       const amt = parseFloat(tx.amount || 0);
       if (tx.type === "Transfer") {
         if (tx.toAccount === "Physical Cash") balance += amt;
@@ -55,7 +106,7 @@ export default function Dashboard({
       }
     });
     return balance;
-  }, [transactions]);
+  }, [yearFilteredTransactions]);
 
   const currentBalance = checkingBalance;
 
@@ -64,10 +115,10 @@ export default function Dashboard({
   today.setHours(0, 0, 0, 0);
 
   const upcomingUnpaid = useMemo(() =>
-    upcomingPayments
+    yearFilteredUpcoming
       .filter(p => !p.paid && !p.isIncome && new Date(p.dueDate) >= today)
       .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
-    [upcomingPayments]
+    [yearFilteredUpcoming]
   );
 
   const next5Bills = upcomingUnpaid.slice(0, 5);
@@ -78,10 +129,10 @@ export default function Dashboard({
 
   // ─── RECENT ACTIVITY ──────────────────────────────────────────────────────
   const recent5 = useMemo(() =>
-    [...transactions]
+    [...yearFilteredTransactions]
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 5),
-    [transactions]
+    [yearFilteredTransactions]
   );
 
   // ─── HELPERS ──────────────────────────────────────────────────────────────

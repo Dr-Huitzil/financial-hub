@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./BudgetFolder.module.css";
+import { useApp } from "../../context/AppContext.jsx";
 
 /**
  * BudgetFolder component representing the "Inner Manila Folder" of the budget sheet.
@@ -35,6 +36,21 @@ export default function BudgetFolder({
   const [activeMonth, setActiveMonth] = useState(MONTHS[currentMonthIndex]);
   const [viewLimit, setViewLimit] = useState("10");
 
+  const currentYear = new Date().getFullYear();
+
+  // Dynamically extract unique years from transactions list, ensuring current year is always available
+  const uniqueYears = Array.from(new Set(
+    transactions
+      .map(tx => tx.date ? new Date(tx.date).getFullYear() : null)
+      .filter(Boolean)
+  ));
+  if (!uniqueYears.includes(currentYear)) {
+    uniqueYears.push(currentYear);
+  }
+  uniqueYears.sort((a, b) => b - a);
+
+  const { activeYear, setActiveYear, isReadOnly } = useApp();
+
   // Form states for new transaction voucher
   const [txDesc, setTxDesc] = useState("");
   const [txAmount, setTxAmount] = useState("");
@@ -63,6 +79,7 @@ export default function BudgetFolder({
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
+    if (isReadOnly) return;
     if (!editDesc.trim() || !editAmount || !editCategory) return;
 
     const updatedTx = {
@@ -101,13 +118,12 @@ export default function BudgetFolder({
     
     // Translate the activeMonth name (e.g. "Jan") to numerical index
     const monthIndex = MONTHS.indexOf(activeMonth);
-    const currentYear = new Date().getFullYear();
     
-    // Set up range boundary boundaries for transactions
-    const startOfMonth = new Date(currentYear, monthIndex, 1).toISOString();
-    const endOfMonth = new Date(currentYear, monthIndex + 1, 0, 23, 59, 59).toISOString();
+    // Set up range boundary boundaries for transactions under activeYear
+    const startOfMonth = new Date(activeYear, monthIndex, 1).toISOString();
+    const endOfMonth = new Date(activeYear, monthIndex + 1, 0, 23, 59, 59).toISOString();
 
-    // Query dynamically from Firestore
+    // Query dynamically from Firestore filtering by date boundaries in activeYear
     const txCollectionRef = collection(db, "users", user.uid, "transactions");
     const q = query(
       txCollectionRef,
@@ -124,21 +140,21 @@ export default function BudgetFolder({
       // Hook this list back up to your parent state setter:
       // setTransactions(monthTxList);
     }, (err) => {
-      console.error("Firestore dynamic load failed for month: " + activeMonth, err);
+      console.error("Firestore dynamic load failed for month: " + activeMonth + " in " + activeYear, err);
     });
 
     return () => unsubscribe();
-  }, [activeMonth, user]);
+  }, [activeMonth, activeYear, user]);
   */
 
-  // Filter transactions for active month
+  // Filter transactions for active month and selected active year
   const activeMonthIndex = MONTHS.indexOf(activeMonth);
   const activeMonthName = FULL_MONTH_NAMES[activeMonthIndex];
   
   const monthlyTx = transactions.filter(tx => {
     if (!tx.date) return false;
     const txDateObj = new Date(tx.date);
-    return txDateObj.getMonth() === activeMonthIndex;
+    return txDateObj.getMonth() === activeMonthIndex && txDateObj.getFullYear() === activeYear;
   }).sort((a, b) => new Date(a.date) - new Date(b.date)); // sort ascending by date
 
   /**
@@ -160,7 +176,7 @@ export default function BudgetFolder({
       return (
         <tr>
           <td colSpan="4" style={{ textAlign: "center", fontStyle: "italic", padding: "30px", color: "rgba(32,30,28,0.5)" }}>
-            No ledger records filed under {activeMonthName} 2026.
+            No ledger records filed under {activeMonthName} {activeYear}.
           </td>
         </tr>
       );
@@ -274,9 +290,34 @@ export default function BudgetFolder({
             <h2 style={{ fontFamily: "var(--font-accent)", textTransform: "uppercase", fontSize: "16px", letterSpacing: "1.5px", margin: 0 }}>
               Monthly Ledger Ledger Sheet
             </h2>
-            <span style={{ fontSize: "12px", fontFamily: "var(--font-typewriter)", color: "rgba(32,30,28,0.6)" }}>
-              FILING LEDGER PERIOD: {activeMonthName.toUpperCase()} 2026
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+              <span style={{ fontSize: "12px", fontFamily: "var(--font-typewriter)", color: "rgba(32,30,28,0.6)" }}>
+                FILING LEDGER PERIOD:
+              </span>
+              <span style={{ fontSize: "12px", fontFamily: "var(--font-typewriter)", color: "rgba(32,30,28,0.6)", fontWeight: "bold" }}>
+                {activeMonthName.toUpperCase()}
+              </span>
+              <select
+                value={activeYear}
+                onChange={(e) => setActiveYear(parseInt(e.target.value))}
+                className="paper-select-recessed"
+                style={{
+                  padding: "2px 20px 2px 6px",
+                  fontSize: "11.5px",
+                  height: "22px",
+                  fontFamily: "var(--font-typewriter)",
+                  fontWeight: "bold",
+                  lineHeight: "1",
+                  borderWidth: "1.5px",
+                  marginLeft: "4px",
+                  cursor: "pointer"
+                }}
+              >
+                {uniqueYears.map(yr => (
+                  <option key={yr} value={yr}>{yr}</option>
+                ))}
+              </select>
+            </div>
           </div>
           
           <div className="stamp stamp-blue" style={{ transform: "rotate(-2deg)", fontSize: "10px" }}>
@@ -451,10 +492,10 @@ export default function BudgetFolder({
               paddingBottom: "8px",
               marginBottom: "18px"
             }}>
-              {isEditing ? "Modify Voucher Details" : "Voucher Detail Audit"}
+              {(isEditing && !isReadOnly) ? "Modify Voucher Details" : "Voucher Detail Audit"}
             </div>
 
-            {!isEditing ? (
+            {(!isEditing || isReadOnly) ? (
               // READ-ONLY DETAIL VIEW
               <>
                 <div style={{
@@ -488,49 +529,71 @@ export default function BudgetFolder({
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
-                  <button
-                    onClick={() => {
-                      if (onDeleteTransaction) {
-                        onDeleteTransaction(selectedTx.id);
-                      }
-                      setSelectedTx(null);
-                    }}
-                    style={{
-                      padding: "10px",
-                      fontFamily: "var(--font-accent)",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                      letterSpacing: "1px",
-                      textTransform: "uppercase",
-                      color: "var(--color-stamp-red)",
-                      backgroundColor: "transparent",
-                      border: "2px dashed var(--color-stamp-red)",
-                      borderRadius: "4px",
-                      cursor: "pointer"
+                {!isReadOnly ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
+                    <button
+                      onClick={() => {
+                        if (onDeleteTransaction) {
+                          onDeleteTransaction(selectedTx.id);
+                        }
+                        setSelectedTx(null);
+                      }}
+                      style={{
+                        padding: "10px",
+                        fontFamily: "var(--font-accent)",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                        color: "var(--color-stamp-red)",
+                        backgroundColor: "transparent",
+                        border: "2px dashed var(--color-stamp-red)",
+                        borderRadius: "4px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      VOID VOUCHER
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      style={{
+                        padding: "10px",
+                        fontFamily: "var(--font-accent)",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        letterSpacing: "1px",
+                        textTransform: "uppercase",
+                        color: "var(--color-ink-blue)",
+                        backgroundColor: "transparent",
+                        border: "2px dashed var(--color-ink-blue)",
+                        borderRadius: "4px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      EDIT DETAILS
+                    </button>
+                  </div>
+                ) : (
+                  <div 
+                    className="stamp stamp-red" 
+                    style={{ 
+                      position: "relative", 
+                      display: "block", 
+                      textAlign: "center", 
+                      margin: "5px auto 15px auto", 
+                      fontSize: "10px", 
+                      fontWeight: "900", 
+                      letterSpacing: "1.5px", 
+                      transform: "rotate(-2.5deg)", 
+                      width: "fit-content",
+                      padding: "5px 10px",
+                      borderWidth: "2px",
+                      backgroundColor: "rgba(158, 42, 43, 0.05)"
                     }}
                   >
-                    VOID VOUCHER
-                  </button>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    style={{
-                      padding: "10px",
-                      fontFamily: "var(--font-accent)",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                      letterSpacing: "1px",
-                      textTransform: "uppercase",
-                      color: "var(--color-ink-blue)",
-                      backgroundColor: "transparent",
-                      border: "2px dashed var(--color-ink-blue)",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    EDIT DETAILS
-                  </button>
-                </div>
+                    [ ARCHIVED / SAFETY LOCK ]
+                  </div>
+                )}
                 <button
                   onClick={() => setSelectedTx(null)}
                   style={{

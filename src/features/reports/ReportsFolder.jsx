@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import styles from "./ReportsFolder.module.css";
 import { aggregateFinancialData } from "../../data/financialDataSync";
+import { useApp } from "../../context/AppContext.jsx";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -58,21 +59,31 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function ReportsFolder({ transactions = [], goals = [] }) {
+  const { activeYear } = useApp();
+
   // ─── CATEGORY TREND STATE ────────────────────────────────────────────────
   const [selectedCategory, setSelectedCategory] = useState("");
 
+  // Filter transactions by the globally activeYear
+  const yearFilteredTransactions = useMemo(() => {
+    return transactions.filter(tx => {
+      if (!tx.date) return false;
+      return new Date(tx.date).getFullYear() === activeYear;
+    });
+  }, [transactions, activeYear]);
+
   // Aggregate data using system layer
-  const aggregates = aggregateFinancialData(transactions, goals);
+  const aggregates = aggregateFinancialData(yearFilteredTransactions, goals);
   const { monthlyBudgets, categoryBreakdown } = aggregates;
 
   // ─── UNIQUE CATEGORIES derived from live transactions for the selector ───
   const availableCategories = useMemo(() => {
     const cats = new Set();
-    transactions.forEach(tx => {
+    yearFilteredTransactions.forEach(tx => {
       if (tx.category) cats.add(tx.category);
     });
     return Array.from(cats).sort();
-  }, [transactions]);
+  }, [yearFilteredTransactions]);
 
   // ─── CATEGORY TREND BAR DATA (12 months for selected category) ──────────
   const categoryTrendData = useMemo(() => {
@@ -80,7 +91,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
 
     // Bucket spending by month index
     const monthTotals = new Array(12).fill(0);
-    transactions.forEach(tx => {
+    yearFilteredTransactions.forEach(tx => {
       if (tx.category !== selectedCategory) return;
       if (tx.type === "Income") return; // only track outflows for trend
       if (!tx.date) return;
@@ -92,7 +103,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
       month: m,
       amount: Math.round(monthTotals[idx] * 100) / 100,
     }));
-  }, [transactions, selectedCategory]);
+  }, [yearFilteredTransactions, selectedCategory]);
 
   const categoryAnnualTotal = categoryTrendData.reduce((sum, d) => sum + d.amount, 0);
 
@@ -105,9 +116,8 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
   // useEffect(() => {
   //   if (!user || !selectedCategory) return;
   //
-  //   const currentYear = new Date().getFullYear();
-  //   const startOfYear = new Date(currentYear, 0, 1).toISOString();
-  //   const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
+  //   const startOfYear = `${activeYear}-01-01T00:00:00.000Z`;
+  //   const endOfYear = `${activeYear}-12-31T23:59:59.999Z`;
   //
   //   const txRef = collection(db, "users", user.uid, "transactions");
   //   const q = query(
@@ -135,7 +145,7 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
   //   });
   //
   //   return () => unsubscribe();
-  // }, [selectedCategory, user]);
+  // }, [selectedCategory, activeYear, user]);
   */
 
   // 1. DATA FORMATTING FOR ANNUAL TRENDS (BAR CHART)
@@ -178,13 +188,13 @@ export default function ReportsFolder({ transactions = [], goals = [] }) {
   // 3. HEARTBEAT — Daily running balance from all transactions, sorted chronologically
   // Each point is one calendar day that has at least one transaction event
   const heartbeatData = (() => {
-    if (transactions.length === 0) return [];
+    if (yearFilteredTransactions.length === 0) return [];
 
     // Start balance is the net before the first transaction
     let runningBalance = 0;
 
     // Sort all transactions by date ascending
-    const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted = [...yearFilteredTransactions].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // Build a map: date-string → net delta that day
     const dayMap = {};

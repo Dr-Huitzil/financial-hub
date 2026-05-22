@@ -1,0 +1,191 @@
+/* SettingsModal.module.css - Skeuomorphic Settings Card Modal */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(32, 30, 28, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* Center card - Aged punch card or cardboard folder sheet */
+.settingsCard {
+  width: 390px;
+  background-color: var(--color-paper-light);
+  background-image: radial-gradient(var(--color-paper-grid) 1px, transparent 1px);
+  background-size: 16px 16px;
+  border: 3.5px solid var(--color-ink-dark);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  padding: 30px;
+  position: relative;
+  transform: rotate(0.8deg);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Skeuomorphic Ring Punch Holes at the top */
+.punchHoles {
+  display: flex;
+  justify-content: space-around;
+  width: 60%;
+  margin: -15px auto 18px auto;
+  pointer-events: none;
+}
+
+.punchHole {
+  width: 14px;
+  height: 14px;
+  background-color: #1e1b18; /* table backing shadow */
+  border-radius: 50%;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.cardHeader {
+  font-family: var(--font-accent);
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-bottom: 2.5px solid var(--color-ink-dark);
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Setting line rows */
+.settingRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 15px 0 25px 0;
+  user-select: none;
+}
+
+/* Tactile Ink-Drawn Checkbox Container */
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  font-family: var(--font-typewriter), monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--color-ink-dark);
+}
+
+/* Hide native checkbox completely */
+.checkboxContainer input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Hand-drawn checkbox frame */
+.checkmarkBox {
+  width: 22px;
+  height: 22px;
+  background-color: #ebdcb9; /* Recession manila paper background */
+  border: 2px solid var(--color-ink-dark);
+  border-radius: 3px;
+  box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.15);
+  margin-right: 12px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.12s ease;
+}
+
+.checkboxContainer:hover .checkmarkBox {
+  background-color: #dfd0ab;
+}
+
+/* Drawing two lines representing a physical felt-tip ink pen "X" mark */
+.checkmarkBox::before,
+.checkmarkBox::after {
+  content: "";
+  position: absolute;
+  background-color: var(--color-ink-blue); /* Royal Blue Ink */
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+/* First line of the X */
+.checkmarkBox::before {
+  top: 3px;
+  left: 9px;
+  width: 2.5px;
+  height: 14px;
+  transform: rotate(43deg);
+  box-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.1);
+}
+
+/* Second line of the X */
+.checkmarkBox::after {
+  top: 3px;
+  left: 9px;
+  width: 2.5px;
+  height: 14px;
+  transform: rotate(-45deg);
+  box-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.1);
+}
+
+/* Toggle visibility when check is active */
+.checkboxContainer input:checked ~ .checkmarkBox::before,
+.checkboxContainer input:checked ~ .checkmarkBox::after {
+  opacity: 1;
+}
+
+.settingDesc {
+  font-size: 10px;
+  font-family: var(--font-sans);
+  color: rgba(32, 30, 28, 0.6);
+  margin-top: 4px;
+  font-weight: normal;
+  display: block;
+}
+
+/* Perforation perforated spacer strip */
+.divider {
+  border-top: 1.5px dashed var(--color-paper-grid);
+  margin: 10px 0 20px 0;
+  height: 0;
+}
+
+/* Comptroller apply changes buttons */
+.applyBtn {
+  width: 100%;
+  padding: 10px;
+  font-family: var(--font-accent);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-paper-light);
+  background-color: var(--color-ink-dark);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  text-align: center;
+}
+
+.applyBtn:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.applyBtn:active {
+  transform: translateY(0.5px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}

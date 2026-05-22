@@ -1,0 +1,206 @@
+/* UserProfile.module.css - Skeuomorphic Pinned ID Badge & Dropdown */
+
+.profileContainer {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-typewriter), monospace;
+  z-index: 500;
+}
+
+/* Tactile ID Badge Pinned Card */
+.badgeCard {
+  width: 175px;
+  height: 65px;
+  background-color: #f7ecd3;
+  background-image: radial-gradient(rgba(32, 30, 28, 0.04) 1px, transparent 1px);
+  background-size: 8px 8px;
+  border: 2px solid var(--color-ink-dark);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  padding: 6px 10px 6px 14px;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transform: rotate(0.5deg);
+}
+
+.badgeCard:hover {
+  transform: scale(1.03) rotate(-0.5deg);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+.badgeCard:active {
+  transform: scale(0.98);
+}
+
+/* Metal safety pin/clip pinned at the top-center */
+.metalPin {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-12deg);
+  width: 28px;
+  height: 7px;
+  background: linear-gradient(to bottom, #d1d5db 0%, #9ca3af 40%, #4b5563 80%, #1f2937 100%);
+  border: 1px solid #374151;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+}
+
+/* Pin hole indentation beneath pin */
+.pinHole {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  background-color: #1e1b18;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8);
+  z-index: 5;
+}
+
+/* Stenciled Typewriter details inside badge */
+.badgeHeader {
+  font-size: 8px;
+  color: rgba(32, 30, 28, 0.5);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.badgeName {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--color-ink-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 1px rgba(32, 30, 28, 0.1);
+}
+
+.badgeSub {
+  font-size: 8.5px;
+  color: var(--color-stamp-red);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 1px;
+  opacity: 0.85;
+}
+
+/* Tactile barcode stripe on the left edge */
+.badgeBarcode {
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  bottom: 6px;
+  width: 6px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-ink-dark),
+    var(--color-ink-dark) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity: 0.4;
+}
+
+/* Lined Index Card Dropdown Menu */
+.dropdownMenu {
+  position: absolute;
+  top: 76px;
+  right: 0;
+  width: 180px;
+  background-color: var(--color-paper-light);
+  /* Lined blue rows background */
+  background-image: 
+    linear-gradient(rgba(37, 99, 235, 0.12) 1px, transparent 1px);
+  background-size: 100% 28px;
+  border: 2px solid var(--color-ink-dark);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25), 0 5px 15px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  transform: rotate(-1deg);
+  transform-origin: top right;
+  animation: dropdownReveal 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 1000;
+}
+
+/* Red vertical margin line on lined index card */
+.dropdownMenu::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: rgba(220, 38, 38, 0.25);
+  pointer-events: none;
+}
+
+@keyframes dropdownReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px) rotate(1deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotate(-1deg);
+  }
+}
+
+/* Menu Dropdown Lined Options */
+.menuItem {
+  height: 28px;
+  padding: 0 10px 0 30px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-typewriter), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  color: var(--color-ink-dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: all 0.12s ease;
+  width: 100%;
+}
+
+/* Yellow marker highlighter effect on hover */
+.menuItem:hover {
+  background-color: rgba(254, 240, 138, 0.85); /* Heavy marker highlighter */
+  color: #1a1505;
+  padding-left: 33px;
+  font-weight: 900;
+}
+
+.menuItem:active {
+  background-color: rgba(254, 240, 138, 0.95);
+}
+
+.menuItemIcon {
+  margin-right: 8px;
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+/* Separation perforation */
+.menuPerforation {
+  height: 1px;
+  border-top: 1px dashed rgba(32, 30, 28, 0.15);
+  margin: 4px 0;
+  pointer-events: none;
+}

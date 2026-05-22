@@ -16,6 +16,9 @@ import MainLayout from "./components/layout/MainLayout";
 import Dashboard from "./features/dashboard/Dashboard";
 import BudgetFolder from "./features/budget/BudgetFolder";
 import TransactionModal from "./components/TransactionModal";
+import UserProfile from "./components/UserProfile";
+import SettingsModal from "./components/SettingsModal";
+import { useApp } from "./context/AppContext.jsx";
 
 import { initialUpcomingPayments, savingsGoals as initialGoals } from "./data/financialData";
 import { generateDemoTransactions } from "./data/demoDataGenerator";
@@ -55,10 +58,12 @@ const DEFAULT_BUDGET_LIMITS = {
 };
 
 export default function App() {
+  const { isReadOnly } = useApp();
   const [user, setUser] = useState(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [plannerSubTab, setPlannerSubTab] = useState("goals");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // General ledger states
   const [transactions, setTransactions] = useState([]);
@@ -442,7 +447,7 @@ export default function App() {
   }
 
   return (
-    <MainLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+    <MainLayout activeTab={activeTab} setActiveTab={setActiveTab} transactions={transactions}>
       {/* Binder Header */}
       <div className="folder-header">
         <div className="folder-title-block">
@@ -453,48 +458,12 @@ export default function App() {
         </div>
 
         <div className="folder-badge-strip">
-          {/* Live Mode Indicator or Logout Stamp */}
-          <button
-            onClick={handleLogout}
-            className="stamp stamp-red"
-            style={{
-              fontSize: "10px",
-              cursor: "pointer",
-              border: "2px solid var(--color-stamp-red)",
-              backgroundColor: "rgba(158, 42, 43, 0.08)",
-              transform: "rotate(-3deg)",
-              fontFamily: "var(--font-typewriter)",
-              letterSpacing: "1.5px"
-            }}
-            title="Secure Lock & Exit Account"
-          >
-            [ Audit Lock-Out ]
-          </button>
-
-          {/* Profile badge */}
-          <div 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '12px', 
-              border: '1.5px solid var(--color-paper-grid)', 
-              borderRadius: '6px', 
-              padding: '6px 12px', 
-              backgroundColor: 'rgba(235, 220, 185, 0.15)' 
-            }}
-          >
-            <svg width="32" height="32" viewBox="0 0 32 32" style={{ borderRadius: '50%', backgroundColor: 'var(--color-manila-dark)', border: '1px solid var(--color-ink-dark)' }}>
-              <path d="M16,14 C18.7614237,14 21,11.7614237 21,9 C21,6.23857625 18.7614237,4 16,4 C13.2385763,4 11,6.23857625 11,9 C11,11.7614237 13.2385763,14 16,14 Z M16,16 C10.4771525,16 6,20.4771525 6,26 L26,26 C26,20.4771525 21.5228475,16 16,16 Z" fill="var(--color-ink-dark)" />
-            </svg>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '11px', fontWeight: 'bold', fontFamily: 'var(--font-accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {isDemoMode ? "Guest Comptroller" : user.email.split("@")[0].toUpperCase()}
-              </span>
-              <span style={{ fontSize: '9px', fontFamily: 'var(--font-ledger)', color: 'rgba(32,30,28,0.6)' }}>
-                Ledger Comptroller
-              </span>
-            </div>
-          </div>
+          <UserProfile
+            user={user}
+            isDemoMode={isDemoMode}
+            onSettingsClick={() => setIsSettingsOpen(true)}
+            onLogout={handleLogout}
+          />
         </div>
       </div>
 
@@ -522,9 +491,17 @@ export default function App() {
       </div>
 
       {/* Floating Transaction Modal trigger FAB */}
-      <TransactionModal 
-        categories={categories}
-        onAddTransaction={handleAddTransaction}
+      {!isReadOnly && (
+        <TransactionModal 
+          categories={categories}
+          onAddTransaction={handleAddTransaction}
+        />
+      )}
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
       />
     </MainLayout>
   );
