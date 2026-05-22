@@ -142,7 +142,7 @@ export default function BudgetFolder({
     if (!tx.date) return false;
     const txDateObj = new Date(tx.date);
     return txDateObj.getMonth() === activeMonthIndex && txDateObj.getFullYear() === activeYear;
-  }).sort((a, b) => new Date(a.date) - new Date(b.date)); // sort ascending by date
+  }).sort((a, b) => new Date(b.date) - new Date(a.date)); // sort descending by date (most recent first)
 
   /**
    * Returns the "week bucket" number for a given day-of-month:

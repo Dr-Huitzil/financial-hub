@@ -205,14 +205,14 @@ export default function SetupTab({
 
             <div style={{ display: "flex", gap: "15px", marginBottom: "15px", flexWrap: "wrap", alignItems: "center" }}>
               <div style={{ display: "flex", gap: "6px" }} className="sub-tabs-strip">
-                {["Expense", "Bill", "Debt"].map((type) => (
+                {["Expense", "Bill", "Debt", "Income"].map((type) => (
                   <button
                     key={type}
                     className={`sub-tab-btn ${limitSelectedType === type ? "active" : ""}`}
                     onClick={() => setLimitSelectedType(type)}
                     style={{ marginBottom: 0 }}
                   >
-                    {type}s
+                    {type === "Income" ? type : type + "s"}
                   </button>
                 ))}
               </div>
@@ -287,39 +287,34 @@ export default function SetupTab({
                               </div>
                             </div>
                           </td>
-                          <td style={{ verticalAlign: "top", paddingTop: "12px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontSize: "11px", opacity: 0.5 }}>$</span>
-                              <input
-                                type="number"
-                                value={currentLimit}
-                                onChange={(e) => handleUpdateLimit(cat, e.target.value)}
-                                placeholder="0"
-                                style={{
-                                  width: "100px",
-                                  padding: "4px 8px",
-                                  border: "1px dashed var(--color-paper-grid)",
-                                  borderRadius: "4px",
-                                  backgroundColor: "transparent",
-                                  fontFamily: "var(--font-ledger)",
-                                  fontWeight: "bold"
-                                }}
-                                onFocus={(e) => e.target.style.border = "1px solid var(--color-paper-grid)"}
-                                onBlur={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
-                              />
-                            </div>
+                           <td style={{ verticalAlign: "top", paddingTop: "12px" }}>
+                            {limitSelectedType === "Income" ? (
+                              <span style={{ fontSize: "11px", opacity: 0.5, fontStyle: "italic", fontFamily: "var(--font-sans)" }}>N/A (Income)</span>
+                            ) : (
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ fontSize: "11px", opacity: 0.5 }}>$</span>
+                                <input
+                                  type="number"
+                                  value={currentLimit}
+                                  onChange={(e) => handleUpdateLimit(cat, e.target.value)}
+                                  placeholder="0"
+                                  style={{
+                                    width: "100px",
+                                    padding: "4px 8px",
+                                    border: "1px dashed var(--color-paper-grid)",
+                                    borderRadius: "4px",
+                                    backgroundColor: "transparent",
+                                    fontFamily: "var(--font-ledger)",
+                                    fontWeight: "bold"
+                                  }}
+                                  onFocus={(e) => e.target.style.border = "1px solid var(--color-paper-grid)"}
+                                  onBlur={(e) => e.target.style.border = "1px dashed var(--color-paper-grid)"}
+                                />
+                              </div>
+                            )}
                           </td>
                           <td style={{ textAlign: "center", verticalAlign: "top", paddingTop: "12px" }}>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
-                              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "9px", cursor: "pointer" }}>
-                                <input 
-                                  type="checkbox" 
-                                  checked={isScheduled} 
-                                  onChange={() => handleToggleScheduled(cat, isScheduled, existingBill, currentLimit)}
-                                  style={{ cursor: "pointer", margin: 0 }}
-                                />
-                                {isScheduled ? "Unschedule" : "Schedule"}
-                              </label>
+                            {limitSelectedType === "Income" ? (
                               <button
                                 onClick={() => handleDeleteCategory(cat)}
                                 style={{
@@ -328,7 +323,7 @@ export default function SetupTab({
                                   color: "var(--color-stamp-red)",
                                   cursor: "pointer",
                                   fontFamily: "var(--font-typewriter)",
-                                  fontSize: "10px",
+                                  fontSize: "11px",
                                   fontWeight: "bold",
                                   textDecoration: "underline"
                                 }}
@@ -336,7 +331,35 @@ export default function SetupTab({
                               >
                                 Delete
                               </button>
-                            </div>
+                            ) : (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "9px", cursor: "pointer" }}>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={isScheduled} 
+                                    onChange={() => handleToggleScheduled(cat, isScheduled, existingBill, currentLimit)}
+                                    style={{ cursor: "pointer", margin: 0 }}
+                                  />
+                                  {isScheduled ? "Unschedule" : "Schedule"}
+                                </label>
+                                <button
+                                  onClick={() => handleDeleteCategory(cat)}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "var(--color-stamp-red)",
+                                    cursor: "pointer",
+                                    fontFamily: "var(--font-typewriter)",
+                                    fontSize: "10px",
+                                    fontWeight: "bold",
+                                    textDecoration: "underline"
+                                  }}
+                                  title="Delete Category"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );
