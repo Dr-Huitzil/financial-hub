@@ -484,7 +484,7 @@ export default function App() {
       {/* Binder Header */}
       <div className="folder-header">
         <div className="folder-title-block">
-          <h1 className="folder-title-main">IVAN'S FINANCIAL HUB</h1>
+          <h1 className="folder-title-main">COVE</h1>
           <p className="folder-subtitle">
             {isDemoMode ? "ANNUAL TREASURY GENERAL LEDGER — DEMO VISITOR" : `ANNUAL TREASURY GENERAL LEDGER — ID: ${user.email.toUpperCase()}`}
           </p>

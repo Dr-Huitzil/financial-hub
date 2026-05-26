@@ -368,13 +368,13 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
           <div className="tactile-card" style={{ backgroundColor: "#fefdfb", border: "1px dashed var(--color-paper-grid)", display: "flex", flexDirection: "column", minHeight: "330px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
               <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
-                Spending Allocation Breakdown
+                Spending Money Split
               </span>
               <span className="stamp stamp-red" style={{ fontSize: "7px", transform: "rotate(-1deg)" }}>SECTOR DIVIDE</span>
             </div>
 
             <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.7)", marginBottom: "15px" }}>
-              Categorized cumulative debit allocation breakdown. Mapped by ledger percentages.
+              Categorized cumulative debit money split. Mapped by ledger percentages.
             </p>
 
             <div style={{ position: "relative", width: "100%", height: "210px" }}>
@@ -424,19 +424,19 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
           <div className="tactile-card" style={{ gridColumn: "span 2", backgroundColor: "#fefdfb", border: "1px dashed var(--color-paper-grid)", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
               <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
-                Heartbeat — Daily Running Balance
+                Balance History — Daily Running Balance
               </span>
               <span className="stamp stamp-blue" style={{ fontSize: "7px", transform: "rotate(-1deg)" }}>LIVE PULSE</span>
             </div>
 
             <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.7)", marginBottom: "15px" }}>
-              Sharp linear area chart tracing the account balance day-by-day. Each payday spike and bill drop creates the characteristic heartbeat pulse.
+              Sharp linear area chart tracing the account balance day-by-day. Each payday spike and bill drop creates the characteristic balance history pulse.
             </p>
 
             <div style={{ width: "100%", height: "230px" }}>
               {heartbeatData.length < 2 ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontFamily: "var(--font-ledger)", fontSize: "12px", color: "rgba(32,30,28,0.4)", fontStyle: "italic" }}>
-                  Post transactions to generate the heartbeat chart.
+                  Post transactions to generate the balance history chart.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -486,7 +486,7 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
           {/* Card header with stamp */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
             <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
-              Annual Category Trend
+              Spending Over Time
             </span>
             <span className="stamp stamp-red" style={{ fontSize: "7px", transform: "rotate(-1.5deg)" }}>DRILLDOWN</span>
           </div>
@@ -558,7 +558,7 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
         <div className="tactile-card" style={{ width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
             <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
-              Annual Comptroller General Ledger Matrix
+              Yearly Overview General Ledger Matrix
             </span>
             <span className="barcode-text" style={{ fontSize: "8px" }}>ANNUAL-COM-992</span>
           </div>

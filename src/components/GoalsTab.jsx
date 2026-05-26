@@ -32,7 +32,7 @@ export default function GoalsTab({ goals, onAddGoal, onSliderChange }) {
       <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div className="card-title">
           <span>Active Savings Milestones</span>
-          <div className="stamp stamp-green" style={{ fontSize: '9px', transform: 'rotate(-2deg)' }}>Reconciled</div>
+          <div className="stamp stamp-green" style={{ fontSize: '9px', transform: 'rotate(-2deg)' }}>Matched Up</div>
         </div>
 
         <p style={{ fontSize: '12.5px', color: 'rgba(32,30,28,0.7)' }}>

@@ -383,7 +383,7 @@ export default function SavingsPlanner({ goals = [], onAddGoal, onDeleteGoal, on
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="card-title">
         <span>Active Savings Milestones</span>
-        <div className="stamp stamp-green" style={{ fontSize: '9px', transform: 'rotate(-2deg)' }}>Reconciled</div>
+        <div className="stamp stamp-green" style={{ fontSize: '9px', transform: 'rotate(-2deg)' }}>Matched Up</div>
       </div>
 
       <p style={{ fontSize: '12.5px', color: 'rgba(32,30,28,0.7)', marginTop: '-10px' }}>

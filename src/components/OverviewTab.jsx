@@ -187,7 +187,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
           </div>
           
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: '12.5px', color: 'rgba(32,30,28,0.7)', marginBottom: '16px' }}>
-            Tick off payments to reconcile your cash balance. Income receipts (e.g. Paychecks) are auto-calculated in green.
+            Tick off payments to match up your cash balance. Income receipts (e.g. Paychecks) are auto-calculated in green.
           </p>
   
           <div className="payment-checklist">
@@ -222,7 +222,7 @@ export default function OverviewTab({ upcomingPayments, onTogglePayment, cashFlo
   
           <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px dashed var(--color-paper-grid)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontFamily: 'var(--font-ledger)' }}>
             <div>Outstanding: <strong>${totalUpcomingToPay.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
-            <div>Reconciled: <strong>${totalUpcomingPaid.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
+            <div>Matched Up: <strong>${totalUpcomingPaid.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
           </div>
         </div>
 

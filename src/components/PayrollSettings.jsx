@@ -151,7 +151,7 @@ export default function PayrollSettings({ transactions = [] }) {
         </div>
         <div className={styles.headerRight}>
           <div className={styles.statusBox}>ACTIVE</div>
-          <span className={styles.stampNotice}>COMPTROLLER APPROVED</span>
+          <span className={styles.stampNotice}>YEARLY OVERVIEW APPROVED</span>
         </div>
       </div>
 

@@ -79,7 +79,7 @@ export default function UncategorizedReviewDesk({
     const finalCategory = catName || editCategory;
 
     if (!finalCategory) {
-      alert("Comptroller Error: Please select or enter a valid category.");
+      alert("Yearly Overview Error: Please select or enter a valid category.");
       return;
     }
 
@@ -243,7 +243,7 @@ export default function UncategorizedReviewDesk({
               AUDIT VERIFICATION PASSED
             </h2>
             <p style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "rgba(32,30,28,0.75)", lineHeight: "1.6", margin: "0 0 35px 0" }}>
-              The comptroller has audited the books and reports that there are <strong>zero (0)</strong> unclassified transaction vouchers remaining. All inputs are perfectly reconciled to their corresponding budget limits!
+              The Yearly Overview has audited the books and reports that there are <strong>zero (0)</strong> unclassified transaction vouchers remaining. All inputs are perfectly matched up to their corresponding budget limits!
             </p>
 
             <span
@@ -258,7 +258,7 @@ export default function UncategorizedReviewDesk({
                 boxShadow: "0 0 4px rgba(20,83,45,0.3)",
               }}
             >
-              FULLY RECONCILED ✓
+              FULLY MATCHED UP ✓
             </span>
 
             <button

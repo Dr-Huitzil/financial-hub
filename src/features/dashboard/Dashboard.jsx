@@ -250,7 +250,7 @@ export default function Dashboard({
                   letterSpacing: "0.5px",
                 }}
               >
-                * COMPTROL EXCEPTION: RECONCILIATION AUDIT REQUIRED *
+                * COMPTROL EXCEPTION: MATCHING IT UP AUDIT REQUIRED *
               </h3>
               <p
                 style={{
@@ -306,7 +306,7 @@ export default function Dashboard({
                 e.currentTarget.style.transform = "translateY(0px)";
               }}
             >
-              Open Reconciliation Desk
+              Open Matching It Up Desk
             </button>
           </div>
         </div>

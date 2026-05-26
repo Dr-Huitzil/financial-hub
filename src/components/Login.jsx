@@ -25,7 +25,7 @@ export default function Login({ onDemoMode }) {
       if (err.code === "auth/invalid-credential") {
         setError("AUTHENTICATION INVALID: ACCESS DENIED");
       } else if (err.code === "auth/email-already-in-use") {
-        setError("COMPTROLLER REGISTERED: CHOOSE NEW IDENTITY");
+        setError("YEARLY OVERVIEW REGISTERED: CHOOSE NEW IDENTITY");
       } else if (err.code === "auth/weak-password") {
         setError("PASSCODE WEAK: MINIMUM 6 CHARACTERS REQUIRED");
       } else {
@@ -93,7 +93,7 @@ export default function Login({ onDemoMode }) {
             TREASURY LEDGER SIGN-IN
           </h2>
           <p style={{ fontFamily: "var(--font-ledger)", fontSize: "11px", color: "rgba(32,30,28,0.7)", margin: "4px 0 0 0", textTransform: "uppercase" }}>
-            IVAN'S OFFICE OF AUDIT & CAPITAL RECONCILIATION
+            COVE'S OFFICE OF AUDIT & CAPITAL MATCHING IT UP
           </p>
         </div>
 
@@ -137,7 +137,7 @@ export default function Login({ onDemoMode }) {
               transition: "all 0.2s ease"
             }}
           >
-            New Comptroller
+            New Yearly Overview
           </button>
         </div>
 
@@ -145,7 +145,7 @@ export default function Login({ onDemoMode }) {
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <label style={{ fontFamily: "var(--font-accent)", fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.8)" }}>
-              Comptroller Email Address
+              Yearly Overview Email Address
             </label>
             <input
               type="email"
@@ -310,7 +310,7 @@ export default function Login({ onDemoMode }) {
             </span>
             <div style={{ width: "120px", height: "1px", backgroundColor: "var(--color-ink-dark)" }} />
             <span style={{ fontFamily: "var(--font-ledger)", fontSize: "8px", color: "rgba(32,30,28,0.5)", marginTop: "4px" }}>
-              LEDGER COMPTROLLER GENERAL
+              LEDGER YEARLY OVERVIEW GENERAL
             </span>
           </div>
         </div>

@@ -39,7 +39,7 @@ export default function SettingsModal({ isOpen, onClose }) {
 
         {/* 2. System Title Stamp */}
         <div className={styles.cardHeader} id="settings-modal-title">
-          Comptroller Settings Panel
+          Yearly Overview Settings Panel
         </div>
 
         {/* 3. Lined safety check fields */}

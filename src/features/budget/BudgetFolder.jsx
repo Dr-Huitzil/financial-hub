@@ -362,7 +362,7 @@ export default function BudgetFolder({
         <div style={{ marginBottom: "35px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
             <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
-              Monthly Ledger Transactions Registry
+              Monthly Ledger Purchases & Bills Registry
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", textTransform: "uppercase", opacity: 0.7 }}>Show Limit:</span>

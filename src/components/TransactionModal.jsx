@@ -39,7 +39,7 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
     if (!desc.trim() || !amount || (!isTransfer && !category)) return;
 
     if (isTransfer && fromAccount === toAccount) {
-      alert("Comptroller Validation Error: Source and Destination accounts cannot be identical.");
+      alert("Yearly Overview Validation Error: Source and Destination accounts cannot be identical.");
       return;
     }
 
@@ -407,7 +407,7 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
 
                 {/* Date */}
                 <div className="form-group">
-                  <label className="form-label">Reconciliation Date</label>
+                  <label className="form-label">Matching It Up Date</label>
                   <input
                     type="date"
                     value={date}
@@ -441,7 +441,7 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
             {/* Manila Folder Authentic Stamped Accent */}
             <div className="modal-stamp-container">
               <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(-1.5deg)" }}>
-                LEDGER COMPTROLLER SECURED
+                LEDGER YEARLY OVERVIEW SECURED
               </span>
               <span className="stamp stamp-green" style={{ fontSize: "8px", transform: "rotate(2.5deg)" }}>
                 APPROVED DEPOSIT

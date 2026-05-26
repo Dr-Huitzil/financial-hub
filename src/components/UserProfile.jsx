@@ -31,7 +31,7 @@ export default function UserProfile({ user, isDemoMode, onSettingsClick, onLogou
     ? "Guest Visitor"
     : user?.email
     ? user.email.split("@")[0].toUpperCase()
-    : "COMPTROLLER";
+    : "YEARLY OVERVIEW";
 
   return (
     <div className={styles.profileContainer} ref={containerRef}>
@@ -43,11 +43,11 @@ export default function UserProfile({ user, isDemoMode, onSettingsClick, onLogou
       <div 
         className={styles.badgeCard} 
         onClick={() => setIsOpen(!isOpen)}
-        title="View Comptroller Credentials & Options"
+        title="View Yearly Overview Credentials & Options"
       >
         <div className={styles.badgeBarcode} />
         
-        <span className={styles.badgeHeader}>COMPTROLLER ID</span>
+        <span className={styles.badgeHeader}>YEARLY OVERVIEW ID</span>
         <span className={styles.badgeName} title={isDemoMode ? "Guest Visitor" : user?.email || ""}>
           {userName}
         </span>
