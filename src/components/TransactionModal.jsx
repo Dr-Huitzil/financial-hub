@@ -152,14 +152,14 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
             
             {/* Folder tab peak to align with cabinet style */}
             <div className="modal-folder-tab-peak">
-              <span className="modal-folder-tab-text">New Voucher Entry</span>
+              <span className="modal-folder-tab-text">New Purchase Entry</span>
             </div>
 
             {/* Modal Header */}
             <div className="modal-header">
               <div>
-                <h3 className="modal-title">AUTHORIZE TRANSACTION VOUCHER</h3>
-                <span className="modal-subtitle">FEDERAL CAPITAL LEDGER DEPOSIT/WITHDRAWAL RECORD</span>
+                <h3 className="modal-title">ADD NEW PURCHASE</h3>
+                <span className="modal-subtitle">Enter purchase details below</span>
               </div>
               <button className="modal-close-btn" onClick={() => setIsOpen(false)}>&times;</button>
             </div>
@@ -170,7 +170,7 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
                 
                 {/* Description */}
                 <div className="form-group full-width">
-                  <label className="form-label">Voucher Description / Recipient</label>
+                  <label className="form-label">Description / Recipient</label>
                   <input
                     type="text"
                     value={desc}
@@ -195,9 +195,9 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
                   />
                 </div>
 
-                 {/* Voucher Type (Skeuomorphic Segmented Controls) */}
+                 {/* Type (Skeuomorphic Segmented Controls) */}
                  <div className="form-group full-width">
-                   <label className="form-label">Voucher Class (Type)</label>
+                   <label className="form-label">Type</label>
                    <div className="segmented-control">
                      {["Expense", "Income", "Bill", "Debt", "Transfer"].map((t) => (
                        <button
@@ -426,13 +426,13 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
                   className="btn btn-cancel" 
                   onClick={() => setIsOpen(false)}
                 >
-                  Void Voucher
+                  Cancel
                 </button>
                 <button 
                   type="submit" 
                   className="btn btn-submit"
                 >
-                  Post to Ledger
+                  Save
                 </button>
               </div>
 

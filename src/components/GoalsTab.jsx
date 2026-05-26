@@ -31,7 +31,7 @@ export default function GoalsTab({ goals, onAddGoal, onSliderChange }) {
       {/* Interactive Goal Sliders Ledger */}
       <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div className="card-title">
-          <span>Active Savings Milestones</span>
+          <span>Active Savings Goals</span>
           <div className="stamp stamp-green" style={{ fontSize: '9px', transform: 'rotate(-2deg)' }}>Matched Up</div>
         </div>
 
@@ -109,17 +109,17 @@ export default function GoalsTab({ goals, onAddGoal, onSliderChange }) {
       {/* Add Savings Goal Ledger Card */}
       <div className="tactile-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'fit-content' }}>
         <div className="card-title">
-          <span>Authorize New Milestone</span>
+          <span>Create New Goal</span>
           <span className="barcode-text" style={{ fontSize: '8px' }}>FORM-G-77</span>
         </div>
 
         <p style={{ fontSize: '12px', color: 'rgba(32,30,28,0.7)' }}>
-          Establish a new capital reserve allocation by completing the ledger form below.
+          Create a new savings goal by filling out the form below.
         </p>
 
         <form onSubmit={handleAddGoal} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Milestone Identifier</label>
+            <label style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Goal Name</label>
             <input 
               type="text" 
               value={newGoalName} 
@@ -143,7 +143,7 @@ export default function GoalsTab({ goals, onAddGoal, onSliderChange }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Milestone Category</label>
+            <label style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}>Goal Category</label>
             <select 
               value={newGoalCategory} 
               onChange={(e) => setNewGoalCategory(e.target.value)}

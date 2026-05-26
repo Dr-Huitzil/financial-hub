@@ -382,7 +382,7 @@ export default function SavingsPlanner({ goals = [], onAddGoal, onDeleteGoal, on
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="card-title">
-        <span>Active Savings Milestones</span>
+        <span>Active Savings Goals</span>
         <div className="stamp stamp-green" style={{ fontSize: '9px', transform: 'rotate(-2deg)' }}>Matched Up</div>
       </div>
 

@@ -180,7 +180,7 @@ export default function Dashboard({
               margin: 0,
             }}
           >
-            Command Center — Daily Docket
+            Command Center — Daily Overview
           </h2>
           <p
             style={{
@@ -190,14 +190,14 @@ export default function Dashboard({
               fontFamily: "var(--font-sans)",
             }}
           >
-            Actionable financial snapshot: safe cash position, upcoming obligations, and latest vouchers.
+            Actionable financial snapshot: safe cash position, upcoming bills, and recent purchases.
           </p>
         </div>
         <span
           className="stamp stamp-blue"
           style={{ transform: "rotate(-3deg)", fontSize: "9px" }}
         >
-          DAILY RECONCILED
+          DAILY UPDATED
         </span>
       </div>
 
@@ -250,7 +250,7 @@ export default function Dashboard({
                   letterSpacing: "0.5px",
                 }}
               >
-                * COMPTROL EXCEPTION: MATCHING IT UP AUDIT REQUIRED *
+                * Uncategorized Purchases Found *
               </h3>
               <p
                 style={{
@@ -261,8 +261,8 @@ export default function Dashboard({
                   lineHeight: "1.4",
                 }}
               >
-                There are <strong>{uncategorizedCount}</strong> imported transaction voucher(s) in suspense (Uncategorized) totaling <strong style={{ color: "var(--color-stamp-red)", fontFamily: "var(--font-ledger)" }}>${fmt(Math.abs(uncategorizedTotal))}</strong>. 
-                Reconcile these inputs to ensure budget sheets and balance sheets remain true.
+                There are <strong>{uncategorizedCount}</strong> uncategorized purchases (Uncategorized) totaling <strong style={{ color: "var(--color-stamp-red)", fontFamily: "var(--font-ledger)" }}>${fmt(Math.abs(uncategorizedTotal))}</strong>. 
+                Categorize these purchases to keep your budget and balance history updated.
               </p>
             </div>
           </div>
@@ -306,7 +306,7 @@ export default function Dashboard({
                 e.currentTarget.style.transform = "translateY(0px)";
               }}
             >
-              Open Matching It Up Desk
+              Categorize Purchases
             </button>
           </div>
         </div>
@@ -759,7 +759,7 @@ export default function Dashboard({
                     fontWeight: "bold",
                   }}
                 >
-                  Credit Obligations
+                  Credit Cards & Debts
                 </span>
                 <p
                   style={{
@@ -987,7 +987,7 @@ export default function Dashboard({
                     fontWeight: "bold",
                   }}
                 >
-                  Expected Payroll
+                  Expected Income
                 </span>
                 <p
                   style={{
@@ -1074,7 +1074,7 @@ export default function Dashboard({
                   marginBottom: "4px"
                 }}
               >
-                Wage Envelopes:
+                Paychecks:
               </span>
               {paydayDetails.length === 0 ? (
                 <span
@@ -1086,7 +1086,7 @@ export default function Dashboard({
                     padding: "15px 0",
                   }}
                 >
-                  No payroll streams configured.
+                  No income streams configured.
                 </span>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "150px", overflowY: "auto" }}>
@@ -1310,7 +1310,7 @@ export default function Dashboard({
                     textTransform: "uppercase",
                   }}
                 >
-                  {transactions.length} total vouchers on file
+                  {transactions.length} total purchases on file
                 </span>
                 <span
                   className={`stamp ${currentBalance >= 0 ? "stamp-green" : "stamp-red"}`}

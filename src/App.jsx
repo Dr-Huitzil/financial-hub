@@ -486,7 +486,7 @@ export default function App() {
         <div className="folder-title-block">
           <h1 className="folder-title-main">COVE</h1>
           <p className="folder-subtitle">
-            {isDemoMode ? "ANNUAL TREASURY GENERAL LEDGER — DEMO VISITOR" : `ANNUAL TREASURY GENERAL LEDGER — ID: ${user.email.toUpperCase()}`}
+            {isDemoMode ? "Personal Finance Tracker — DEMO VISITOR" : `Personal Finance Tracker — ID: ${user.email.toUpperCase()}`}
           </p>
         </div>
 
@@ -519,7 +519,7 @@ export default function App() {
           color: 'rgba(32,30,28,0.5)'
         }}
       >
-        <span>AUTORIZADO POR REGISTRO GENERAL DE FINANZAS</span>
+        <span>Cove Financial Hub</span>
         <span>FOLIO NO. 2026-XLSX-001</span>
       </div>
 

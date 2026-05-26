@@ -243,7 +243,7 @@ export default function UncategorizedReviewDesk({
               AUDIT VERIFICATION PASSED
             </h2>
             <p style={{ fontFamily: "var(--font-sans)", fontSize: "14px", color: "rgba(32,30,28,0.75)", lineHeight: "1.6", margin: "0 0 35px 0" }}>
-              The Yearly Overview has audited the books and reports that there are <strong>zero (0)</strong> unclassified transaction vouchers remaining. All inputs are perfectly matched up to their corresponding budget limits!
+              We have updated your records and found <strong>zero (0)</strong> uncategorized purchases remaining! All items are perfectly matched up with your spending limits.
             </p>
 
             <span
@@ -345,7 +345,7 @@ export default function UncategorizedReviewDesk({
               {/* Manila tab top accent */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", borderBottom: "2px double var(--color-ink-dark)", paddingBottom: "10px", marginBottom: "15px" }}>
                 <span style={{ fontFamily: "var(--font-accent)", fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" }}>
-                  INBOX LEDGER QUEUE
+                  INCOMING PURCHASES QUEUE
                 </span>
                 <span className="stamp stamp-red" style={{ fontSize: "7px", borderWidth: "1.5px", padding: "1px 4px", transform: "rotate(3deg)" }}>
                   AUDIT ACTIVE
@@ -366,11 +366,11 @@ export default function UncategorizedReviewDesk({
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
-                  <span style={{ fontFamily: "var(--font-sans)", color: "rgba(32,30,28,0.6)", fontWeight: "600" }}>Total Pending Vouchers:</span>
+                  <span style={{ fontFamily: "var(--font-sans)", color: "rgba(32,30,28,0.6)", fontWeight: "600" }}>Total Pending Purchases:</span>
                   <span style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold" }}>{uncategorizedList.length}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
-                  <span style={{ fontFamily: "var(--font-sans)", color: "rgba(32,30,28,0.6)", fontWeight: "600" }}>Cumulative Suspense Bal:</span>
+                  <span style={{ fontFamily: "var(--font-sans)", color: "rgba(32,30,28,0.6)", fontWeight: "600" }}>Total Pending Amount:</span>
                   <span style={{ fontFamily: "var(--font-ledger)", fontWeight: "bold", color: "var(--color-stamp-red)" }}>
                     ${fmt(totalAmountPending)}
                   </span>
@@ -502,10 +502,10 @@ export default function UncategorizedReviewDesk({
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid var(--color-ink-dark)", paddingBottom: "8px", height: "56px" }}>
                   <div>
                     <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "14px", textTransform: "uppercase", fontWeight: "bold", margin: 0 }}>
-                      VOUCHER AUDIT SHEET
+                      Purchase Edit Sheet
                     </h3>
                     <span style={{ fontFamily: "var(--font-ledger)", fontSize: "9px", color: "rgba(32,30,28,0.5)", textTransform: "uppercase" }}>
-                      Ledger ID: {activeTx.id?.toUpperCase() || "NEW-IMPORT"}
+                      Purchase ID: {activeTx.id?.toUpperCase() || "NEW-IMPORT"}
                     </span>
                   </div>
 
@@ -620,7 +620,7 @@ export default function UncategorizedReviewDesk({
                     {/* Input: Description Rename */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       <label style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.6)", letterSpacing: "0.5px" }}>
-                        Merchant Name Cleanup / Voucher Description
+                        Merchant Name / Purchase Description
                       </label>
                       <input
                         type="text"
@@ -643,7 +643,7 @@ export default function UncategorizedReviewDesk({
                     {/* Input: Segmented Controls for Class/Type */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       <label style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "rgba(32,30,28,0.6)", letterSpacing: "0.5px" }}>
-                        Authorize Voucher Ledger Class (Type)
+                        Ledger Class (Type)
                       </label>
                       <div className="segmented-control" style={{ width: "100%", height: "38px" }}>
                         {["Expense", "Income", "Bill", "Debt"].map((t) => (
@@ -785,7 +785,7 @@ export default function UncategorizedReviewDesk({
                   >
                     {/* Progress details */}
                     <span style={{ fontSize: "11px", fontFamily: "var(--font-ledger)", color: "rgba(32,30,28,0.5)" }}>
-                      AUDITING RECORD <strong>{activeIndex + 1}</strong> OF <strong>{uncategorizedList.length}</strong> IN SUSPENSE FILE
+                      EDITING RECORD <strong>{activeIndex + 1}</strong> OF <strong>{uncategorizedList.length}</strong> IN UNCLASSIFIED PURCHASES
                     </span>
 
                     {/* Large stamp approved post button */}

@@ -93,7 +93,7 @@ export default function Login({ onDemoMode }) {
             TREASURY LEDGER SIGN-IN
           </h2>
           <p style={{ fontFamily: "var(--font-ledger)", fontSize: "11px", color: "rgba(32,30,28,0.7)", margin: "4px 0 0 0", textTransform: "uppercase" }}>
-            COVE'S OFFICE OF AUDIT & CAPITAL MATCHING IT UP
+            COVE FINANCIAL HUB
           </p>
         </div>
 
@@ -310,7 +310,7 @@ export default function Login({ onDemoMode }) {
             </span>
             <div style={{ width: "120px", height: "1px", backgroundColor: "var(--color-ink-dark)" }} />
             <span style={{ fontFamily: "var(--font-ledger)", fontSize: "8px", color: "rgba(32,30,28,0.5)", marginTop: "4px" }}>
-              LEDGER YEARLY OVERVIEW GENERAL
+              Account Owner
             </span>
           </div>
         </div>

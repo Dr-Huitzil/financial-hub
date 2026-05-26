@@ -308,10 +308,10 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
       <div className="tactile-card" style={{ border: "2px solid var(--color-ink-dark)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
         <div>
           <h2 style={{ fontFamily: "var(--font-accent)", fontSize: "14px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
-            Treasury Performance Analytics Ledger
+            Reports & Analytics
           </h2>
           <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "rgba(32,30,28,0.7)", fontFamily: "var(--font-sans)" }}>
-            Visual cash flow balancing, category distributions, and multi-month capital growth trends.
+            Visual cash flow, spending by category, and balance trends over time.
           </p>
         </div>
         <span className="stamp stamp-blue" style={{ transform: "rotate(-3deg)", fontSize: "9px" }}>
@@ -368,13 +368,13 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
           <div className="tactile-card" style={{ backgroundColor: "#fefdfb", border: "1px dashed var(--color-paper-grid)", display: "flex", flexDirection: "column", minHeight: "330px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
               <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
-                Spending Money Split
+                Where Your Money Goes
               </span>
               <span className="stamp stamp-red" style={{ fontSize: "7px", transform: "rotate(-1deg)" }}>SECTOR DIVIDE</span>
             </div>
 
             <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.7)", marginBottom: "15px" }}>
-              Categorized cumulative debit money split. Mapped by ledger percentages.
+              Your spending by category, mapped by percentages.
             </p>
 
             <div style={{ position: "relative", width: "100%", height: "210px" }}>
@@ -558,13 +558,13 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
         <div className="tactile-card" style={{ width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "10px", marginBottom: "15px" }}>
             <span style={{ fontFamily: "var(--font-accent)", fontSize: "12px", fontWeight: "bold", textTransform: "uppercase" }}>
-              Yearly Overview General Ledger Matrix
+              Yearly Overview
             </span>
             <span className="barcode-text" style={{ fontSize: "8px" }}>ANNUAL-COM-992</span>
           </div>
           
           <p style={{ fontSize: "12px", color: "rgba(32,30,28,0.7)", marginBottom: "15px" }}>
-            Pivot table detailing horizontal ledger flows logged across all registry fields.
+            Summary table of your monthly income, spending, and savings.
           </p>
 
           <div className="ledger-table-container" style={{ width: "100%", overflowX: "auto" }}>

@@ -141,10 +141,10 @@ export default function SetupTab({
       <div className="tactile-card" style={{ border: "2px solid var(--color-ink-dark)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
         <div>
           <h2 style={{ fontFamily: "var(--font-accent)", fontSize: "14px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
-            Treasury Ledger Setup Control Panel
+            Setup & Settings
           </h2>
           <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "rgba(32,30,28,0.7)", fontFamily: "var(--font-sans)" }}>
-            Configure your master categories and credit portfolio below. Click on a folder tab to switch views.
+            Configure your spending categories, limits, and accounts below. Click a tab to switch views.
           </p>
         </div>
         <span className="stamp stamp-blue" style={{ transform: "rotate(-4deg)", fontSize: "9px" }}>
@@ -194,10 +194,10 @@ export default function SetupTab({
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--color-paper-grid)", paddingBottom: "12px", marginBottom: "10px" }}>
               <div>
                 <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "13px", margin: 0, textTransform: "uppercase" }}>
-                  Master Category Targets & Scheduled Obligations
+                  Categories & Planned Bills
                 </h3>
                 <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "rgba(32,30,28,0.6)" }}>
-                  Organize transaction category groups, define spending caps, and schedule recurring bills.
+                  Organize your spending categories, define spending limits, and schedule recurring bills.
                 </p>
               </div>
               <span className="stamp stamp-blue" style={{ fontSize: "8px", transform: "rotate(1deg)" }}>CATEGORIES</span>

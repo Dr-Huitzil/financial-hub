@@ -52,7 +52,7 @@ export default function UserProfile({ user, isDemoMode, onSettingsClick, onLogou
           {userName}
         </span>
         <span className={styles.badgeSub}>
-          {isDemoMode ? "GUEST SANDBOX" : "AUDIT OFFICER"}
+          {isDemoMode ? "GUEST SANDBOX" : "Account Owner"}
         </span>
       </div>
 

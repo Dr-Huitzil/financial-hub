@@ -275,11 +275,11 @@ export default function BudgetFolder({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", flexWrap: "wrap", gap: "15px" }}>
           <div>
             <h2 style={{ fontFamily: "var(--font-accent)", textTransform: "uppercase", fontSize: "16px", letterSpacing: "1.5px", margin: 0 }}>
-              Monthly Ledger Ledger Sheet
+              Monthly Budget
             </h2>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
               <span style={{ fontSize: "12px", fontFamily: "var(--font-typewriter)", color: "rgba(32,30,28,0.6)" }}>
-                FILING LEDGER PERIOD:
+                BUDGET PERIOD:
               </span>
               <span style={{ fontSize: "12px", fontFamily: "var(--font-typewriter)", color: "rgba(32,30,28,0.6)", fontWeight: "bold" }}>
                 {activeMonthName.toUpperCase()} {activeYear}
@@ -319,7 +319,7 @@ export default function BudgetFolder({
         {/* Categories budget limits tracking bars */}
         <div style={{ marginBottom: "35px" }}>
           <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "15px" }}>
-            Monthly Caps Allocation Progress
+            Spending Limits
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }} className="overview-grid">
             {Object.keys(budgetLimits).map(cat => {
@@ -362,7 +362,7 @@ export default function BudgetFolder({
         <div style={{ marginBottom: "35px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
             <h3 style={{ fontFamily: "var(--font-accent)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
-              Monthly Ledger Purchases & Bills Registry
+              Purchases & Bills
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ fontSize: "10px", fontFamily: "var(--font-accent)", textTransform: "uppercase", opacity: 0.7 }}>Show Limit:</span>
