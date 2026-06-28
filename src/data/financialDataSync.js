@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../utils/dateUtils';
 // Financial Data Aggregator and Sync Layer
 // Converts raw transactions list into exact structures required by dashboard tabs
 
@@ -13,7 +14,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = [], star
 
   transactions.forEach((tx) => {
     if (!tx.date) return;
-    if (activeYear && new Date(tx.date).getFullYear() !== activeYear) return;
+    if (activeYear && parseLocalDate(tx.date).getFullYear() !== activeYear) return;
 
     const amt = parseFloat(tx.amount || 0);
     if (tx.type === "Income") {
@@ -55,7 +56,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = [], star
     // Filter transactions for this month
     transactions.forEach((tx) => {
       if (!tx.date) return;
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       if (activeYear && txDate.getFullYear() !== activeYear) return;
       if (txDate.getMonth() === idx) {
         const amt = parseFloat(tx.amount || 0);
@@ -90,7 +91,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = [], star
 
   transactions.forEach((tx) => {
     if (!tx.date) return;
-    if (activeYear && new Date(tx.date).getFullYear() !== activeYear) return;
+    if (activeYear && parseLocalDate(tx.date).getFullYear() !== activeYear) return;
     if (tx.type === "Income") return; // Only expenses, bills, and debts in breakdown
     const amt = parseFloat(tx.amount || 0);
     const cat = tx.category || "Uncategorized";
@@ -142,7 +143,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = [], star
   const dailyCheckingNet = {};
   transactions.forEach(tx => {
     if (!tx.date) return;
-    const tDate = new Date(tx.date);
+    const tDate = parseLocalDate(tx.date);
     if (tDate.getFullYear() !== chartYear) return;
 
     // ensure local date extraction
@@ -172,7 +173,7 @@ export function aggregateFinancialData(transactions, savingsGoalsList = [], star
 
   transactions.forEach((tx) => {
     if (!tx.date) return;
-    const txYear = new Date(tx.date).getFullYear();
+    const txYear = parseLocalDate(tx.date).getFullYear();
     if (txYear >= chartYear) return; // only prior transactions roll over!
 
     const amt = parseFloat(tx.amount || 0);
@@ -242,7 +243,7 @@ function calculatedBalancesForInvestments(transactions, startingBalances = {}, a
   const calculatedBalances = { ...STARTING_BALANCES };
   transactions.forEach((tx) => {
     if (!tx.date) return;
-    if (activeYear && new Date(tx.date).getFullYear() > activeYear) return;
+    if (activeYear && parseLocalDate(tx.date).getFullYear() > activeYear) return;
 
     const amt = parseFloat(tx.amount || 0);
     if (tx.type === "Transfer") {

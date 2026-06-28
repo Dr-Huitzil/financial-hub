@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../../utils/dateUtils';
 import React, { useState, useEffect, useMemo } from "react";
 
 /**
@@ -26,7 +27,7 @@ export default function UncategorizedReviewDesk({
   const uncategorizedList = useMemo(() => {
     return transactions
       .filter((tx) => tx.category === "Uncategorized")
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+      .sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
   }, [transactions]);
 
   const activeTx = uncategorizedList[activeIndex];

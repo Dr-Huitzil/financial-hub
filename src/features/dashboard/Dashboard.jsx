@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../../utils/dateUtils';
 import React, { useMemo, useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
 import useIncomePredictor from "../../hooks/useIncomePredictor.js";
@@ -44,7 +45,7 @@ export default function Dashboard({
   const yearFilteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       if (!tx.date) return false;
-      return new Date(tx.date).getFullYear() === activeYear;
+      return parseLocalDate(tx.date).getFullYear() === activeYear;
     });
   }, [transactions, activeYear]);
 
@@ -58,7 +59,7 @@ export default function Dashboard({
   const yearFilteredUpcoming = useMemo(() => {
     return upcomingPayments.filter((p) => {
       if (!p.dueDate) return false;
-      return new Date(p.dueDate).getFullYear() === activeYear;
+      return parseLocalDate(p.dueDate).getFullYear() === activeYear;
     });
   }, [upcomingPayments, activeYear]);
 
@@ -67,7 +68,7 @@ export default function Dashboard({
     let balance = startingBalances?.Checking || 0; 
     transactions.forEach((tx) => {
       if (!tx.date) return;
-      const txYear = new Date(tx.date).getFullYear();
+      const txYear = parseLocalDate(tx.date).getFullYear();
       if (txYear > activeYear) return;
 
       const amt = parseFloat(tx.amount || 0);
@@ -89,7 +90,7 @@ export default function Dashboard({
     let balance = startingBalances?.["Physical Cash"] || 0;
     transactions.forEach((tx) => {
       if (!tx.date) return;
-      const txYear = new Date(tx.date).getFullYear();
+      const txYear = parseLocalDate(tx.date).getFullYear();
       if (txYear > activeYear) return;
 
       const amt = parseFloat(tx.amount || 0);
@@ -115,8 +116,8 @@ export default function Dashboard({
 
   const upcomingUnpaid = useMemo(() =>
     yearFilteredUpcoming
-      .filter(p => !p.paid && !p.isIncome && new Date(p.dueDate) >= today)
-      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
+      .filter(p => !p.paid && !p.isIncome && parseLocalDate(p.dueDate) >= today)
+      .sort((a, b) => parseLocalDate(a.dueDate) - parseLocalDate(b.dueDate)),
     [yearFilteredUpcoming]
   );
 
@@ -129,7 +130,7 @@ export default function Dashboard({
   // ─── RECENT ACTIVITY ──────────────────────────────────────────────────────
   const recent5 = useMemo(() =>
     [...yearFilteredTransactions]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date))
       .slice(0, 5),
     [yearFilteredTransactions]
   );

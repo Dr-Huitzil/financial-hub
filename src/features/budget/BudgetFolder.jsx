@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../../utils/dateUtils';
 import React, { useState, useEffect } from "react";
 import styles from "./BudgetFolder.module.css";
 import { useApp } from "../../context/AppContext.jsx";
@@ -140,9 +141,9 @@ export default function BudgetFolder({
   
   const monthlyTx = transactions.filter(tx => {
     if (!tx.date) return false;
-    const txDateObj = new Date(tx.date);
+    const txDateObj = parseLocalDate(tx.date);
     return txDateObj.getMonth() === activeMonthIndex && txDateObj.getFullYear() === activeYear;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date)); // sort descending by date (most recent first)
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date)); // sort descending by date (most recent first)
 
   /**
    * Returns the "week bucket" number for a given day-of-month:

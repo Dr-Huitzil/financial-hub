@@ -1,3 +1,4 @@
+import { parseLocalDate } from './utils/dateUtils';
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, onSnapshot, doc, setDoc, addDoc, deleteDoc, updateDoc } from "firebase/firestore";
@@ -144,7 +145,7 @@ export default function App() {
       const paymentsList = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data()
-      })).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      })).sort((a, b) => parseLocalDate(a.dueDate) - parseLocalDate(b.dueDate));
       setUpcomingPayments(paymentsList);
     }, (error) => {
       console.error("Firestore Sync Error (Payments):", error);
@@ -434,7 +435,7 @@ export default function App() {
   const handleAddPayment = async (newPayment) => {
     try {
       if (isDemoMode) {
-        setUpcomingPayments([...upcomingPayments, newPayment].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)));
+        setUpcomingPayments([...upcomingPayments, newPayment].sort((a, b) => parseLocalDate(a.dueDate) - parseLocalDate(b.dueDate)));
       } else if (user) {
         await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(newPayment.id)), newPayment);
       }
@@ -464,7 +465,7 @@ export default function App() {
       if (isDemoMode) {
         setUpcomingPayments(
           upcomingPayments.map((p) => (p.id === id ? { ...p, ...updatedFields } : p))
-            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+            .sort((a, b) => parseLocalDate(a.dueDate) - parseLocalDate(b.dueDate))
         );
       } else if (user) {
         await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(id)), updatedFields, { merge: true });

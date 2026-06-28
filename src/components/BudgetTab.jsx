@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../utils/dateUtils';
 import { useState } from "react";
 
 export default function BudgetTab({ 
@@ -41,7 +42,7 @@ export default function BudgetTab({
       if (tx.category !== cat) return false;
       if (selectedMonth === "All") return true;
       if (!tx.date) return false;
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       return MONTH_NAMES[txDate.getMonth()] === selectedMonth;
     });
     const actualSpent = activeTx.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
@@ -77,7 +78,7 @@ export default function BudgetTab({
       if (tx.category !== cat) return false;
       if (selectedMonth === "All") return true;
       if (!tx.date) return false;
-      const txDate = new Date(tx.date);
+      const txDate = parseLocalDate(tx.date);
       return MONTH_NAMES[txDate.getMonth()] === selectedMonth;
     });
     const actualSpent = activeTx.reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);

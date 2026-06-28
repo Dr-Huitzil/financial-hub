@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../../utils/dateUtils';
 import React from "react";
 import styles from "./MainLayout.module.css";
 import { useApp } from "../../context/AppContext.jsx";
@@ -27,7 +28,7 @@ export default function MainLayout({ activeTab, setActiveTab, transactions = [],
   // Dynamically extract unique years from transactions list
   const uniqueYears = Array.from(new Set(
     transactions
-      .map(tx => tx.date ? new Date(tx.date).getFullYear() : null)
+      .map(tx => tx.date ? parseLocalDate(tx.date).getFullYear() : null)
       .filter(Boolean)
   ));
   

@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../../utils/dateUtils';
 import { useState, useMemo } from "react";
 import { 
   ResponsiveContainer, 
@@ -69,7 +70,7 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
   const yearFilteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
       if (!tx.date) return false;
-      return new Date(tx.date).getFullYear() === activeYear;
+      return parseLocalDate(tx.date).getFullYear() === activeYear;
     });
   }, [transactions, activeYear]);
 
@@ -96,7 +97,7 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
       if (tx.category !== selectedCategory) return;
       if (tx.type === "Income") return; // only track outflows for trend
       if (!tx.date) return;
-      const monthIdx = new Date(tx.date).getMonth();
+      const monthIdx = parseLocalDate(tx.date).getMonth();
       monthTotals[monthIdx] += parseFloat(tx.amount || 0);
     });
 
@@ -197,7 +198,7 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
 
     transactions.forEach((tx) => {
       if (!tx.date) return;
-      const txYear = new Date(tx.date).getFullYear();
+      const txYear = parseLocalDate(tx.date).getFullYear();
       if (txYear >= activeYear) return;
 
       const amt = parseFloat(tx.amount || 0);
@@ -214,7 +215,7 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
     });
 
     // Sort all transactions by date ascending
-    const sorted = [...yearFilteredTransactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted = [...yearFilteredTransactions].sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
 
     // Build a map: date-string → checking net delta that day
     const dayMap = {};
@@ -259,7 +260,7 @@ export default function ReportsFolder({ transactions = [], goals = [], startingB
 
   transactions.forEach((tx) => {
     if (!tx.date) return;
-    const txYear = new Date(tx.date).getFullYear();
+    const txYear = parseLocalDate(tx.date).getFullYear();
     if (txYear >= activeYear) return;
 
     const amt = parseFloat(tx.amount || 0);

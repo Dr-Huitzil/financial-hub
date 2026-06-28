@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../utils/dateUtils';
 import { useState } from "react";
 
 const DEFAULT_CATEGORIES = {
@@ -199,13 +200,13 @@ export default function TransactionTab({ transactions, categories, startingBalan
     
     let matchesMonth = true;
     if (selectedMonth !== "All" && tx.date) {
-      const txMonthIndex = new Date(tx.date).getMonth();
+      const txMonthIndex = parseLocalDate(tx.date).getMonth();
       const targetMonthIndex = months.indexOf(selectedMonth);
       matchesMonth = txMonthIndex === targetMonthIndex;
     }
     
     return matchesSearch && matchesType && matchesMonth;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date));
 
   const displayedTxs = visibleLimit === "All" 
     ? filteredTxs 
