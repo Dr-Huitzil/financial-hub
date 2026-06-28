@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 /**
  * TransactionModal component
@@ -11,6 +11,15 @@ import React, { useState } from "react";
  */
 export default function TransactionModal({ categories = {}, onAddTransaction }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [entryMode, setEntryMode] = useState("single");
+  const [localError, setLocalError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [batchRows, setBatchRows] = useState([
+    { id: 1, date: new Date().toISOString().split("T")[0], description: "", amount: "", type: "Expense", category: "" },
+    { id: 2, date: new Date().toISOString().split("T")[0], description: "", amount: "", type: "Expense", category: "" },
+    { id: 3, date: new Date().toISOString().split("T")[0], description: "", amount: "", type: "Expense", category: "" }
+  ]);
 
   // Form states for transaction record
   const [desc, setDesc] = useState("");
@@ -33,99 +42,64 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
     cat.toLowerCase().includes(categorySearchQuery.toLowerCase())
   );
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const isTransfer = type === "Transfer";
-    if (!desc.trim() || !amount || (!isTransfer && !category)) return;
+    setLocalError("");
+    setIsSubmitting(true);
 
-    if (isTransfer && fromAccount === toAccount) {
-      alert("Yearly Overview Validation Error: Source and Destination accounts cannot be identical.");
-      return;
-    }
-
-    const newTx = {
-      description: desc.trim(),
-      amount: parseFloat(amount) || 0,
-      category: isTransfer ? "Transfer" : category,
-      type,
-      date,
-      ...(isTransfer ? { fromAccount, toAccount } : {})
-    };
-
-    // Parent callback to submit transaction
-    if (onAddTransaction) {
-      onAddTransaction(newTx);
-    }
-
-    // =========================================================================
-    // COMMENTED FIREBASE DOUBLE-ENTRY TRANSFER PROCESS
-    // Demonstrates logging two voucher entries to preserve global net worth.
-    // =========================================================================
-    /*
-    const postTransactionToFirestore = async (txData) => {
-      try {
-        if (!auth.currentUser) return;
-        const txCollectionRef = collection(db, "users", auth.currentUser.uid, "transactions");
-        await addDoc(txCollectionRef, {
-          ...txData,
-          createdAt: serverTimestamp()
-        });
-        console.log("Transaction voucher posted successfully to Firestore!");
-      } catch (err) {
-        console.error("Failed to upload transaction voucher:", err);
-      }
-    };
-
-    const postTransferToFirestore = async (transferData) => {
-      try {
-        if (!auth.currentUser) return;
-        const batch = writeBatch(db);
-        const txCollectionRef = collection(db, "users", auth.currentUser.uid, "transactions");
+    try {
+      if (entryMode === "batch") {
+        const txArray = batchRows
+          .filter(row => row.description.trim() !== "" && row.amount !== "")
+          .map(row => ({
+            description: row.description.trim(),
+            amount: parseFloat(row.amount) || 0,
+            category: row.category || (categories[row.type]?.[0] || ""),
+            type: row.type,
+            date: row.date
+          }));
         
-        // Entry 1: Negative ledger entry (withdrawal from source account)
-        const debitDocRef = doc(txCollectionRef);
-        batch.set(debitDocRef, {
-          description: `Transfer Out: ${transferData.description}`,
-          amount: transferData.amount,
-          type: "Expense",
-          category: "Transfer",
-          account: transferData.fromAccount,
-          date: transferData.date,
-          createdAt: serverTimestamp()
-        });
+        if (txArray.length > 0 && onAddTransaction) {
+          await onAddTransaction(txArray);
+        } else {
+          throw new Error("Please enter a description and amount for at least one row in the batch.");
+        }
+      } else {
+        const isTransfer = type === "Transfer";
+        if (!desc.trim() || !amount || (!isTransfer && !category)) throw new Error("Please fill in all required fields.");
+        if (isTransfer && fromAccount === toAccount) throw new Error("Source and Destination accounts cannot be identical.");
 
-        // Entry 2: Positive ledger entry (deposit to destination account)
-        const creditDocRef = doc(txCollectionRef);
-        batch.set(creditDocRef, {
-          description: `Transfer In: ${transferData.description}`,
-          amount: transferData.amount,
-          type: "Income",
-          category: "Transfer",
-          account: transferData.toAccount,
-          date: transferData.date,
-          createdAt: serverTimestamp()
-        });
+        const newTx = {
+          description: desc.trim(),
+          amount: parseFloat(amount) || 0,
+          category: isTransfer ? "Transfer" : category,
+          type,
+          date,
+          ...(isTransfer ? { fromAccount, toAccount } : {})
+        };
 
-        await batch.commit();
-        console.log("Double-entry transfer voucher posted successfully to Firestore batch!");
-      } catch (err) {
-        console.error("Double-entry transfer failed:", err);
+        if (onAddTransaction) {
+          await onAddTransaction(newTx);
+        }
       }
-    };
 
-    if (isTransfer) {
-      postTransferToFirestore(newTx);
-    } else {
-      postTransactionToFirestore(newTx);
+      // Reset form states & close modal
+      setDesc("");
+      setAmount("");
+      setCategorySearchQuery("");
+      setIsCategoryDropdownOpen(false);
+      setBatchRows([
+        { id: Date.now(), date: new Date().toISOString().split("T")[0], description: "", amount: "", type: "Expense", category: categories["Expense"]?.[0] || "" },
+        { id: Date.now()+1, date: new Date().toISOString().split("T")[0], description: "", amount: "", type: "Expense", category: categories["Expense"]?.[0] || "" },
+        { id: Date.now()+2, date: new Date().toISOString().split("T")[0], description: "", amount: "", type: "Expense", category: categories["Expense"]?.[0] || "" }
+      ]);
+      setIsOpen(false);
+    } catch (err) {
+      console.error("Submission error:", err);
+      setLocalError(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsSubmitting(false);
     }
-    */
-
-    // Reset form states & close modal
-    setDesc("");
-    setAmount("");
-    setCategorySearchQuery("");
-    setIsCategoryDropdownOpen(false);
-    setIsOpen(false);
   };
 
   return (
@@ -135,6 +109,7 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
         className="fab-trigger" 
         onClick={() => {
           setIsOpen(true);
+          setLocalError("");
           const defaultCat = categories[type]?.[0] || "";
           setCategory(defaultCat);
           setCategorySearchQuery("");
@@ -148,7 +123,11 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
       {/* 2. Manila Card Overlay Modal */}
       {isOpen && (
         <div className="modal-overlay" onClick={() => setIsOpen(false)}>
-          <div className="modal-card manila-folder-modal" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="modal-card manila-folder-modal" 
+            style={{ maxWidth: entryMode === "batch" ? "850px" : undefined, transition: "max-width 0.3s ease" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             
             {/* Folder tab peak to align with cabinet style */}
             <div className="modal-folder-tab-peak">
@@ -164,8 +143,39 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
               <button className="modal-close-btn" onClick={() => setIsOpen(false)}>&times;</button>
             </div>
 
+            {/* Entry Mode Toggle */}
+            <div style={{ padding: "0 24px", marginBottom: "16px" }}>
+              <div className="segmented-control">
+                <button
+                  type="button"
+                  className={`segmented-tab ${entryMode === "single" ? "active" : ""}`}
+                  onClick={() => { setEntryMode("single"); setLocalError(""); }}
+                >
+                  SINGLE ENTRY
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-tab ${entryMode === "batch" ? "active" : ""}`}
+                  onClick={() => { setEntryMode("batch"); setLocalError(""); }}
+                >
+                  BATCH ENTRY
+                </button>
+              </div>
+            </div>
+
+            {/* Local Error State */}
+            {localError && (
+              <div style={{ margin: "0 24px 16px 24px", padding: "10px", backgroundColor: "rgba(158, 42, 43, 0.08)", border: "1.5px dashed var(--color-stamp-red)", borderRadius: "4px", display: "flex", alignItems: "center", gap: "10px" }}>
+                <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(-2deg)" }}>ERROR</span>
+                <span style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "var(--color-stamp-red)", fontWeight: "bold" }}>
+                  {localError}
+                </span>
+              </div>
+            )}
+
             {/* Modal Form */}
             <form onSubmit={handleSubmit} className="modal-form">
+              {entryMode === "single" ? (
               <div className="modal-grid">
                 
                 {/* Description */}
@@ -418,6 +428,86 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
                 </div>
 
               </div>
+              ) : (
+                <div className="form-group full-width" style={{ padding: "0 24px" }}>
+                  <label className="form-label">Batch Data Grid</label>
+                  <div style={{ overflowX: "auto", border: "1px solid var(--color-paper-edge)", borderRadius: "4px", backgroundColor: "#fff" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", fontFamily: "var(--font-sans)" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "var(--color-paper-light)", borderBottom: "2px solid var(--color-paper-edge)" }}>
+                          <th style={{ padding: "8px", textAlign: "left", width: "110px" }}>Date</th>
+                          <th style={{ padding: "8px", textAlign: "left" }}>Description</th>
+                          <th style={{ padding: "8px", textAlign: "left", width: "90px" }}>Amount</th>
+                          <th style={{ padding: "8px", textAlign: "left", width: "100px" }}>Type</th>
+                          <th style={{ padding: "8px", textAlign: "left", width: "120px" }}>Category</th>
+                          <th style={{ padding: "8px", width: "30px" }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {batchRows.map((row, index) => (
+                          <tr key={row.id} style={{ borderBottom: "1px solid var(--color-paper-edge)" }}>
+                            <td style={{ padding: "4px" }}>
+                              <input type="date" value={row.date} onChange={(e) => {
+                                const newRows = [...batchRows];
+                                newRows[index].date = e.target.value;
+                                setBatchRows(newRows);
+                              }} style={{ width: "100%", border: "none", outline: "none", background: "transparent" }} required={!!row.description || !!row.amount} />
+                            </td>
+                            <td style={{ padding: "4px" }}>
+                              <input type="text" placeholder="Description" value={row.description} onChange={(e) => {
+                                const newRows = [...batchRows];
+                                newRows[index].description = e.target.value;
+                                setBatchRows(newRows);
+                              }} style={{ width: "100%", border: "none", outline: "none", background: "transparent" }} />
+                            </td>
+                            <td style={{ padding: "4px" }}>
+                              <input type="number" placeholder="0.00" step="0.01" value={row.amount} onChange={(e) => {
+                                const newRows = [...batchRows];
+                                newRows[index].amount = e.target.value;
+                                setBatchRows(newRows);
+                              }} style={{ width: "100%", border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-mono)" }} />
+                            </td>
+                            <td style={{ padding: "4px" }}>
+                              <select value={row.type} onChange={(e) => {
+                                const newRows = [...batchRows];
+                                newRows[index].type = e.target.value;
+                                newRows[index].category = categories[e.target.value]?.[0] || "";
+                                setBatchRows(newRows);
+                              }} style={{ width: "100%", border: "none", outline: "none", background: "transparent" }}>
+                                <option value="Expense">Expense</option>
+                                <option value="Income">Income</option>
+                                <option value="Bill">Bill</option>
+                                <option value="Debt">Debt</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: "4px" }}>
+                              <select value={row.category || (categories[row.type]?.[0] || "")} onChange={(e) => {
+                                const newRows = [...batchRows];
+                                newRows[index].category = e.target.value;
+                                setBatchRows(newRows);
+                              }} style={{ width: "100%", border: "none", outline: "none", background: "transparent" }}>
+                                {categories[row.type]?.map(cat => (
+                                  <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: "4px", textAlign: "center" }}>
+                              <button type="button" onClick={() => {
+                                setBatchRows(batchRows.filter((_, i) => i !== index));
+                              }} style={{ border: "none", background: "transparent", color: "#e63946", cursor: "pointer", fontSize: "16px", fontWeight: "bold" }}>&times;</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button type="button" onClick={() => {
+                    setBatchRows([...batchRows, { id: Date.now(), date: new Date().toISOString().split("T")[0], description: "", amount: "", type: "Expense", category: categories["Expense"]?.[0] || "" }]);
+                  }} style={{ marginTop: "8px", border: "1px dashed var(--color-paper-edge)", background: "var(--color-paper-light)", padding: "6px", width: "100%", cursor: "pointer", borderRadius: "4px", color: "var(--color-ink-light)", fontWeight: "bold" }}>
+                    + Add Row
+                  </button>
+                </div>
+              )}
 
               {/* Form Actions */}
               <div className="modal-actions">
@@ -431,8 +521,9 @@ export default function TransactionModal({ categories = {}, onAddTransaction }) 
                 <button 
                   type="submit" 
                   className="btn btn-submit"
+                  disabled={isSubmitting}
                 >
-                  Save
+                  {isSubmitting ? "Saving..." : "Save"}
                 </button>
               </div>
 

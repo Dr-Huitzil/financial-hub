@@ -20,6 +20,7 @@ export default function UncategorizedReviewDesk({
   const [editCategory, setEditCategory] = useState("");
   const [transitioning, setTransitioning] = useState(false);
   const [stampStatus, setStampStatus] = useState(null); // 'approved', 'skipped' or null
+  const [localError, setLocalError] = useState(""); // Add localized error state
 
   // Filter list of uncategorized transactions
   const uncategorizedList = useMemo(() => {
@@ -71,23 +72,22 @@ export default function UncategorizedReviewDesk({
     Income: ["Paycheck 1", "Paycheck 2", "Side hustle", "Interest", "Cash"]
   };
 
-  // Perform transaction classification update with animation
   const handleCategorize = async (catName, customType = null) => {
     if (!activeTx || transitioning) return;
+    setLocalError("");
 
     const finalType = customType || editType;
     const finalCategory = catName || editCategory;
 
     if (!finalCategory) {
-      alert("Yearly Overview Error: Please select or enter a valid category.");
+      setLocalError("Please select or enter a valid category.");
       return;
     }
 
     setTransitioning(true);
     setStampStatus("approved");
 
-    // Micro-delay for visual stamp animation
-    setTimeout(async () => {
+    try {
       if (onUpdateTransaction) {
         await onUpdateTransaction(activeTx.id, {
           description: editDesc.trim(),
@@ -96,16 +96,24 @@ export default function UncategorizedReviewDesk({
         });
       }
 
-      setTransitioning(false);
-      setStampStatus(null);
+      // Micro-delay for visual stamp animation before moving on
+      setTimeout(() => {
+        setTransitioning(false);
+        setStampStatus(null);
 
-      // If we aren't at the end of the queue, slide to the next, otherwise loop back or stay
-      if (activeIndex < uncategorizedList.length - 1) {
-        // Queue shrinks, so we don't necessarily have to advance index since current item is deleted from queue
-      } else {
-        setActiveIndex(0);
-      }
-    }, 450);
+        // Advance queue or reset
+        if (activeIndex >= uncategorizedList.length - 1) {
+          setActiveIndex(0);
+        }
+      }, 450);
+
+    } catch (err) {
+      console.error("Categorize Error:", err);
+      // Revert stamp state and block advance on failure
+      setStampStatus(null);
+      setTransitioning(false);
+      setLocalError(err.message || "Failed to update category.");
+    }
   };
 
   const handleSkip = () => {
@@ -613,6 +621,16 @@ export default function UncategorizedReviewDesk({
                       <span>PERSON: <strong>{activeTx.person || "Ivan"}</strong></span>
                     </div>
                   </div>
+
+                  {/* Local Error Feedback */}
+                  {localError && (
+                    <div style={{ margin: "16px 0 0 0", padding: "10px", backgroundColor: "rgba(158, 42, 43, 0.08)", border: "1.5px dashed var(--color-stamp-red)", borderRadius: "4px", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span className="stamp stamp-red" style={{ fontSize: "8px", transform: "rotate(-2deg)" }}>ERROR</span>
+                      <span style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "var(--color-stamp-red)", fontWeight: "bold" }}>
+                        {localError}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Audit inputs */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "28px", marginTop: "28px" }}>

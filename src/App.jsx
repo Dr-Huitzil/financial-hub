@@ -81,6 +81,13 @@ export default function App() {
   const [startingBalances, setStartingBalances] = useState(DEFAULT_STARTING_BALANCES);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // Global Error/Toast State
+  const [toast, setToast] = useState({ visible: false, message: "", type: "error" });
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 5000);
+  };
+
   // Auth State Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -113,6 +120,9 @@ export default function App() {
         ...doc.data()
       }));
       setTransactions(txList);
+    }, (error) => {
+      console.error("Firestore Sync Error (Transactions):", error);
+      showToast("Unable to sync transactions. Connection issue.", "error");
     });
 
     // 2. Sync Savings Goals
@@ -123,6 +133,9 @@ export default function App() {
         ...doc.data()
       }));
       setGoals(goalsList);
+    }, (error) => {
+      console.error("Firestore Sync Error (Goals):", error);
+      showToast("Unable to sync savings goals. Connection issue.", "error");
     });
 
     // 3. Sync Upcoming Payments Checklists
@@ -133,6 +146,9 @@ export default function App() {
         ...doc.data()
       })).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
       setUpcomingPayments(paymentsList);
+    }, (error) => {
+      console.error("Firestore Sync Error (Payments):", error);
+      showToast("Unable to sync upcoming payments. Connection issue.", "error");
     });
 
     // 4. Sync Setup settings (Categories & Credit Cards & Budget Limits)
@@ -159,16 +175,22 @@ export default function App() {
           creditCards: DEFAULT_CREDIT_CARDS,
           budgetLimits: DEFAULT_BUDGET_LIMITS,
           startingBalances: DEFAULT_STARTING_BALANCES
+        }).catch(err => {
+          console.error("Failed to seed default settings:", err);
+          showToast("Failed to initialize profile settings.", "error");
         });
 
         // Seed default goals and payments on first login (when settings doesn't exist)
         initialGoals.forEach((goal) => {
-          setDoc(doc(goalsRef, String(goal.id)), goal);
+          setDoc(doc(goalsRef, String(goal.id)), goal).catch(console.error);
         });
         initialUpcomingPayments.forEach((payment) => {
-          setDoc(doc(paymentsRef, String(payment.id)), payment);
+          setDoc(doc(paymentsRef, String(payment.id)), payment).catch(console.error);
         });
       }
+    }, (error) => {
+      console.error("Firestore Sync Error (Settings):", error);
+      showToast("Unable to sync settings. Connection issue.", "error");
     });
 
     return () => {
@@ -193,174 +215,263 @@ export default function App() {
 
   // Sign out / Exit Demo mode
   const handleLogout = async () => {
-    if (isDemoMode) {
-      setIsDemoMode(false);
-      setTransactions([]);
-      setGoals([]);
-      setUpcomingPayments([]);
-      setCreditCards(DEFAULT_CREDIT_CARDS);
-      setBudgetLimits(DEFAULT_BUDGET_LIMITS);
-      setStartingBalances(DEFAULT_STARTING_BALANCES);
-    } else {
-      await signOut(auth);
+    try {
+      if (isDemoMode) {
+        setIsDemoMode(false);
+        setTransactions([]);
+        setGoals([]);
+        setUpcomingPayments([]);
+        setCreditCards(DEFAULT_CREDIT_CARDS);
+        setBudgetLimits(DEFAULT_BUDGET_LIMITS);
+        setStartingBalances(DEFAULT_STARTING_BALANCES);
+      } else {
+        await signOut(auth);
+      }
+      setActiveTab("overview");
+    } catch (err) {
+      console.error("Logout Error:", err);
+      showToast("Failed to securely log out.", "error");
     }
-    setActiveTab("overview");
   };
 
   // 1. Post a new transaction voucher
   const handleAddTransaction = async (newTx) => {
-    if (isDemoMode) {
-      setTransactions([{ ...newTx, id: `demo-${Date.now()}` }, ...transactions]);
-    } else if (user) {
-      await addDoc(collection(db, "users", user.uid, "transactions"), newTx);
+    try {
+      const txArray = Array.isArray(newTx) ? newTx : [newTx];
+      if (isDemoMode) {
+        setTransactions((prev) => {
+          const newTxs = txArray.map((tx, idx) => ({ ...tx, id: `demo-${Date.now()}-${idx}` }));
+          return [...newTxs, ...prev];
+        });
+      } else if (user) {
+        const txCollectionRef = collection(db, "users", user.uid, "transactions");
+        for (const tx of txArray) {
+          await addDoc(txCollectionRef, tx);
+        }
+      }
+    } catch (err) {
+      console.error("handleAddTransaction Error:", err);
+      showToast("Failed to post transaction voucher.", "error");
+      throw err; // re-throw to allow modals to block close
     }
   };
 
   // 2. Void / Delete a transaction voucher
   const handleDeleteTransaction = async (id) => {
-    if (isDemoMode) {
-      setTransactions(transactions.filter((tx) => tx.id !== id));
-    } else if (user) {
-      await deleteDoc(doc(db, "users", user.uid, "transactions", id));
+    try {
+      if (isDemoMode) {
+        setTransactions(transactions.filter((tx) => tx.id !== id));
+      } else if (user) {
+        await deleteDoc(doc(db, "users", user.uid, "transactions", id));
+      }
+    } catch (err) {
+      console.error("handleDeleteTransaction Error:", err);
+      showToast("Failed to void transaction.", "error");
     }
   };
 
   // 3. Edit / Update an existing transaction voucher
   const handleUpdateTransaction = async (id, updatedTx) => {
-    if (isDemoMode) {
-      setTransactions(transactions.map((tx) => tx.id === id ? { ...tx, ...updatedTx } : tx));
-    } else if (user) {
-      await updateDoc(doc(db, "users", user.uid, "transactions", id), updatedTx);
+    try {
+      if (isDemoMode) {
+        setTransactions(transactions.map((tx) => tx.id === id ? { ...tx, ...updatedTx } : tx));
+      } else if (user) {
+        await updateDoc(doc(db, "users", user.uid, "transactions", id), updatedTx);
+      }
+    } catch (err) {
+      console.error("handleUpdateTransaction Error:", err);
+      showToast("Failed to update transaction record.", "error");
+      throw err;
     }
   };
 
   // 3. Toggle upcoming obligation paid status
   const handleTogglePayment = async (id) => {
-    const payment = upcomingPayments.find((p) => p.id === id);
-    if (!payment) return;
+    try {
+      const payment = upcomingPayments.find((p) => p.id === id);
+      if (!payment) return;
 
-    if (isDemoMode) {
-      setUpcomingPayments(
-        upcomingPayments.map((p) =>
-          p.id === id ? { ...p, paid: !p.paid } : p
-        )
-      );
-    } else if (user) {
-      await setDoc(
-        doc(db, "users", user.uid, "upcomingPayments", String(id)),
-        { paid: !payment.paid },
-        { merge: true }
-      );
+      if (isDemoMode) {
+        setUpcomingPayments(
+          upcomingPayments.map((p) =>
+            p.id === id ? { ...p, paid: !p.paid } : p
+          )
+        );
+      } else if (user) {
+        await setDoc(
+          doc(db, "users", user.uid, "upcomingPayments", String(id)),
+          { paid: !payment.paid },
+          { merge: true }
+        );
+      }
+    } catch (err) {
+      console.error("handleTogglePayment Error:", err);
+      showToast("Failed to toggle payment status.", "error");
     }
   };
 
   // 4. Update Milestone savings slider
   const handleUpdateGoalSlider = async (id, currentVal) => {
-    if (isDemoMode) {
-      setGoals(goals.map((g) => (g.id === id ? { ...g, current: parseFloat(currentVal) } : g)));
-    } else if (user) {
-      await setDoc(
-        doc(db, "users", user.uid, "savingsGoals", String(id)),
-        { current: parseFloat(currentVal) },
-        { merge: true }
-      );
+    try {
+      if (isDemoMode) {
+        setGoals(goals.map((g) => (g.id === id ? { ...g, current: parseFloat(currentVal) } : g)));
+      } else if (user) {
+        await setDoc(
+          doc(db, "users", user.uid, "savingsGoals", String(id)),
+          { current: parseFloat(currentVal) },
+          { merge: true }
+        );
+      }
+    } catch (err) {
+      console.error("handleUpdateGoalSlider Error:", err);
+      showToast("Failed to update savings milestone.", "error");
     }
   };
 
   // 5. Authorize new savings goal milestone
   const handleAddGoal = async (newGoal) => {
-    if (isDemoMode) {
-      setGoals([...goals, { ...newGoal, id: Date.now() }]);
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "savingsGoals", String(newGoal.id)), newGoal);
+    try {
+      if (isDemoMode) {
+        setGoals([...goals, { ...newGoal, id: Date.now() }]);
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "savingsGoals", String(newGoal.id)), newGoal);
+      }
+    } catch (err) {
+      console.error("handleAddGoal Error:", err);
+      showToast("Failed to authorize new savings goal.", "error");
     }
   };
 
   // 6. Delete savings goal milestone
   const handleDeleteGoal = async (id) => {
-    if (isDemoMode) {
-      setGoals(goals.filter((g) => g.id !== id));
-    } else if (user) {
-      await deleteDoc(doc(db, "users", user.uid, "savingsGoals", String(id)));
+    try {
+      if (isDemoMode) {
+        setGoals(goals.filter((g) => g.id !== id));
+      } else if (user) {
+        await deleteDoc(doc(db, "users", user.uid, "savingsGoals", String(id)));
+      }
+    } catch (err) {
+      console.error("handleDeleteGoal Error:", err);
+      showToast("Failed to revoke savings goal.", "error");
     }
   };
 
   // 7. Update savings goal fields
   const handleUpdateGoal = async (id, updatedFields) => {
-    if (isDemoMode) {
-      setGoals(goals.map((g) => (g.id === id ? { ...g, ...updatedFields } : g)));
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "savingsGoals", String(id)), updatedFields, { merge: true });
+    try {
+      if (isDemoMode) {
+        setGoals(goals.map((g) => (g.id === id ? { ...g, ...updatedFields } : g)));
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "savingsGoals", String(id)), updatedFields, { merge: true });
+      }
+    } catch (err) {
+      console.error("handleUpdateGoal Error:", err);
+      showToast("Failed to update savings goal parameters.", "error");
     }
   };
 
   // 8. Update customized categories registry
   const handleUpdateCategories = async (newCategories) => {
-    setCategories(newCategories);
-    if (isDemoMode) {
-      // Keep in local guest state
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { categories: newCategories }, { merge: true });
+    try {
+      setCategories(newCategories);
+      if (isDemoMode) {
+        // Keep in local guest state
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { categories: newCategories }, { merge: true });
+      }
+    } catch (err) {
+      console.error("handleUpdateCategories Error:", err);
+      showToast("Failed to update custom categories.", "error");
     }
   };
 
   // 12. Update credit card portfolio
   const handleUpdateCreditCards = async (newCreditCards) => {
-    setCreditCards(newCreditCards);
-    if (isDemoMode) {
-      // Keep in local guest state
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { creditCards: newCreditCards }, { merge: true });
+    try {
+      setCreditCards(newCreditCards);
+      if (isDemoMode) {
+        // Keep in local guest state
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { creditCards: newCreditCards }, { merge: true });
+      }
+    } catch (err) {
+      console.error("handleUpdateCreditCards Error:", err);
+      showToast("Failed to update credit portfolios.", "error");
     }
   };
 
   // 13. Update customized budget limits registry
   const handleUpdateBudgetLimits = async (newBudgetLimits) => {
-    setBudgetLimits(newBudgetLimits);
-    if (isDemoMode) {
-      // Keep in local guest state
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { budgetLimits: newBudgetLimits }, { merge: true });
+    try {
+      setBudgetLimits(newBudgetLimits);
+      if (isDemoMode) {
+        // Keep in local guest state
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { budgetLimits: newBudgetLimits }, { merge: true });
+      }
+    } catch (err) {
+      console.error("handleUpdateBudgetLimits Error:", err);
+      showToast("Failed to update budget thresholds.", "error");
     }
   };
 
   // 14. Update starting balances
   const handleUpdateStartingBalances = async (newBalances) => {
-    setStartingBalances(newBalances);
-    if (isDemoMode) {
-      // Keep in local guest state
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { startingBalances: newBalances }, { merge: true });
+    try {
+      setStartingBalances(newBalances);
+      if (isDemoMode) {
+        // Keep in local guest state
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "settings", "comptroller"), { startingBalances: newBalances }, { merge: true });
+      }
+    } catch (err) {
+      console.error("handleUpdateStartingBalances Error:", err);
+      showToast("Failed to update baseline balances.", "error");
     }
   };
 
   // 9. Add recurring scheduled payment
   const handleAddPayment = async (newPayment) => {
-    if (isDemoMode) {
-      setUpcomingPayments([...upcomingPayments, newPayment].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)));
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(newPayment.id)), newPayment);
+    try {
+      if (isDemoMode) {
+        setUpcomingPayments([...upcomingPayments, newPayment].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)));
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(newPayment.id)), newPayment);
+      }
+    } catch (err) {
+      console.error("handleAddPayment Error:", err);
+      showToast("Failed to schedule payment.", "error");
     }
   };
 
   // 10. Delete scheduled recurring payment
   const handleDeletePayment = async (id) => {
-    if (isDemoMode) {
-      setUpcomingPayments(upcomingPayments.filter((p) => p.id !== id));
-    } else if (user) {
-      await deleteDoc(doc(db, "users", user.uid, "upcomingPayments", String(id)));
+    try {
+      if (isDemoMode) {
+        setUpcomingPayments(upcomingPayments.filter((p) => p.id !== id));
+      } else if (user) {
+        await deleteDoc(doc(db, "users", user.uid, "upcomingPayments", String(id)));
+      }
+    } catch (err) {
+      console.error("handleDeletePayment Error:", err);
+      showToast("Failed to remove scheduled payment.", "error");
     }
   };
 
   // 11. Edit scheduled payment parameters
   const handleUpdatePayment = async (id, updatedFields) => {
-    if (isDemoMode) {
-      setUpcomingPayments(
-        upcomingPayments.map((p) => (p.id === id ? { ...p, ...updatedFields } : p))
-          .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-      );
-    } else if (user) {
-      await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(id)), updatedFields, { merge: true });
+    try {
+      if (isDemoMode) {
+        setUpcomingPayments(
+          upcomingPayments.map((p) => (p.id === id ? { ...p, ...updatedFields } : p))
+            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        );
+      } else if (user) {
+        await setDoc(doc(db, "users", user.uid, "upcomingPayments", String(id)), updatedFields, { merge: true });
+      }
+    } catch (err) {
+      console.error("handleUpdatePayment Error:", err);
+      showToast("Failed to update payment parameters.", "error");
     }
   };
 
@@ -536,6 +647,40 @@ export default function App() {
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
       />
+
+      {/* Global Toast Notification */}
+      {toast.visible && (
+        <div style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          backgroundColor: toast.type === "error" ? "var(--color-paper-light)" : "var(--color-paper-light)",
+          border: `2.5px dashed ${toast.type === "error" ? "var(--color-stamp-red)" : "var(--color-stamp-green)"}`,
+          padding: "16px 20px",
+          borderRadius: "8px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+          display: "flex",
+          alignItems: "center",
+          gap: "14px",
+          zIndex: 9999,
+          animation: "scaleInModal 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.15)"
+        }}>
+          <span className={`stamp stamp-${toast.type === "error" ? "red" : "green"}`} style={{ fontSize: "11px", padding: "4px 8px", transform: "rotate(-3deg)" }}>
+            {toast.type === "error" ? "ERROR" : "NOTICE"}
+          </span>
+          <span style={{ fontFamily: "var(--font-sans)", fontSize: "14px", fontWeight: "700", color: "var(--color-ink-dark)" }}>
+            {toast.message}
+          </span>
+          <button 
+            onClick={() => setToast(prev => ({ ...prev, visible: false }))} 
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "rgba(32,30,28,0.5)", display: "flex" }}
+            onMouseOver={(e) => e.currentTarget.style.color = "var(--color-ink-dark)"}
+            onMouseOut={(e) => e.currentTarget.style.color = "rgba(32,30,28,0.5)"}
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </MainLayout>
   );
 }
